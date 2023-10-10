@@ -4,6 +4,7 @@ mod instruction;
 mod memory;
 mod register;
 mod types;
+mod utils;
 use crate::core::*;
 use instruction::*;
 use std::{
@@ -11,6 +12,7 @@ use std::{
     io::{self, stdout, BufRead, BufReader, Write},
 };
 use types::*;
+use utils::*;
 
 fn main() {
     let mut core = Core::new();
@@ -48,17 +50,17 @@ fn main() {
                         let mut inst_count = 0;
                         for line in reader.lines() {
                             let input = line.unwrap();
-                            let input: String = input.chars().collect();
-                            if input.len() != 32 {
-                                eprintln!("invalid instruction");
-                                continue;
+                            let input: Vec<char> = input.chars().collect();
+                            for c in input {
+                                let inst = c as u8;
+                                core.store_byte(inst_count, u8_to_i8(inst));
+                                inst_count += 1;
                             }
-                            let inst = u32::from_str_radix(&input, 2).unwrap() as i32;
-                            core.store_word(inst_count * 4, inst);
-                            inst_count += 1;
                         }
-                        core.show_memory();
-                        core.run();
+                        if inst_count % 4 != 0 {
+                            eprintln!("Reading file failed.\nThe number of instructions is not a multiple of 4. {}", inst_count);
+                        }
+                        core.run(false, 0);
                     }
                 }
             }
@@ -73,7 +75,7 @@ fn main() {
                     let byte: String = input[(32 - (i + 1) * 8)..(32 - i * 8)].iter().collect();
                     inst[i] = MemoryValue::from_str_radix(&byte, 2).unwrap();
                 }
-                exec_instruction(&mut core, inst);
+                exec_instruction(&mut core, inst, false);
             }
         }
     }

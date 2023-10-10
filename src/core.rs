@@ -5,6 +5,7 @@ use crate::instruction::exec_instruction;
 use crate::memory::*;
 use crate::register::*;
 use crate::types::*;
+use crate::utils::*;
 
 const INT_REGISTER_SIZE: usize = 32;
 const FLOAT_REGISTER_SIZE: usize = 16;
@@ -100,18 +101,32 @@ impl Core {
         self.memory.show();
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, verbose: bool, interval: u64) {
+        let start_time = Instant::now();
+        let mut inst_count = 0;
         loop {
-            println!("pc: {}", self.get_pc());
-            let start_time = Instant::now();
-            while start_time.elapsed() < Duration::from_millis(100) {}
+            if verbose {
+                println!("pc: {}", self.get_pc());
+            }
+            if interval != 0 {
+                let interval_start_time = Instant::now();
+                while interval_start_time.elapsed() < Duration::from_millis(interval) {}
+            }
             let current_pc = self.get_pc();
             let mut inst: [MemoryValue; 4] = [0; 4];
             for i in 0..4 {
-                inst[i] = u8::from_str_radix(&self.get_memory_byte(current_pc + i), 2).unwrap();
+                // inst[i] = u8::from_str_radix(&self.get_memory_byte(current_pc + i), 2).unwrap();
+                inst[i] = i8_to_u8(self.load_byte(current_pc + i));
             }
-            exec_instruction(self, inst);
-            self.show_registers();
+            exec_instruction(self, inst, verbose);
+            inst_count += 1;
+            if verbose {
+                self.show_registers();
+            }
+            if start_time.elapsed() > Duration::from_millis(1000) {
+                println!("{}", inst_count);
+                return;
+            }
         }
     }
 }
