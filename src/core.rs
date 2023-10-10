@@ -115,7 +115,6 @@ impl Core {
             let current_pc = self.get_pc();
             let mut inst: [MemoryValue; 4] = [0; 4];
             for i in 0..4 {
-                // inst[i] = u8::from_str_radix(&self.get_memory_byte(current_pc + i), 2).unwrap();
                 inst[i] = i8_to_u8(self.load_byte(current_pc + i));
             }
             exec_instruction(self, inst, verbose);
