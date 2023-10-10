@@ -33,7 +33,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 3 => match funct3 {
                     0b000 => {
                         // lb
-                        // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
                             println!("lb x{}, {}(x{})", rd, imm, rs1);
@@ -45,7 +44,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     }
                     0b010 => {
                         // lw
-                        // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
                             println!("lw x{}, {}(x{})", rd, imm, rs1);
@@ -62,7 +60,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 19 => match funct3 {
                     0b000 => {
                         // addi
-                        // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
                             println!("addi x{}, x{}, {}", rd, rs1, imm);
@@ -77,7 +74,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 103 => match funct3 {
                     0b000 => {
                         // jalr
-                        // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
                             println!("jalr x{}, x{}, {}", rd, rs1, imm);
@@ -130,7 +126,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 35 => match funct3 {
                     0b000 => {
                         // sb
-                        // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
                             println!("sb x{}, {}(x{})", rs2, imm, rs1);
@@ -143,7 +138,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     }
                     0b010 => {
                         // sw
-                        // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
                             println!("sw x{}, {}(x{})", rs2, imm, rs1);
@@ -168,7 +162,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
             99 => match funct3 {
                 0b000 => {
                     // beq
-                    // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
                         println!("beq x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
@@ -184,7 +177,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 }
                 0b100 => {
                     // blt
-                    // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
                         println!("blt x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
@@ -209,7 +201,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
         Instruction::JInstruction(imm, rd, op) => match op {
             111 => {
                 // jal
-                // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                 let imm = sign_extention_i32(imm, 20);
                 if verbose {
                     println!("jal x{}, {} + {}", rd, core.get_pc(), imm << 1);
@@ -226,7 +217,6 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
             match op {
                 55 => {
                     // lui
-                    // let imm = u32::from_str_radix(&sign_extention(imm, 32), 2).unwrap() as i32;
                     let imm = sign_extention_i32(imm, 20);
                     if verbose {
                         println!("lui x{}, {}", rd, imm << 12);
