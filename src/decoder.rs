@@ -45,6 +45,16 @@ use crate::types::*;
 //     op: u8,   // 7
 // }
 
+// pub struct R4Instruction {
+//     fs3: u8,    // 5
+//     funct2: u8, // 2
+//     fs2: u8,    // 5
+//     fs1: u8,    // 5
+//     funct3: u8, // 3
+//     fd: u8,     // 5
+//     op: u8,     // 7
+// }
+
 pub enum Instruction {
     IInstruction(i16, u8, u8, u8, u8),
     RInstruction(u8, u8, u8, u8, u8, u8),
@@ -52,6 +62,7 @@ pub enum Instruction {
     JInstruction(i32, u8, u8),
     BInstruction(i16, u8, u8, u8, u8),
     UInstruction(i32, u8, u8),
+    R4Instruction(u8, u8, u8, u8, u8, u8, u8),
     OtherInstruction,
 }
 
@@ -62,6 +73,7 @@ enum InstructionType {
     J,
     B,
     U,
+    R4,
     Other,
 }
 
@@ -74,6 +86,7 @@ fn instruction_typeof(inst: [MemoryValue; 4]) -> InstructionType {
         111 => InstructionType::J,
         99 => InstructionType::B,
         23 | 55 => InstructionType::U,
+        67 | 71 | 75 | 79 => InstructionType::R4,
         _ => InstructionType::Other,
     }
 }
@@ -162,6 +175,17 @@ fn decode_u_instruction(inst: [MemoryValue; 4]) -> Instruction {
     Instruction::UInstruction(imm, rd, op)
 }
 
+fn decode_r4_instruction(inst: [MemoryValue; 4]) -> Instruction {
+    let fs3 = inst[3] >> 3;
+    let funct2 = (inst[3] >> 1) & 3;
+    let fs2 = ((inst[3] & 1) << 4) + (inst[2] >> 4);
+    let fs1 = ((inst[2] & 15) << 1) + (inst[1] >> 7);
+    let funct3 = (inst[1] & 127) >> 4;
+    let fd = ((inst[1] & 15) << 1) + (inst[0] >> 7);
+    let op = inst[0] & 127;
+    Instruction::R4Instruction(fs3, funct2, fs2, fs1, funct3, fd, op)
+}
+
 pub fn decode_instruction(inst: [MemoryValue; 4]) -> Instruction {
     let instruction_type = instruction_typeof(inst);
     match instruction_type {
@@ -171,6 +195,7 @@ pub fn decode_instruction(inst: [MemoryValue; 4]) -> Instruction {
         InstructionType::J => decode_j_instruction(inst),
         InstructionType::B => decode_b_instruction(inst),
         InstructionType::U => decode_u_instruction(inst),
+        InstructionType::R4 => decode_r4_instruction(inst),
         InstructionType::Other => Instruction::OtherInstruction,
     }
 }

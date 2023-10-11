@@ -243,6 +243,18 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             let rs1_value = core.get_int_register(rs1 as usize);
                             core.set_int_register(rd as usize, rs1_value - rs2_value);
                         }
+                        0b0000001 => {
+                            // mul
+                            if verbose {
+                                println!("mul x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_int_register(rs2 as usize) as i64;
+                            let rs1_value = core.get_int_register(rs1 as usize) as i64;
+                            core.set_int_register(
+                                rd as usize,
+                                ((rs1_value * rs2_value) & 0xffffffff) as i32,
+                            );
+                        }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
                         }
@@ -258,6 +270,18 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             core.set_int_register(
                                 rd as usize,
                                 u32_to_i32(i32_to_u32(rs1_value) << (rs2_value & 0b11111)) as Int,
+                            );
+                        }
+                        0b0000001 => {
+                            // mulh
+                            if verbose {
+                                println!("mulh x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_int_register(rs2 as usize) as i64;
+                            let rs1_value = core.get_int_register(rs1 as usize) as i64;
+                            core.set_int_register(
+                                rd as usize,
+                                (((rs1_value * rs2_value) >> 32) & 0xffffffff) as i32,
                             );
                         }
                         _ => {
@@ -278,6 +302,18 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 core.set_int_register(rd as usize, 0);
                             }
                         }
+                        0b0000001 => {
+                            // mulhsu
+                            if verbose {
+                                println!("mulhsu x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize)) as i64;
+                            let rs1_value = core.get_int_register(rs1 as usize) as i64;
+                            core.set_int_register(
+                                rd as usize,
+                                (((rs1_value * rs2_value) >> 32) & 0xffffffff) as i32,
+                            );
+                        }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
                         }
@@ -296,6 +332,18 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 core.set_int_register(rd as usize, 0);
                             }
                         }
+                        0b0000001 => {
+                            // mulhu
+                            if verbose {
+                                println!("mulhu x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize)) as u64;
+                            let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize)) as u64;
+                            core.set_int_register(
+                                rd as usize,
+                                u32_to_i32((((rs1_value * rs2_value) >> 32) & 0xffffffff) as u32),
+                            );
+                        }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
                         }
@@ -309,6 +357,22 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
                             core.set_int_register(rd as usize, rs1_value ^ rs2_value);
+                        }
+                        0b0000001 => {
+                            // div
+                            if verbose {
+                                println!("div x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_int_register(rs2 as usize) as i64;
+                            let rs1_value = core.get_int_register(rs1 as usize) as i64;
+                            if rs2_value == 0 {
+                                core.set_int_register(rd as usize, -1);
+                            } else {
+                                core.set_int_register(
+                                    rd as usize,
+                                    ((rs1_value / rs2_value) & 0xffffffff) as i32,
+                                );
+                            }
                         }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
@@ -336,6 +400,22 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             let rs1_value = core.get_int_register(rs1 as usize);
                             core.set_int_register(rd as usize, rs1_value >> (rs2_value & 0b11111));
                         }
+                        0b0000001 => {
+                            // divu
+                            if verbose {
+                                println!("divu x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
+                            let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
+                            if rs2_value == 0 {
+                                core.set_int_register(rd as usize, -1);
+                            } else {
+                                core.set_int_register(
+                                    rd as usize,
+                                    u32_to_i32((rs1_value / rs2_value) & 0xffffffff),
+                                );
+                            }
+                        }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
                         }
@@ -349,6 +429,22 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
                             core.set_int_register(rd as usize, rs1_value | rs2_value);
+                        }
+                        0b0000001 => {
+                            // rem
+                            if verbose {
+                                println!("rem x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_int_register(rs2 as usize) as i64;
+                            let rs1_value = core.get_int_register(rs1 as usize) as i64;
+                            if rs2_value == 0 {
+                                core.set_int_register(rd as usize, rs1_value as i32);
+                            } else {
+                                core.set_int_register(
+                                    rd as usize,
+                                    ((rs1_value % rs2_value) & 0xffffffff) as i32,
+                                );
+                            }
                         }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
@@ -364,12 +460,253 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             let rs1_value = core.get_int_register(rs1 as usize);
                             core.set_int_register(rd as usize, rs1_value & rs2_value);
                         }
+                        0b0000001 => {
+                            // remu
+                            if verbose {
+                                println!("remu x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
+                            let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
+                            if rs2_value == 0 {
+                                core.set_int_register(rd as usize, u32_to_i32(rs1_value));
+                            } else {
+                                core.set_int_register(
+                                    rd as usize,
+                                    u32_to_i32((rs1_value % rs2_value) & 0xffffffff),
+                                );
+                            }
+                        }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
                         }
                     },
                     _ => {
                         println!("unexpected funct3: {}", funct3)
+                    }
+                },
+                83 => match funct7 >> 2 {
+                    0b00000 => {
+                        // fadd
+                        if verbose {
+                            println!("fadd f{}, f{}, f{}", rd, rs1, rs2);
+                        }
+                        let rs2_value = core.get_float_register(rs2 as usize);
+                        let rs1_value = core.get_float_register(rs1 as usize);
+                        core.set_float_register(rd as usize, rs1_value + rs2_value);
+                    }
+                    0b00001 => {
+                        // fsub
+                        if verbose {
+                            println!("fsub f{}, f{}, f{}", rd, rs1, rs2);
+                        }
+                        let rs2_value = core.get_float_register(rs2 as usize);
+                        let rs1_value = core.get_float_register(rs1 as usize);
+                        core.set_float_register(rd as usize, rs1_value - rs2_value);
+                    }
+                    0b00010 => {
+                        // fmul
+                        if verbose {
+                            println!("fmul f{}, f{}, f{}", rd, rs1, rs2);
+                        }
+                        let rs2_value = core.get_float_register(rs2 as usize);
+                        let rs1_value = core.get_float_register(rs1 as usize);
+                        core.set_float_register(rd as usize, rs1_value * rs2_value);
+                    }
+                    0b00011 => {
+                        // fdiv
+                        if verbose {
+                            println!("fadd f{}, f{}, f{}", rd, rs1, rs2);
+                        }
+                        let rs2_value = core.get_float_register(rs2 as usize);
+                        let rs1_value = core.get_float_register(rs1 as usize);
+                        core.set_float_register(rd as usize, rs1_value / rs2_value);
+                    }
+                    0b01011 => {
+                        // fsqrt
+                        if verbose {
+                            println!("fsqrt f{}, f{}", rd, rs1);
+                        }
+                        let rs1_value = core.get_float_register(rs1 as usize);
+                        core.set_float_register(rd as usize, rs1_value.sqrt());
+                    }
+                    0b00100 => {
+                        match funct3 {
+                            0b000 => {
+                                // fsgnj
+                                if verbose {
+                                    println!("fsgnj f{}, f{}, f{}", rd, rs1, rs2);
+                                }
+                                let rs2_value = core.get_float_register(rs2 as usize);
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                let mut rd_value = rs1_value;
+                                if rs2_value.is_sign_negative() {
+                                    rd_value = -rd_value;
+                                }
+                                core.set_float_register(rd as usize, rd_value);
+                            }
+                            0b001 => {
+                                // fsgnjn
+                                if verbose {
+                                    println!("fsgnj f{}, f{}, f{}", rd, rs1, rs2);
+                                }
+                                let rs2_value = core.get_float_register(rs2 as usize);
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                let mut rd_value = rs1_value;
+                                if !rs2_value.is_sign_negative() {
+                                    rd_value = -rd_value;
+                                }
+                                core.set_float_register(rd as usize, rd_value);
+                            }
+                            0b010 => {
+                                // fsgnjx
+                                if verbose {
+                                    println!("fsgnj f{}, f{}, f{}", rd, rs1, rs2);
+                                }
+                                let rs2_value = core.get_float_register(rs2 as usize);
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                let mut rd_value = rs1_value;
+                                if rs2_value.is_sign_negative() ^ rs1_value.is_sign_negative() {
+                                    rd_value = -rd_value;
+                                }
+                                core.set_float_register(rd as usize, rd_value);
+                            }
+                            _ => {
+                                println!("unexpected funct3: {}", funct3)
+                            }
+                        }
+                    }
+                    0b00101 => {
+                        match funct3 {
+                            0b000 => {
+                                // fmin
+                                if verbose {
+                                    println!("fmin f{}, f{}, f{}", rd, rs1, rs2);
+                                }
+                                let rs2_value = core.get_float_register(rs2 as usize);
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                if rs1_value.is_nan() {
+                                    core.set_float_register(rd as usize, rs1_value);
+                                } else if rs2_value.is_nan() {
+                                    core.set_float_register(rd as usize, rs2_value);
+                                } else if rs1_value < rs2_value {
+                                    core.set_float_register(rd as usize, rs1_value);
+                                } else {
+                                    core.set_float_register(rd as usize, rs2_value);
+                                }
+                            }
+                            0b001 => {
+                                // fmax
+                                if verbose {
+                                    println!("fmax f{}, f{}, f{}", rd, rs1, rs2);
+                                }
+                                let rs2_value = core.get_float_register(rs2 as usize);
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                if rs1_value.is_nan() {
+                                    core.set_float_register(rd as usize, rs1_value);
+                                } else if rs2_value.is_nan() {
+                                    core.set_float_register(rd as usize, rs2_value);
+                                } else if rs1_value > rs2_value {
+                                    core.set_float_register(rd as usize, rs1_value);
+                                } else {
+                                    core.set_float_register(rd as usize, rs2_value);
+                                }
+                            }
+                            _ => {
+                                println!("unexpected funct3: {}", funct3)
+                            }
+                        }
+                    }
+                    0b10100 => match funct3 {
+                        0b010 => {
+                            // feq
+                            if verbose {
+                                println!("feq x{}, f{}, f{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_float_register(rs2 as usize);
+                            let rs1_value = core.get_float_register(rs1 as usize);
+                            if rs1_value == rs2_value {
+                                core.set_int_register(rd as usize, 1);
+                            } else {
+                                core.set_int_register(rd as usize, 0);
+                            }
+                        }
+                        0b001 => {
+                            // flt
+                            if verbose {
+                                println!("flt x{}, f{}, f{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_float_register(rs2 as usize);
+                            let rs1_value = core.get_float_register(rs1 as usize);
+                            if rs1_value < rs2_value {
+                                core.set_int_register(rd as usize, 1);
+                            } else {
+                                core.set_int_register(rd as usize, 0);
+                            }
+                        }
+                        0b000 => {
+                            // fle
+                            if verbose {
+                                println!("fle x{}, f{}, f{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_float_register(rs2 as usize);
+                            let rs1_value = core.get_float_register(rs1 as usize);
+                            if rs1_value <= rs2_value {
+                                core.set_int_register(rd as usize, 1);
+                            } else {
+                                core.set_int_register(rd as usize, 0);
+                            }
+                        }
+                        _ => {
+                            println!("unexpected funct3: {}", funct3)
+                        }
+                    },
+                    0b11100 => match funct3 {
+                        0b001 => {
+                            // fclass
+                            if verbose {
+                                println!("fclass x{}, f{}", rd, rs1);
+                            }
+                            let rs1_value = core.get_float_register(rs1 as usize);
+                            let mut rd_value = 0;
+                            if rs1_value.is_nan() {
+                                if rd_value >> 30 & 1 == 0 {
+                                    rd_value |= 0b0100000000; // signaling nan
+                                } else {
+                                    rd_value |= 0b1000000000; // quiet nan
+                                }
+                            } else if rs1_value == 0. {
+                                if rs1_value.is_sign_negative() {
+                                    rd_value |= 0b0000001000;
+                                } else {
+                                    rd_value |= 0b0000010000;
+                                }
+                            } else if rs1_value.is_infinite() {
+                                if rs1_value.is_sign_negative() {
+                                    rd_value |= 0b0000000001;
+                                } else {
+                                    rd_value |= 0b0010000000;
+                                }
+                            } else if rs1_value.is_normal() {
+                                if rs1_value.is_sign_negative() {
+                                    rd_value |= 0b0000000010;
+                                } else {
+                                    rd_value |= 0b0001000000;
+                                }
+                            } else {
+                                if rs1_value.is_sign_negative() {
+                                    rd_value |= 0b0000000100;
+                                } else {
+                                    rd_value |= 0b0000100000;
+                                }
+                            }
+                            core.set_int_register(rd as usize, rd_value);
+                        }
+                        _ => {
+                            println!("unexpected funct3: {}", funct3)
+                        }
+                    },
+                    _ => {
+                        println!("unexpected funct7: {}", funct7)
                     }
                 },
                 _ => {
@@ -562,6 +899,52 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         println!("lui x{}, {}", rd, imm << 12);
                     }
                     core.set_int_register(rd as usize, (imm as Int) << 12);
+                }
+                _ => {
+                    println!("unexpected op: {}", op);
+                }
+            }
+            core.increment_pc();
+        }
+        Instruction::R4Instruction(fs1, _, fs2, fs3, _, fd, op) => {
+            match op {
+                67 => {
+                    // fmadd
+                    if verbose {
+                        println!("fmadd f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                    }
+                    let fs1_value = core.get_float_register(fs1 as usize);
+                    let fs2_value = core.get_float_register(fs2 as usize);
+                    let fs3_value = core.get_float_register(fs3 as usize);
+                    core.set_float_register(fd as usize, fs1_value * fs2_value + fs3_value);
+                }
+                71 => {
+                    // fmsub
+                    if verbose {
+                        println!("fmsub f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                    }
+                    let fs1_value = core.get_float_register(fs1 as usize);
+                    let fs2_value = core.get_float_register(fs2 as usize);
+                    let fs3_value = core.get_float_register(fs3 as usize);
+                    core.set_float_register(fd as usize, fs1_value * fs2_value - fs3_value);
+                }
+                75 => {
+                    if verbose {
+                        println!("fnmsub f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                    }
+                    let fs1_value = core.get_float_register(fs1 as usize);
+                    let fs2_value = core.get_float_register(fs2 as usize);
+                    let fs3_value = core.get_float_register(fs3 as usize);
+                    core.set_float_register(fd as usize, -(fs1_value * fs2_value + fs3_value));
+                }
+                79 => {
+                    if verbose {
+                        println!("fnmadd f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                    }
+                    let fs1_value = core.get_float_register(fs1 as usize);
+                    let fs2_value = core.get_float_register(fs2 as usize);
+                    let fs3_value = core.get_float_register(fs3 as usize);
+                    core.set_float_register(fd as usize, -(fs1_value * fs2_value + fs3_value));
                 }
                 _ => {
                     println!("unexpected op: {}", op);
