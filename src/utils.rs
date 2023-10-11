@@ -14,10 +14,26 @@ pub fn i8_to_u8(value: i8) -> u8 {
     }
 }
 
+pub fn u16_to_i16(value: u16) -> i16 {
+    if value <= i16::MAX as u16 {
+        value as i16
+    } else {
+        (value as i32 - (u16::MAX as i32 + 1)) as i16
+    }
+}
+
 pub fn u32_to_i32(value: u32) -> i32 {
     if value <= i32::MAX as u32 {
         value as i32
     } else {
         (value as i64 - (u32::MAX as i64 + 1)) as i32
+    }
+}
+
+pub fn i32_to_u32(value: i32) -> u32 {
+    if value >= 0 {
+        value as u32
+    } else {
+        (value as i64 + (u32::MAX as i64 + 1)) as u32
     }
 }

@@ -65,12 +65,28 @@ impl Core {
         self.memory.load_byte(addr)
     }
 
+    pub fn load_ubyte(&self, addr: Address) -> UByte {
+        self.memory.load_ubyte(addr)
+    }
+
     pub fn store_byte(&mut self, addr: Address, value: Byte) {
         self.memory.store_byte(addr, value);
     }
 
+    pub fn load_half(&self, addr: Address) -> Half {
+        self.memory.load_half(addr)
+    }
+
+    pub fn load_uhalf(&self, addr: Address) -> UHalf {
+        self.memory.load_uhalf(addr)
+    }
+
     pub fn load_word(&self, addr: Address) -> Word {
         self.memory.load_word(addr)
+    }
+
+    pub fn store_half(&mut self, addr: Address, value: Half) {
+        self.memory.store_half(addr, value);
     }
 
     pub fn store_word(&mut self, addr: Address, value: Word) {
@@ -115,7 +131,7 @@ impl Core {
             let current_pc = self.get_pc();
             let mut inst: [MemoryValue; 4] = [0; 4];
             for i in 0..4 {
-                inst[i] = i8_to_u8(self.load_byte(current_pc + i));
+                inst[i] = self.load_ubyte(current_pc + i);
             }
             exec_instruction(self, inst, verbose);
             inst_count += 1;
