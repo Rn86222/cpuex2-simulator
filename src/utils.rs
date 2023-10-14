@@ -37,3 +37,14 @@ pub fn i32_to_u32(value: i32) -> u32 {
         (value as i64 + (u32::MAX as i64 + 1)) as u32
     }
 }
+
+pub const RED: &str = "31";
+pub const BLUE: &str = "34";
+
+pub fn colorize(text: &str, color: &str) -> String {
+    format!("\x1b[{}m{}\x1b[0m", color, text)
+}
+
+pub fn colorized_println(text: &str, color: &str) {
+    println!("{}", colorize(text, color));
+}

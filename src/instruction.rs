@@ -27,6 +27,10 @@ pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
     }
 }
 
+fn println_inst(text: &str) {
+    colorized_println(text, RED);
+}
+
 pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) {
     match decode_instruction(inst) {
         Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
@@ -36,7 +40,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // lb
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("lb x{}, {}(x{})", rd, imm, rs1);
+                            println_inst(&format!("lb x{}, {}(x{})", rd, imm, rs1));
                         }
                         let value = core.load_byte(
                             (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
@@ -47,7 +51,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // lh
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("lh x{}, {}(x{})", rd, imm, rs1);
+                            println_inst(&format!("lh x{}, {}(x{})", rd, imm, rs1));
                         }
                         let value = core.load_half(
                             (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
@@ -58,7 +62,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // lw
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("lw x{}, {}(x{})", rd, imm, rs1);
+                            println_inst(&format!("lw x{}, {}(x{})", rd, imm, rs1));
                         }
                         let value = core.load_word(
                             (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
@@ -69,7 +73,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // lbu
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("lbu x{}, {}(x{})", rd, imm, rs1);
+                            println_inst(&format!("lbu x{}, {}(x{})", rd, imm, rs1));
                         }
                         let value = core.load_ubyte(
                             (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
@@ -80,7 +84,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // lhu
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("lhu x{}, {}(x{})", rd, imm, rs1);
+                            println_inst(&format!("lhu x{}, {}(x{})", rd, imm, rs1));
                         }
                         let value = core.load_uhalf(
                             (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
@@ -96,7 +100,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // addi
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("addi x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("addi x{}, x{}, {}", rd, rs1, imm));
                         }
                         let value = core.get_int_register(rs1 as usize) + imm as i32;
                         core.set_int_register(rd as usize, value);
@@ -107,7 +111,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         let funct7 = (imm >> 5) & 0b1111111;
                         assert_eq!(funct7, 0);
                         if verbose {
-                            println!("slli x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("slli x{}, x{}, {}", rd, rs1, imm));
                         }
                         let rs1_value = core.get_int_register(rs1 as usize);
                         core.set_int_register(rd as usize, rs1_value << imm);
@@ -116,7 +120,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // slti
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("slti x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("slti x{}, x{}, {}", rd, rs1, imm));
                         }
                         let rs1_value = core.get_int_register(rs1 as usize);
                         if rs1_value < imm as i32 {
@@ -129,7 +133,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // sltiu
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("sltiu x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("sltiu x{}, x{}, {}", rd, rs1, imm));
                         }
                         let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
                         if (rs1_value as i64) < (imm as i64) {
@@ -142,7 +146,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // xori
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("xori x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("xori x{}, x{}, {}", rd, rs1, imm));
                         }
                         let rs1_value = core.get_int_register(rs1 as usize);
                         core.set_int_register(rd as usize, rs1_value ^ imm as i32);
@@ -154,7 +158,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 // srli
                                 let imm = imm & 0b11111;
                                 if verbose {
-                                    println!("srli x{}, x{}, {}", rd, rs1, imm);
+                                    println_inst(&format!("srli x{}, x{}, {}", rd, rs1, imm));
                                 }
                                 let rs1_value = core.get_int_register(rs1 as usize);
                                 core.set_int_register(
@@ -166,7 +170,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 // srai
                                 let imm = imm & 0b11111;
                                 if verbose {
-                                    println!("srai x{}, x{}, {}", rd, rs1, imm);
+                                    println_inst(&format!("srai x{}, x{}, {}", rd, rs1, imm));
                                 }
                                 let rs1_value = core.get_int_register(rs1 as usize);
                                 core.set_int_register(rd as usize, rs1_value >> imm);
@@ -180,7 +184,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // ori
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("ori x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("ori x{}, x{}, {}", rd, rs1, imm));
                         }
                         let rs1_value = core.get_int_register(rs1 as usize);
                         core.set_int_register(rd as usize, rs1_value | imm as i32);
@@ -189,7 +193,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // andi
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("andi x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("andi x{}, x{}, {}", rd, rs1, imm));
                         }
                         let rs1_value = core.get_int_register(rs1 as usize);
                         core.set_int_register(rd as usize, rs1_value & imm as i32);
@@ -203,7 +207,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // jalr
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("jalr x{}, x{}, {}", rd, rs1, imm);
+                            println_inst(&format!("jalr x{}, x{}, {}", rd, rs1, imm));
                         }
                         let new_pc = core.get_int_register(rs1 as usize) + imm as i32;
                         core.set_int_register(rd as usize, u32_to_i32(core.get_pc() as u32 + 4));
@@ -219,7 +223,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             // flw
                             let imm = sign_extention_i16(imm, 12);
                             if verbose {
-                                println!("flw f{}, {}(x{})", rd, imm, rs1);
+                                println_inst(&format!("flw f{}, {}(x{})", rd, imm, rs1));
                             }
                             let value = core.load_word(
                                 (imm as i64 + core.get_int_register(rs1 as usize) as i64)
@@ -248,7 +252,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // add
                             if verbose {
-                                println!("add x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("add x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -257,7 +261,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0100000 => {
                             // sub
                             if verbose {
-                                println!("sub x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("sub x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -266,7 +270,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // mul
                             if verbose {
-                                println!("mul x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("mul x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize) as i64;
                             let rs1_value = core.get_int_register(rs1 as usize) as i64;
@@ -278,7 +282,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0110000 => {
                             // absdiff
                             if verbose {
-                                println!("absdiff x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("absdiff x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -296,7 +300,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // sll
                             if verbose {
-                                println!("sll x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("sll x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -308,7 +312,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // mulh
                             if verbose {
-                                println!("mulh x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("mulh x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize) as i64;
                             let rs1_value = core.get_int_register(rs1 as usize) as i64;
@@ -325,7 +329,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // slt
                             if verbose {
-                                println!("slt x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("slt x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -338,7 +342,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // mulhsu
                             if verbose {
-                                println!("mulhsu x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("mulhsu x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize)) as i64;
                             let rs1_value = core.get_int_register(rs1 as usize) as i64;
@@ -355,7 +359,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // sltu
                             if verbose {
-                                println!("sltu x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("sltu x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
                             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
@@ -368,7 +372,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // mulhu
                             if verbose {
-                                println!("mulhu x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("mulhu x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize)) as u64;
                             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize)) as u64;
@@ -385,7 +389,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // xor
                             if verbose {
-                                println!("xor x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("xor x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -394,7 +398,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // div
                             if verbose {
-                                println!("div x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("div x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize) as i64;
                             let rs1_value = core.get_int_register(rs1 as usize) as i64;
@@ -415,7 +419,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // srl
                             if verbose {
-                                println!("srl x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("srl x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -427,7 +431,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0100000 => {
                             // sra
                             if verbose {
-                                println!("sra x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("sra x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -436,7 +440,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // divu
                             if verbose {
-                                println!("divu x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("divu x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
                             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
@@ -457,7 +461,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // or
                             if verbose {
-                                println!("or x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("or x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -466,7 +470,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // rem
                             if verbose {
-                                println!("rem x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("rem x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize) as i64;
                             let rs1_value = core.get_int_register(rs1 as usize) as i64;
@@ -487,7 +491,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000000 => {
                             // and
                             if verbose {
-                                println!("and x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("and x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_int_register(rs2 as usize);
                             let rs1_value = core.get_int_register(rs1 as usize);
@@ -496,7 +500,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b0000001 => {
                             // remu
                             if verbose {
-                                println!("remu x{}, x{}, x{}", rd, rs1, rs2);
+                                println_inst(&format!("remu x{}, x{}, x{}", rd, rs1, rs2));
                             }
                             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
                             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
@@ -521,7 +525,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     0b00000 => {
                         // fadd
                         if verbose {
-                            println!("fadd f{}, f{}, f{}", rd, rs1, rs2);
+                            println_inst(&format!("fadd f{}, f{}, f{}", rd, rs1, rs2));
                         }
                         let rs2_value = core.get_float_register(rs2 as usize);
                         let rs1_value = core.get_float_register(rs1 as usize);
@@ -530,7 +534,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     0b00001 => {
                         // fsub
                         if verbose {
-                            println!("fsub f{}, f{}, f{}", rd, rs1, rs2);
+                            println_inst(&format!("fsub f{}, f{}, f{}", rd, rs1, rs2));
                         }
                         let rs2_value = core.get_float_register(rs2 as usize);
                         let rs1_value = core.get_float_register(rs1 as usize);
@@ -539,7 +543,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     0b00010 => {
                         // fmul
                         if verbose {
-                            println!("fmul f{}, f{}, f{}", rd, rs1, rs2);
+                            println_inst(&format!("fmul f{}, f{}, f{}", rd, rs1, rs2));
                         }
                         let rs2_value = core.get_float_register(rs2 as usize);
                         let rs1_value = core.get_float_register(rs1 as usize);
@@ -548,7 +552,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     0b00011 => {
                         // fdiv
                         if verbose {
-                            println!("fadd f{}, f{}, f{}", rd, rs1, rs2);
+                            println_inst(&format!("fadd f{}, f{}, f{}", rd, rs1, rs2));
                         }
                         let rs2_value = core.get_float_register(rs2 as usize);
                         let rs1_value = core.get_float_register(rs1 as usize);
@@ -557,7 +561,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     0b01011 => {
                         // fsqrt
                         if verbose {
-                            println!("fsqrt f{}, f{}", rd, rs1);
+                            println_inst(&format!("fsqrt f{}, f{}", rd, rs1));
                         }
                         let rs1_value = core.get_float_register(rs1 as usize);
                         core.set_float_register(rd as usize, rs1_value.sqrt());
@@ -567,7 +571,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b000 => {
                                 // fsgnj
                                 if verbose {
-                                    println!("fsgnj f{}, f{}, f{}", rd, rs1, rs2);
+                                    println_inst(&format!("fsgnj f{}, f{}, f{}", rd, rs1, rs2));
                                 }
                                 let rs2_value = core.get_float_register(rs2 as usize);
                                 let rs1_value = core.get_float_register(rs1 as usize);
@@ -580,7 +584,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b001 => {
                                 // fsgnjn
                                 if verbose {
-                                    println!("fsgnj f{}, f{}, f{}", rd, rs1, rs2);
+                                    println_inst(&format!("fsgnj f{}, f{}, f{}", rd, rs1, rs2));
                                 }
                                 let rs2_value = core.get_float_register(rs2 as usize);
                                 let rs1_value = core.get_float_register(rs1 as usize);
@@ -593,7 +597,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b010 => {
                                 // fsgnjx
                                 if verbose {
-                                    println!("fsgnj f{}, f{}, f{}", rd, rs1, rs2);
+                                    println_inst(&format!("fsgnj f{}, f{}, f{}", rd, rs1, rs2));
                                 }
                                 let rs2_value = core.get_float_register(rs2 as usize);
                                 let rs1_value = core.get_float_register(rs1 as usize);
@@ -613,7 +617,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b000 => {
                                 // fmin
                                 if verbose {
-                                    println!("fmin f{}, f{}, f{}", rd, rs1, rs2);
+                                    println_inst(&format!("fmin f{}, f{}, f{}", rd, rs1, rs2));
                                 }
                                 let rs2_value = core.get_float_register(rs2 as usize);
                                 let rs1_value = core.get_float_register(rs1 as usize);
@@ -630,7 +634,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b001 => {
                                 // fmax
                                 if verbose {
-                                    println!("fmax f{}, f{}, f{}", rd, rs1, rs2);
+                                    println_inst(&format!("fmax f{}, f{}, f{}", rd, rs1, rs2));
                                 }
                                 let rs2_value = core.get_float_register(rs2 as usize);
                                 let rs1_value = core.get_float_register(rs1 as usize);
@@ -653,7 +657,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b010 => {
                             // feq
                             if verbose {
-                                println!("feq x{}, f{}, f{}", rd, rs1, rs2);
+                                println_inst(&format!("feq x{}, f{}, f{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_float_register(rs2 as usize);
                             let rs1_value = core.get_float_register(rs1 as usize);
@@ -666,7 +670,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b001 => {
                             // flt
                             if verbose {
-                                println!("flt x{}, f{}, f{}", rd, rs1, rs2);
+                                println_inst(&format!("flt x{}, f{}, f{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_float_register(rs2 as usize);
                             let rs1_value = core.get_float_register(rs1 as usize);
@@ -679,7 +683,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b000 => {
                             // fle
                             if verbose {
-                                println!("fle x{}, f{}, f{}", rd, rs1, rs2);
+                                println_inst(&format!("fle x{}, f{}, f{}", rd, rs1, rs2));
                             }
                             let rs2_value = core.get_float_register(rs2 as usize);
                             let rs1_value = core.get_float_register(rs1 as usize);
@@ -697,7 +701,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         0b001 => {
                             // fclass
                             if verbose {
-                                println!("fclass x{}, f{}", rd, rs1);
+                                println_inst(&format!("fclass x{}, f{}", rd, rs1));
                             }
                             let rs1_value = core.get_float_register(rs1 as usize);
                             let mut rd_value = 0;
@@ -743,7 +747,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b00000 => {
                                 // fcvt.w.s
                                 if verbose {
-                                    println!("fcvt.w.s x{}, f{}", rd, rs1);
+                                    println_inst(&format!("fcvt.w.s x{}, f{}", rd, rs1));
                                 }
                                 let rs1_value = core.get_float_register(rs1 as usize);
                                 core.set_int_register(rd as usize, rs1_value as i32);
@@ -751,7 +755,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b00001 => {
                                 // fcvt.wu.s
                                 if verbose {
-                                    println!("fcvt.wu.s x{}, f{}", rd, rs1);
+                                    println_inst(&format!("fcvt.wu.s x{}, f{}", rd, rs1));
                                 }
                                 let rs1_value = core.get_float_register(rs1 as usize);
                                 core.set_int_register(rd as usize, rs1_value.abs() as i32);
@@ -766,7 +770,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b00000 => {
                                 // fcvt.s.w
                                 if verbose {
-                                    println!("fcvt.s.w f{}, x{}", rd, rs1);
+                                    println_inst(&format!("fcvt.s.w f{}, x{}", rd, rs1));
                                 }
                                 let rs1_value = core.get_int_register(rs1 as usize);
                                 core.set_float_register(rd as usize, rs1_value as f32);
@@ -774,7 +778,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b00001 => {
                                 // fcvt.s.wu
                                 if verbose {
-                                    println!("fcvt.s.wu f{}, x{}", rd, rs1);
+                                    println_inst(&format!("fcvt.s.wu f{}, x{}", rd, rs1));
                                 }
                                 let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
                                 core.set_float_register(rd as usize, rs1_value as f32);
@@ -789,7 +793,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b00000 => {
                                 // fmvs.x.w
                                 if verbose {
-                                    println!("fmvs.x.w f{}, x{}", rd, rs1);
+                                    println_inst(&format!("fmvs.x.w f{}, x{}", rd, rs1));
                                 }
                                 let rs1_value = core.get_int_register(rs1 as usize);
                                 core.set_float_register(rd as usize, rs1_value as f32);
@@ -804,7 +808,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             0b00000 => {
                                 // fmv.w.x
                                 if verbose {
-                                    println!("fmv.w.x x{}, f{}", rd, rs1);
+                                    println_inst(&format!("fmv.w.x x{}, f{}", rd, rs1));
                                 }
                                 let rs1_value = core.get_float_register(rs1 as usize);
                                 core.set_int_register(rd as usize, rs1_value as i32);
@@ -825,7 +829,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 0b0000000 => {
                                     // swapw
                                     if verbose {
-                                        println!("swapw x{}, x{}, x{}", rd, rs1, rs2);
+                                        println_inst(&format!("swapw x{}, x{}, x{}", rd, rs1, rs2));
                                     }
                                     let rs2_value = core.get_int_register(rs2 as usize);
                                     let rs1_value = core.get_int_register(rs1 as usize);
@@ -843,7 +847,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 0b0000000 => {
                                     // swaph
                                     if verbose {
-                                        println!("swaph x{}, x{}, x{}", rd, rs1, rs2);
+                                        println_inst(&format!("swaph x{}, x{}, x{}", rd, rs1, rs2));
                                     }
                                     let rs2_value = core.get_int_register(rs2 as usize) & 0xffff;
                                     let rs1_value = core.get_int_register(rs1 as usize) & 0xffff;
@@ -861,7 +865,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 0b0000000 => {
                                     // swapb
                                     if verbose {
-                                        println!("swapb x{}, x{}, x{}", rd, rs1, rs2);
+                                        println_inst(&format!("swapb x{}, x{}, x{}", rd, rs1, rs2));
                                     }
                                     let rs2_value = core.get_int_register(rs2 as usize) & 0xff;
                                     let rs1_value = core.get_int_register(rs1 as usize) & 0xff;
@@ -892,7 +896,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // sb
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("sb x{}, {}(x{})", rs2, imm, rs1);
+                            println_inst(&format!("sb x{}, {}(x{})", rs2, imm, rs1));
                         }
                         let value = core.get_int_register(rs2 as usize);
                         core.store_byte(
@@ -904,7 +908,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // sh
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("sh x{}, {}(x{})", rs2, imm, rs1);
+                            println_inst(&format!("sh x{}, {}(x{})", rs2, imm, rs1));
                         }
                         let value = core.get_int_register(rs2 as usize);
                         core.store_half(
@@ -916,7 +920,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         // sw
                         let imm = sign_extention_i16(imm, 12);
                         if verbose {
-                            println!("sw x{}, {}(x{})", rs2, imm, rs1);
+                            println_inst(&format!("sw x{}, {}(x{})", rs2, imm, rs1));
                         }
                         let value = core.get_int_register(rs2 as usize);
                         core.store_word(
@@ -934,7 +938,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             // fsw
                             let imm = sign_extention_i16(imm, 12);
                             if verbose {
-                                println!("fsw f{}, {}(x{})", rs2, imm, rs1);
+                                println_inst(&format!("fsw f{}, {}(x{})", rs2, imm, rs1));
                             }
                             let value = core.get_float_register(rs2 as usize);
                             core.store_word(
@@ -960,7 +964,13 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // beq
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
-                        println!("beq x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
+                        println_inst(&format!(
+                            "beq x{}, x{}, {} + {}",
+                            rs2,
+                            rs1,
+                            core.get_pc(),
+                            imm << 1,
+                        ));
                     }
                     let rs2_value = core.get_int_register(rs2 as usize);
                     let rs1_value = core.get_int_register(rs1 as usize);
@@ -975,7 +985,13 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // bne
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
-                        println!("bne x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
+                        println_inst(&format!(
+                            "bne x{}, x{}, {} + {}",
+                            rs2,
+                            rs1,
+                            core.get_pc(),
+                            imm << 1,
+                        ));
                     }
                     let rs2_value = core.get_int_register(rs2 as usize);
                     let rs1_value = core.get_int_register(rs1 as usize);
@@ -990,7 +1006,13 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // blt
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
-                        println!("blt x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
+                        println_inst(&format!(
+                            "blt x{}, x{}, {} + {}",
+                            rs2,
+                            rs1,
+                            core.get_pc(),
+                            imm << 1,
+                        ));
                     }
                     let rs2_value = core.get_int_register(rs2 as usize);
                     let rs1_value = core.get_int_register(rs1 as usize);
@@ -1005,7 +1027,13 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // bge
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
-                        println!("bge x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
+                        println_inst(&format!(
+                            "bge x{}, x{}, {} + {}",
+                            rs2,
+                            rs1,
+                            core.get_pc(),
+                            imm << 1,
+                        ));
                     }
                     let rs2_value = core.get_int_register(rs2 as usize);
                     let rs1_value = core.get_int_register(rs1 as usize);
@@ -1020,7 +1048,13 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // bltu
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
-                        println!("bltu x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
+                        println_inst(&format!(
+                            "bltu x{}, x{}, {} + {}",
+                            rs2,
+                            rs1,
+                            core.get_pc(),
+                            imm << 1,
+                        ));
                     }
                     let rs2_value = core.get_int_register(rs2 as usize);
                     let rs1_value = core.get_int_register(rs1 as usize);
@@ -1035,7 +1069,13 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // bgeu
                     let imm = sign_extention_i16(imm, 12);
                     if verbose {
-                        println!("bgeu x{}, x{}, {} + {}", rs2, rs1, core.get_pc(), imm << 1);
+                        println_inst(&format!(
+                            "bgeu x{}, x{}, {} + {}",
+                            rs2,
+                            rs1,
+                            core.get_pc(),
+                            imm << 1,
+                        ));
                     }
                     let rs2_value = core.get_int_register(rs2 as usize);
                     let rs1_value = core.get_int_register(rs1 as usize);
@@ -1059,7 +1099,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 // jal
                 let imm = sign_extention_i32(imm, 20);
                 if verbose {
-                    println!("jal x{}, {} + {}", rd, core.get_pc(), imm << 1);
+                    println_inst(&format!("jal x{}, {} + {}", rd, core.get_pc(), imm << 1));
                 }
                 let new_pc = core.get_pc() as i32 + (imm << 1);
                 core.set_int_register(rd as usize, u32_to_i32(core.get_pc() as u32 + 4));
@@ -1075,7 +1115,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // auipc
                     let imm = sign_extention_i32(imm, 20);
                     if verbose {
-                        println!("auipc x{}, {}", rd, imm << 12);
+                        println_inst(&format!("auipc x{}, {}", rd, imm << 12));
                     }
                     core.set_int_register(
                         rd as usize,
@@ -1086,7 +1126,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // lui
                     let imm = sign_extention_i32(imm, 20);
                     if verbose {
-                        println!("lui x{}, {}", rd, imm << 12);
+                        println_inst(&format!("lui x{}, {}", rd, imm << 12));
                     }
                     core.set_int_register(rd as usize, (imm as Int) << 12);
                 }
@@ -1101,7 +1141,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 67 => {
                     // fmadd
                     if verbose {
-                        println!("fmadd f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                        println_inst(&format!("fmadd f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3));
                     }
                     let fs1_value = core.get_float_register(fs1 as usize);
                     let fs2_value = core.get_float_register(fs2 as usize);
@@ -1111,7 +1151,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 71 => {
                     // fmsub
                     if verbose {
-                        println!("fmsub f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                        println_inst(&format!("fmsub f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3));
                     }
                     let fs1_value = core.get_float_register(fs1 as usize);
                     let fs2_value = core.get_float_register(fs2 as usize);
@@ -1120,7 +1160,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 }
                 75 => {
                     if verbose {
-                        println!("fnmsub f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                        println_inst(&format!("fnmsub f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3));
                     }
                     let fs1_value = core.get_float_register(fs1 as usize);
                     let fs2_value = core.get_float_register(fs2 as usize);
@@ -1129,7 +1169,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                 }
                 79 => {
                     if verbose {
-                        println!("fnmadd f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3);
+                        println_inst(&format!("fnmadd f{}, f{}, f{}, f{}", fd, fs1, fs2, fs3));
                     }
                     let fs1_value = core.get_float_register(fs1 as usize);
                     let fs2_value = core.get_float_register(fs2 as usize);

@@ -5,6 +5,7 @@ use crate::instruction::exec_instruction;
 use crate::memory::*;
 use crate::register::*;
 use crate::types::*;
+use crate::utils::*;
 
 const INT_REGISTER_SIZE: usize = 32;
 const FLOAT_REGISTER_SIZE: usize = 32;
@@ -121,7 +122,7 @@ impl Core {
         let mut inst_count = 0;
         loop {
             if verbose {
-                println!("pc: {}", self.get_pc());
+                colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
             }
             if interval != 0 {
                 let interval_start_time = Instant::now();
@@ -138,7 +139,7 @@ impl Core {
                 self.show_registers();
             }
             if start_time.elapsed() > Duration::from_millis(1000) {
-                println!("{}", inst_count);
+                println!("instruction counts: {}", inst_count);
                 return;
             }
         }
