@@ -29,9 +29,9 @@ impl Memory {
         self.values[addr] = i8_to_u8(value);
     }
 
-    pub fn get_byte(&self, addr: Address) -> String {
-        self.values[addr].to_string()
-    }
+    // pub fn get_byte(&self, addr: Address) -> String {
+    //     self.values[addr].to_string()
+    // }
 
     pub fn load_half(&self, addr: Address) -> Half {
         let mut load_value: u16 = 0;
@@ -79,10 +79,10 @@ impl Memory {
         println!("");
     }
 
-    pub fn show_word(&self, addr: Address) {
-        for i in 0..4 {
-            print!("{}", self.get_byte(addr + 3 - i));
-        }
-        println!("");
-    }
+    // pub fn show_word(&self, addr: Address) {
+    //     for i in 0..4 {
+    //         print!("{}", self.get_byte(addr + 3 - i));
+    //     }
+    //     println!("");
+    // }
 }

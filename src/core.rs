@@ -5,10 +5,9 @@ use crate::instruction::exec_instruction;
 use crate::memory::*;
 use crate::register::*;
 use crate::types::*;
-use crate::utils::*;
 
 const INT_REGISTER_SIZE: usize = 32;
-const FLOAT_REGISTER_SIZE: usize = 16;
+const FLOAT_REGISTER_SIZE: usize = 32;
 
 pub struct Core {
     memory: Memory,
@@ -93,9 +92,9 @@ impl Core {
         self.memory.store_word(addr, value);
     }
 
-    pub fn get_memory_byte(&self, addr: Address) -> String {
-        self.memory.get_byte(addr)
-    }
+    // pub fn get_memory_byte(&self, addr: Address) -> String {
+    //     self.memory.get_byte(addr)
+    // }
 
     pub fn show_registers(&self) {
         for i in 0..INT_REGISTER_SIZE {
@@ -104,12 +103,12 @@ impl Core {
                 println!("");
             }
         }
-        // for i in 0..FLOAT_REGISTER_SIZE {
-        //     print!("f{: <2} {} ", i, self.get_float_register(i));
-        //     if i % 8 == 7 {
-        //         println!("");
-        //     }
-        // }
+        for i in 0..FLOAT_REGISTER_SIZE {
+            print!("f{: <2} {:>10.5} ", i, self.get_float_register(i));
+            if i % 8 == 7 {
+                println!("");
+            }
+        }
     }
 
     pub fn show_memory(&self) {

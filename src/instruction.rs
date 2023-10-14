@@ -39,7 +39,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             println!("lb x{}, {}(x{})", rd, imm, rs1);
                         }
                         let value = core.load_byte(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                         );
                         core.set_int_register(rd as usize, value as Int);
                     }
@@ -50,7 +50,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             println!("lh x{}, {}(x{})", rd, imm, rs1);
                         }
                         let value = core.load_half(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                         );
                         core.set_int_register(rd as usize, value as Int);
                     }
@@ -61,7 +61,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             println!("lw x{}, {}(x{})", rd, imm, rs1);
                         }
                         let value = core.load_word(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                         );
                         core.set_int_register(rd as usize, value as Int);
                     }
@@ -72,7 +72,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             println!("lbu x{}, {}(x{})", rd, imm, rs1);
                         }
                         let value = core.load_ubyte(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                         );
                         core.set_int_register(rd as usize, value as Int);
                     }
@@ -83,7 +83,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             println!("lhu x{}, {}(x{})", rd, imm, rs1);
                         }
                         let value = core.load_uhalf(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                         );
                         core.set_int_register(rd as usize, value as Int);
                     }
@@ -159,7 +159,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 let rs1_value = core.get_int_register(rs1 as usize);
                                 core.set_int_register(
                                     rd as usize,
-                                    u32_to_i32((i32_to_u32(rs1_value) >> imm)),
+                                    u32_to_i32(i32_to_u32(rs1_value) >> imm),
                                 );
                             }
                             0b0100000 => {
@@ -213,6 +213,25 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         println!("unexpected funct3: {}", funct3)
                     }
                 },
+                7 => {
+                    match funct3 {
+                        0b010 => {
+                            // flw
+                            let imm = sign_extention_i16(imm, 12);
+                            if verbose {
+                                println!("flw f{}, {}(x{})", rd, imm, rs1);
+                            }
+                            let value = core.load_word(
+                                (imm as i64 + core.get_int_register(rs1 as usize) as i64)
+                                    as Address,
+                            );
+                            core.set_float_register(rd as usize, f32::from_bits(i32_to_u32(value)));
+                        }
+                        _ => {
+                            println!("unexpected funct3: {}", funct3)
+                        }
+                    }
+                }
                 _ => {
                     println!("unexpected op: {}", op);
                 }
@@ -223,6 +242,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
         }
         Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op) => {
             match op {
+                // TODO: swap instructions
                 51 => match funct3 {
                     0b000 => match funct7 {
                         0b0000000 => {
@@ -254,6 +274,19 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                                 rd as usize,
                                 ((rs1_value * rs2_value) & 0xffffffff) as i32,
                             );
+                        }
+                        0b0110000 => {
+                            // absdiff
+                            if verbose {
+                                println!("absdiff x{}, x{}, x{}", rd, rs1, rs2);
+                            }
+                            let rs2_value = core.get_int_register(rs2 as usize);
+                            let rs1_value = core.get_int_register(rs1 as usize);
+                            if rs1_value > rs2_value {
+                                core.set_int_register(rd as usize, rs1_value - rs2_value);
+                            } else {
+                                core.set_int_register(rd as usize, rs2_value - rs1_value);
+                            }
                         }
                         _ => {
                             println!("unexpected funct7: {}", funct7)
@@ -705,10 +738,147 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                             println!("unexpected funct3: {}", funct3)
                         }
                     },
+                    0b1100000 => {
+                        match rs2 {
+                            0b00000 => {
+                                // fcvt.w.s
+                                if verbose {
+                                    println!("fcvt.w.s x{}, f{}", rd, rs1);
+                                }
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                core.set_int_register(rd as usize, rs1_value as i32);
+                            }
+                            0b00001 => {
+                                // fcvt.wu.s
+                                if verbose {
+                                    println!("fcvt.wu.s x{}, f{}", rd, rs1);
+                                }
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                core.set_int_register(rd as usize, rs1_value.abs() as i32);
+                            }
+                            _ => {
+                                println!("unexpected rs2: {}", rs2)
+                            }
+                        }
+                    }
+                    0b1101000 => {
+                        match rs2 {
+                            0b00000 => {
+                                // fcvt.s.w
+                                if verbose {
+                                    println!("fcvt.s.w f{}, x{}", rd, rs1);
+                                }
+                                let rs1_value = core.get_int_register(rs1 as usize);
+                                core.set_float_register(rd as usize, rs1_value as f32);
+                            }
+                            0b00001 => {
+                                // fcvt.s.wu
+                                if verbose {
+                                    println!("fcvt.s.wu f{}, x{}", rd, rs1);
+                                }
+                                let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
+                                core.set_float_register(rd as usize, rs1_value as f32);
+                            }
+                            _ => {
+                                println!("unexpected rs2: {}", rs2)
+                            }
+                        }
+                    }
+                    0b1110000 => {
+                        match rs2 {
+                            0b00000 => {
+                                // fmvs.x.w
+                                if verbose {
+                                    println!("fmvs.x.w f{}, x{}", rd, rs1);
+                                }
+                                let rs1_value = core.get_int_register(rs1 as usize);
+                                core.set_float_register(rd as usize, rs1_value as f32);
+                            }
+                            _ => {
+                                println!("unexpected rs2: {}", rs2)
+                            }
+                        }
+                    }
+                    0b1111000 => {
+                        match rs2 {
+                            0b00000 => {
+                                // fmv.w.x
+                                if verbose {
+                                    println!("fmv.w.x x{}, f{}", rd, rs1);
+                                }
+                                let rs1_value = core.get_float_register(rs1 as usize);
+                                core.set_int_register(rd as usize, rs1_value as i32);
+                            }
+                            _ => {
+                                println!("unexpected rs2: {}", rs2)
+                            }
+                        }
+                    }
                     _ => {
                         println!("unexpected funct7: {}", funct7)
                     }
                 },
+                52 => {
+                    match funct3 {
+                        0b000 => {
+                            match funct7 {
+                                0b0000000 => {
+                                    // swapw
+                                    if verbose {
+                                        println!("swapw x{}, x{}, x{}", rd, rs1, rs2);
+                                    }
+                                    let rs2_value = core.get_int_register(rs2 as usize);
+                                    let rs1_value = core.get_int_register(rs1 as usize);
+                                    core.set_int_register(rd as usize, rs2_value);
+                                    core.set_int_register(rs2 as usize, rs1_value);
+                                    core.set_int_register(rs1 as usize, rs2_value);
+                                }
+                                _ => {
+                                    println!("unexpected funct7: {}", funct7)
+                                }
+                            }
+                        }
+                        0b001 => {
+                            match funct7 {
+                                0b0000000 => {
+                                    // swaph
+                                    if verbose {
+                                        println!("swaph x{}, x{}, x{}", rd, rs1, rs2);
+                                    }
+                                    let rs2_value = core.get_int_register(rs2 as usize) & 0xffff;
+                                    let rs1_value = core.get_int_register(rs1 as usize) & 0xffff;
+                                    core.set_int_register(rd as usize, rs2_value);
+                                    core.set_int_register(rs2 as usize, rs1_value);
+                                    core.set_int_register(rs1 as usize, rs2_value);
+                                }
+                                _ => {
+                                    println!("unexpected funct7: {}", funct7)
+                                }
+                            }
+                        }
+                        0b010 => {
+                            match funct7 {
+                                0b0000000 => {
+                                    // swapb
+                                    if verbose {
+                                        println!("swapb x{}, x{}, x{}", rd, rs1, rs2);
+                                    }
+                                    let rs2_value = core.get_int_register(rs2 as usize) & 0xff;
+                                    let rs1_value = core.get_int_register(rs1 as usize) & 0xff;
+                                    core.set_int_register(rd as usize, rs2_value);
+                                    core.set_int_register(rs2 as usize, rs1_value);
+                                    core.set_int_register(rs1 as usize, rs2_value);
+                                }
+                                _ => {
+                                    println!("unexpected funct7: {}", funct7)
+                                }
+                            }
+                        }
+                        _ => {
+                            println!("unexpected funct3: {}", funct3)
+                        }
+                    }
+                }
                 _ => {
                     println!("unexpected op: {}", op);
                 }
@@ -726,7 +896,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         }
                         let value = core.get_int_register(rs2 as usize);
                         core.store_byte(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                             (value & 255) as Byte,
                         )
                     }
@@ -738,7 +908,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         }
                         let value = core.get_int_register(rs2 as usize);
                         core.store_half(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                             (value & 65535) as Half,
                         )
                     }
@@ -750,7 +920,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         }
                         let value = core.get_int_register(rs2 as usize);
                         core.store_word(
-                            (imm as i32 + core.get_int_register(rs1 as usize)) as Address,
+                            (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                             value as Word,
                         )
                     }
@@ -758,6 +928,26 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                         println!("unexpected funct3: {}", funct3)
                     }
                 },
+                39 => {
+                    match funct3 {
+                        0b010 => {
+                            // fsw
+                            let imm = sign_extention_i16(imm, 12);
+                            if verbose {
+                                println!("fsw f{}, {}(x{})", rs2, imm, rs1);
+                            }
+                            let value = core.get_float_register(rs2 as usize);
+                            core.store_word(
+                                (imm as i64 + core.get_int_register(rs1 as usize) as i64)
+                                    as Address,
+                                value.to_bits() as Word,
+                            )
+                        }
+                        _ => {
+                            println!("unexpected funct3: {}", funct3)
+                        }
+                    }
+                }
                 _ => {
                     println!("unexpected op: {}", op);
                 }
@@ -944,7 +1134,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     let fs1_value = core.get_float_register(fs1 as usize);
                     let fs2_value = core.get_float_register(fs2 as usize);
                     let fs3_value = core.get_float_register(fs3 as usize);
-                    core.set_float_register(fd as usize, -(fs1_value * fs2_value + fs3_value));
+                    core.set_float_register(fd as usize, -(fs1_value * fs2_value - fs3_value));
                 }
                 _ => {
                     println!("unexpected op: {}", op);
