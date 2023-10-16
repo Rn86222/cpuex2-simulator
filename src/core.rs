@@ -118,8 +118,8 @@ impl Core {
     }
 
     pub fn run(&mut self, verbose: bool, interval: u64) {
-        let start_time = Instant::now();
-        let mut inst_count = 0;
+        // let start_time = Instant::now();
+        // let mut inst_count = 0;
         loop {
             if verbose {
                 colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
@@ -134,14 +134,14 @@ impl Core {
                 inst[i] = self.load_ubyte(current_pc + i);
             }
             exec_instruction(self, inst, verbose);
-            inst_count += 1;
+            // inst_count += 1;
             if verbose {
                 self.show_registers();
             }
-            if start_time.elapsed() > Duration::from_millis(1000) {
-                println!("instruction counts: {}", inst_count);
-                return;
-            }
+            // if start_time.elapsed() > Duration::from_millis(1000) {
+            //     println!("instruction counts: {}", inst_count);
+            //     return;
+            // }
         }
     }
 }

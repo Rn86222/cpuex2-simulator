@@ -17,66 +17,95 @@ use utils::*;
 fn main() {
     let mut core = Core::new();
     core.set_int_register(2, 5000);
-    loop {
-        print!("> ");
-        io::stdout().flush().unwrap();
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        input.pop().unwrap();
-        let input: &str = &input;
-        match input {
-            "sr" => {
-                core.show_registers();
-            }
-            "sm" => {
-                core.show_memory();
-            }
-            "lf" => {
-                print!("file name: ");
-                stdout().flush().unwrap();
-                let mut input = String::new();
-                io::stdin()
-                    .read_line(&mut input)
-                    .expect("Failed to read line");
-                input.pop().unwrap();
-                match File::open(input) {
-                    Err(e) => {
-                        println!("Failed in opening file ({}).", e);
-                    }
-                    Ok(file) => {
-                        let reader = BufReader::new(file);
-                        let mut inst_count = 0;
-                        for line in reader.lines() {
-                            let input = line.unwrap();
-                            let input: Vec<char> = input.chars().collect();
-                            for c in input {
-                                let inst = c as u8;
-                                core.store_byte(inst_count, u8_to_i8(inst));
-                                inst_count += 1;
-                            }
-                        }
-                        if inst_count % 4 != 0 {
-                            eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
-                        }
-                        core.run(false, 0);
-                    }
-                }
-            }
-            _ => {
+    print!("binary file name: ");
+    stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
+    input.pop().unwrap();
+    match File::open(input) {
+        Err(e) => {
+            println!("Failed in opening file ({}).", e);
+        }
+        Ok(file) => {
+            let reader = BufReader::new(file);
+            let mut inst_count = 0;
+            for line in reader.lines() {
+                let input = line.unwrap();
                 let input: Vec<char> = input.chars().collect();
-                if input.len() != 32 {
-                    eprintln!("invalid instruction");
-                    continue;
+                for c in input {
+                    let inst = c as u8;
+                    core.store_byte(inst_count, u8_to_i8(inst));
+                    inst_count += 1;
                 }
-                let mut inst: [MemoryValue; 4] = [0; 4];
-                for i in 0..4 {
-                    let byte: String = input[(32 - (i + 1) * 8)..(32 - i * 8)].iter().collect();
-                    inst[i] = MemoryValue::from_str_radix(&byte, 2).unwrap();
-                }
-                exec_instruction(&mut core, inst, false);
             }
+            if inst_count % 4 != 0 {
+                eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
+            }
+            core.run(true, 100);
         }
     }
+    // loop {
+    //     print!("> ");
+    //     io::stdout().flush().unwrap();
+    //     let mut input = String::new();
+    //     io::stdin()
+    //         .read_line(&mut input)
+    //         .expect("Failed to read line");
+    //     input.pop().unwrap();
+    //     let input: &str = &input;
+    //     match input {
+    //         "sr" => {
+    //             core.show_registers();
+    //         }
+    //         "sm" => {
+    //             core.show_memory();
+    //         }
+    //         "lf" => {
+    //             print!("file name: ");
+    //             stdout().flush().unwrap();
+    //             let mut input = String::new();
+    //             io::stdin()
+    //                 .read_line(&mut input)
+    //                 .expect("Failed to read line");
+    //             input.pop().unwrap();
+    //             match File::open(input) {
+    //                 Err(e) => {
+    //                     println!("Failed in opening file ({}).", e);
+    //                 }
+    //                 Ok(file) => {
+    //                     let reader = BufReader::new(file);
+    //                     let mut inst_count = 0;
+    //                     for line in reader.lines() {
+    //                         let input = line.unwrap();
+    //                         let input: Vec<char> = input.chars().collect();
+    //                         for c in input {
+    //                             let inst = c as u8;
+    //                             core.store_byte(inst_count, u8_to_i8(inst));
+    //                             inst_count += 1;
+    //                         }
+    //                     }
+    //                     if inst_count % 4 != 0 {
+    //                         eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
+    //                     }
+    //                     core.run(true, 100);
+    //                 }
+    //             }
+    //         }
+    //         _ => {
+    //             let input: Vec<char> = input.chars().collect();
+    //             if input.len() != 32 {
+    //                 eprintln!("invalid instruction");
+    //                 continue;
+    //             }
+    //             let mut inst: [MemoryValue; 4] = [0; 4];
+    //             for i in 0..4 {
+    //                 let byte: String = input[(32 - (i + 1) * 8)..(32 - i * 8)].iter().collect();
+    //                 inst[i] = MemoryValue::from_str_radix(&byte, 2).unwrap();
+    //             }
+    //             exec_instruction(&mut core, inst, false);
+    //         }
+    //     }
+    // }
 }
