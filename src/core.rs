@@ -120,15 +120,25 @@ impl Core {
     pub fn run(&mut self, verbose: bool, interval: u64) {
         // let start_time = Instant::now();
         // let mut inst_count = 0;
+        let mut before_pc = std::usize::MAX;
+        let mut same_pc_cnt = 0;
+        let same_pc_limit = 5;
         loop {
             if verbose {
-                colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
+                // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
+                println!("pc: {}", self.get_pc());
             }
             if interval != 0 {
                 let interval_start_time = Instant::now();
                 while interval_start_time.elapsed() < Duration::from_millis(interval) {}
             }
             let current_pc = self.get_pc();
+            if current_pc == before_pc {
+                same_pc_cnt += 1;
+            } else {
+                same_pc_cnt = 0;
+                before_pc = current_pc;
+            }
             let mut inst: [MemoryValue; 4] = [0; 4];
             for i in 0..4 {
                 inst[i] = self.load_ubyte(current_pc + i);
@@ -142,6 +152,10 @@ impl Core {
             //     println!("instruction counts: {}", inst_count);
             //     return;
             // }
+            if same_pc_cnt >= same_pc_limit {
+                println!("infinite loop detected.");
+                break;
+            }
         }
     }
 }

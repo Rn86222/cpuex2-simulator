@@ -28,7 +28,8 @@ pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
 }
 
 fn println_inst(text: &str) {
-    colorized_println(text, RED);
+    println!("{}", text);
+    // colorized_println(text, RED);
 }
 
 pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) {
