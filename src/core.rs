@@ -15,6 +15,8 @@ pub struct Core {
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
+    int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
+    pc_history: Vec<Address>,
 }
 
 impl Core {
@@ -22,11 +24,16 @@ impl Core {
         let memory = Memory::new();
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
+        let pc = 0;
+        let int_registers_history = Vec::new();
+        let pc_history = Vec::new();
         Core {
             memory,
             int_registers,
             float_registers,
-            pc: 0,
+            pc,
+            int_registers_history,
+            pc_history,
         }
     }
 
@@ -117,12 +124,61 @@ impl Core {
         self.memory.show();
     }
 
+    fn save_int_registers(&mut self) {
+        let mut int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
+        for i in 0..INT_REGISTER_SIZE {
+            int_registers[i].set(self.get_int_register(i));
+        }
+        self.int_registers_history.push(int_registers);
+    }
+
+    fn save_pc(&mut self) {
+        self.pc_history.push(self.get_pc());
+    }
+
+    fn show_pc_buffer(&self) {
+        print!("pc  ");
+        for i in 0..self.pc_history.len() {
+            print!("{:>8}  ", self.pc_history[i]);
+        }
+        println!("");
+    }
+
+    fn show_int_registers_buffer(&self) {
+        let mut strings = vec![vec![]; INT_REGISTER_SIZE];
+        for i in 0..self.int_registers_history.len() {
+            for j in 0..INT_REGISTER_SIZE {
+                strings[j].push(format!("{:>08x}", self.int_registers_history[i][j].get()));
+            }
+        }
+        let mut line = String::from("");
+        for _ in 0..self.int_registers_history.len() {
+            line += "-----"
+        }
+        for i in 0..INT_REGISTER_SIZE {
+            // println!("{}", line);
+            print!("x{: <2} ", i);
+            let mut before_string = String::from("");
+            for j in 0..strings[i].len() {
+                if before_string != strings[i][j] {
+                    print!("{} |", strings[i][j]);
+                    before_string = strings[i][j].clone();
+                } else {
+                    print!("---------|");
+                }
+            }
+            println!("");
+        }
+    }
+
     pub fn run(&mut self, verbose: bool, interval: u64) {
         // let start_time = Instant::now();
         // let mut inst_count = 0;
         let mut before_pc = std::usize::MAX;
         let mut same_pc_cnt = 0;
         let same_pc_limit = 5;
+        self.save_pc();
+        self.save_int_registers();
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
@@ -156,6 +212,10 @@ impl Core {
                 println!("infinite loop detected.");
                 break;
             }
+            self.save_pc();
+            self.save_int_registers();
         }
+        self.show_pc_buffer();
+        self.show_int_registers_buffer();
     }
 }
