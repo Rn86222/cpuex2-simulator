@@ -173,7 +173,7 @@ impl Core {
 
     pub fn run(&mut self, verbose: bool, interval: u64) {
         // let start_time = Instant::now();
-        // let mut inst_count = 0;
+        let mut inst_count = 0;
         let mut before_pc = std::usize::MAX;
         let mut same_pc_cnt = 0;
         let same_pc_limit = 5;
@@ -186,7 +186,7 @@ impl Core {
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
-                println!("pc: {}", self.get_pc());
+                println!("pc: {} ({})", self.get_pc(), inst_count);
             }
             if interval != 0 {
                 let interval_start_time = Instant::now();
@@ -204,7 +204,7 @@ impl Core {
                 inst[i] = self.load_ubyte(current_pc + i);
             }
             exec_instruction(self, inst, verbose);
-            // inst_count += 1;
+            inst_count += 1;
             if verbose {
                 self.show_registers();
             }
