@@ -179,6 +179,10 @@ impl Core {
         let same_pc_limit = 5;
         self.save_pc();
         self.save_int_registers();
+        if verbose {
+            println!("");
+            self.show_registers();
+        }
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
@@ -215,6 +219,11 @@ impl Core {
             self.save_pc();
             self.save_int_registers();
         }
+        print!("    ");
+        for i in 0..self.pc_history.len() {
+            print!("{:>8}  ", i);
+        }
+        println!("");
         self.show_pc_buffer();
         self.show_int_registers_buffer();
     }
