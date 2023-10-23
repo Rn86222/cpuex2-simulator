@@ -1184,7 +1184,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
             core.increment_pc();
         }
         Instruction::OtherInstruction => {
-            println!("other instruction");
+            println!("other instruction {:?}", inst);
         }
     }
 }

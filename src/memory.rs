@@ -1,32 +1,34 @@
+use crate::cache::LINE_SIZE;
 use crate::types::*;
 use crate::utils::*;
-const MEMORY_SIZE: usize = 128000000;
-const CACHE_SIZE: usize = 4860 * 1024 / 8;
+const MEMORY_SIZE: usize = 128 * 1024 * 1024;
 
 pub struct Memory {
     values: [MemoryValue; MEMORY_SIZE],
-    cache: [MemoryValue; CACHE_SIZE],
 }
 
 impl Memory {
     pub fn new() -> Self {
         let init_val = 0;
         let values = [init_val; MEMORY_SIZE];
-        let cache = [init_val; CACHE_SIZE];
-        let memory = Memory { values, cache };
+        let memory = Memory { values };
         memory
     }
 
     pub fn load_byte(&self, addr: Address) -> Byte {
-        u8_to_i8(self.values[addr]) as Byte
+        u8_to_i8(self.values[addr as usize]) as Byte
     }
 
     pub fn load_ubyte(&self, addr: Address) -> UByte {
-        self.values[addr] as UByte
+        self.values[addr as usize] as UByte
     }
 
     pub fn store_byte(&mut self, addr: Address, value: Byte) {
-        self.values[addr] = i8_to_u8(value);
+        self.values[addr as usize] = i8_to_u8(value);
+    }
+
+    fn store_ubyte(&mut self, addr: Address, value: UByte) {
+        self.values[addr as usize] = value;
     }
 
     // pub fn get_byte(&self, addr: Address) -> String {
@@ -72,12 +74,26 @@ impl Memory {
         }
     }
 
-    pub fn show(&self) {
-        for i in 0..MEMORY_SIZE {
-            print!("{} {}\n", i, self.values[i]);
+    pub fn get_cache_line(&self, addr: Address) -> [MemoryValue; LINE_SIZE] {
+        let mut line = [0; LINE_SIZE];
+        for i in 0..LINE_SIZE {
+            line[i] = self.load_ubyte(addr + i as Address);
         }
-        println!("");
+        line
     }
+
+    pub fn set_cache_line(&mut self, line: [(Address, MemoryValue); LINE_SIZE]) {
+        for i in 0..LINE_SIZE {
+            self.store_ubyte(line[i].0, line[i].1);
+        }
+    }
+
+    // pub fn show(&self) {
+    //     for i in 0..MEMORY_SIZE {
+    //         print!("{} {}\n", i, self.values[i]);
+    //     }
+    //     println!("");
+    // }
 
     // pub fn show_word(&self, addr: Address) {
     //     for i in 0..4 {

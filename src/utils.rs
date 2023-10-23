@@ -22,6 +22,14 @@ pub fn u16_to_i16(value: u16) -> i16 {
     }
 }
 
+pub fn i16_to_u16(value: i16) -> u16 {
+    if value >= 0 {
+        value as u16
+    } else {
+        (value as i32 + (u16::MAX as i32 + 1)) as u16
+    }
+}
+
 pub fn u32_to_i32(value: u32) -> i32 {
     if value <= i32::MAX as u32 {
         value as i32

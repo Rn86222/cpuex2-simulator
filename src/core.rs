@@ -1,6 +1,7 @@
 use std::time::Duration;
 use std::time::Instant;
 
+use crate::cache::*;
 use crate::instruction::exec_instruction;
 use crate::memory::*;
 use crate::register::*;
@@ -12,6 +13,9 @@ const FLOAT_REGISTER_SIZE: usize = 32;
 
 pub struct Core {
     memory: Memory,
+    cache: Cache,
+    memory_access_count: usize,
+    cache_hit_count: usize,
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
@@ -22,6 +26,9 @@ pub struct Core {
 impl Core {
     pub fn new() -> Self {
         let memory = Memory::new();
+        let cache = Cache::new();
+        let memory_access_count = 0;
+        let cache_hit_count = 0;
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
@@ -29,6 +36,9 @@ impl Core {
         let pc_history = Vec::new();
         Core {
             memory,
+            cache,
+            memory_access_count,
+            cache_hit_count,
             int_registers,
             float_registers,
             pc,
@@ -68,36 +78,206 @@ impl Core {
         self.float_registers[index].set(value);
     }
 
-    pub fn load_byte(&self, addr: Address) -> Byte {
-        self.memory.load_byte(addr)
+    fn increment_memory_access_count(&mut self) {
+        self.memory_access_count += 1;
     }
 
-    pub fn load_ubyte(&self, addr: Address) -> UByte {
-        self.memory.load_ubyte(addr)
+    fn increment_cache_hit_count(&mut self) {
+        self.cache_hit_count += 1;
+    }
+
+    pub fn load_byte(&mut self, addr: Address) -> Byte {
+        self.increment_memory_access_count();
+        let cache_access = self.cache.get_ubyte(addr);
+        match cache_access {
+            CacheAccess::HitUByte(value) => {
+                self.increment_cache_hit_count();
+                return u8_to_i8(value) as Byte;
+            }
+            CacheAccess::Miss => {
+                let value = self.memory.load_byte(addr);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+                return value;
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
+    }
+
+    pub fn load_ubyte(&mut self, addr: Address) -> UByte {
+        self.increment_memory_access_count();
+        let cache_access = self.cache.get_ubyte(addr);
+        match cache_access {
+            CacheAccess::HitUByte(value) => {
+                self.increment_cache_hit_count();
+                return value;
+            }
+            CacheAccess::Miss => {
+                let value = self.memory.load_ubyte(addr);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+                return value;
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
     pub fn store_byte(&mut self, addr: Address, value: Byte) {
-        self.memory.store_byte(addr, value);
+        self.increment_memory_access_count();
+        let cache_access = self.cache.set_ubyte(addr, i8_to_u8(value));
+        match cache_access {
+            CacheAccess::HitSet => {
+                self.increment_cache_hit_count();
+            }
+            CacheAccess::Miss => {
+                self.memory.store_byte(addr, value);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
-    pub fn load_half(&self, addr: Address) -> Half {
-        self.memory.load_half(addr)
+    pub fn load_half(&mut self, addr: Address) -> Half {
+        self.increment_memory_access_count();
+        let cache_access = self.cache.get_uhalf(addr);
+        match cache_access {
+            CacheAccess::HitUHalf(value) => {
+                self.increment_cache_hit_count();
+                return u16_to_i16(value);
+            }
+            CacheAccess::Miss => {
+                let value = self.memory.load_half(addr);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+                return value;
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
-    pub fn load_uhalf(&self, addr: Address) -> UHalf {
-        self.memory.load_uhalf(addr)
+    pub fn load_uhalf(&mut self, addr: Address) -> UHalf {
+        self.increment_memory_access_count();
+        let cache_access = self.cache.get_uhalf(addr);
+        match cache_access {
+            CacheAccess::HitUHalf(value) => {
+                self.increment_cache_hit_count();
+                return value;
+            }
+            CacheAccess::Miss => {
+                let value = self.memory.load_uhalf(addr);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+                return value;
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
-    pub fn load_word(&self, addr: Address) -> Word {
-        self.memory.load_word(addr)
+    pub fn load_word(&mut self, addr: Address) -> Word {
+        self.increment_memory_access_count();
+        let cache_access = self.cache.get_word(addr);
+        match cache_access {
+            CacheAccess::HitWord(value) => {
+                self.increment_cache_hit_count();
+                return value;
+            }
+            CacheAccess::Miss => {
+                let value = self.memory.load_word(addr);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+                return value;
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
     pub fn store_half(&mut self, addr: Address, value: Half) {
-        self.memory.store_half(addr, value);
+        self.increment_memory_access_count();
+        let cache_access = self.cache.set_uhalf(addr, i16_to_u16(value));
+        match cache_access {
+            CacheAccess::HitSet => {
+                self.increment_cache_hit_count();
+            }
+            CacheAccess::Miss => {
+                self.memory.store_half(addr, value);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
     pub fn store_word(&mut self, addr: Address, value: Word) {
-        self.memory.store_word(addr, value);
+        self.increment_memory_access_count();
+        let cache_access = self.cache.set_word(addr, value);
+        match cache_access {
+            CacheAccess::HitSet => {
+                self.increment_cache_hit_count();
+            }
+            CacheAccess::Miss => {
+                self.memory.store_word(addr, value);
+                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+                let line = self.memory.get_cache_line(line_addr);
+                let set_line_result = self.cache.set_line(line_addr, line);
+                if set_line_result.is_some() {
+                    let evicted_line = set_line_result.unwrap();
+                    self.memory.set_cache_line(evicted_line);
+                }
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
     // pub fn get_memory_byte(&self, addr: Address) -> String {
@@ -119,10 +299,10 @@ impl Core {
         }
     }
 
-    pub fn show_memory(&self) {
-        println!("memory");
-        self.memory.show();
-    }
+    // pub fn show_memory(&self) {
+    //     println!("memory");
+    //     self.memory.show();
+    // }
 
     fn save_int_registers(&mut self) {
         let mut int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
@@ -174,7 +354,7 @@ impl Core {
     pub fn run(&mut self, verbose: bool, interval: u64) {
         // let start_time = Instant::now();
         let mut inst_count = 0;
-        let mut before_pc = std::usize::MAX;
+        let mut before_pc = std::u32::MAX;
         let mut same_pc_cnt = 0;
         let same_pc_limit = 5;
         self.save_pc();
@@ -201,7 +381,7 @@ impl Core {
             }
             let mut inst: [MemoryValue; 4] = [0; 4];
             for i in 0..4 {
-                inst[i] = self.load_ubyte(current_pc + i);
+                inst[i] = self.load_ubyte(current_pc + i as Address);
             }
             exec_instruction(self, inst, verbose);
             inst_count += 1;
@@ -226,5 +406,11 @@ impl Core {
         println!("");
         self.show_pc_buffer();
         self.show_int_registers_buffer();
+        println!("memory access count: {}", self.memory_access_count);
+        println!("cache hit count: {}", self.cache_hit_count);
+        println!(
+            "cache hit rate: {}%",
+            self.cache_hit_count as f64 / self.memory_access_count as f64 * 100.0
+        );
     }
 }

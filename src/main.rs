@@ -1,3 +1,4 @@
+mod cache;
 mod core;
 mod decoder;
 mod instruction;
@@ -6,12 +7,12 @@ mod register;
 mod types;
 mod utils;
 use crate::core::*;
-use instruction::*;
+// use instruction::*;
 use std::{
     fs::File,
     io::{self, stdout, BufRead, BufReader, Write},
 };
-use types::*;
+// use types::*;
 use utils::*;
 
 fn main() {
