@@ -16,6 +16,7 @@ pub struct CacheLine {
     valid: bool,
     dirty: bool,
     accessed: bool,
+    tag: Tag,
     value: CacheValue,
 }
 
@@ -47,6 +48,7 @@ impl Cache {
                         valid: false,
                         dirty: false,
                         accessed: false,
+                        tag: std::u32::MAX,
                         value: [0; LINE_SIZE],
                     },
                 );
@@ -85,11 +87,32 @@ impl Cache {
         ((addr << (self.tag_bit_num + self.index_bit_num)) >> (32 - self.offset_bit_num)) as usize
     }
 
-    pub fn get_ubyte(&mut self, addr: Address) -> CacheAccess {
+    fn get_status(&self, addr: Address) -> (Tag, CacheIndex, usize) {
         let tag = self.get_tag(addr);
         let index = self.get_index(addr);
         let offset = self.get_offset(addr);
-        let cache_line_candidates = &self.values[index];
+        (tag, index, offset)
+    }
+
+    fn update_on_get(&mut self, cache_line: &CacheLine, tag: Tag, index: CacheIndex) {
+        let mut cache_line = (*cache_line).clone();
+        cache_line.accessed = true;
+        cache_line.valid = true;
+        self.values[index].swap_remove(&tag);
+        self.values[index].insert(tag, cache_line);
+    }
+
+    fn update_on_set(&mut self, mut cache_line: CacheLine, tag: Tag, index: CacheIndex) {
+        cache_line.dirty = true;
+        cache_line.accessed = true;
+        cache_line.valid = true;
+        self.values[index].swap_remove(&tag);
+        self.values[index].insert(tag, cache_line);
+    }
+
+    pub fn get_ubyte(&mut self, addr: Address) -> CacheAccess {
+        let (tag, index, offset) = self.get_status(addr);
+        let cache_line_candidates = self.values[index].clone();
         let cache_line = cache_line_candidates.get(&tag);
         match cache_line {
             Some(cache_line) => {
@@ -97,11 +120,7 @@ impl Cache {
                     return CacheAccess::Miss;
                 }
                 let value = cache_line.value[offset];
-                let mut cache_line = (*cache_line).clone();
-                cache_line.accessed = true;
-                cache_line.valid = true;
-                self.values[index].swap_remove(&tag);
-                self.values[index].insert(tag, cache_line);
+                self.update_on_get(cache_line, tag, index);
                 return CacheAccess::HitUByte(value);
             }
             None => {
@@ -111,10 +130,8 @@ impl Cache {
     }
 
     pub fn get_uhalf(&mut self, addr: Address) -> CacheAccess {
-        let tag = self.get_tag(addr);
-        let index = self.get_index(addr);
-        let offset = self.get_offset(addr);
-        let cache_line_candidates = &self.values[index];
+        let (tag, index, offset) = self.get_status(addr);
+        let cache_line_candidates = self.values[index].clone();
         let cache_line = cache_line_candidates.get(&tag);
         match cache_line {
             Some(cache_line) => {
@@ -125,11 +142,7 @@ impl Cache {
                 for i in 0..2 {
                     value += (cache_line.value[offset + i] as UHalf) << (8 * i);
                 }
-                let mut cache_line = (*cache_line).clone();
-                cache_line.accessed = true;
-                cache_line.valid = true;
-                self.values[index].swap_remove(&tag);
-                self.values[index].insert(tag, cache_line);
+                self.update_on_get(cache_line, tag, index);
                 return CacheAccess::HitUHalf(value);
             }
             None => {
@@ -139,10 +152,8 @@ impl Cache {
     }
 
     pub fn get_word(&mut self, addr: Address) -> CacheAccess {
-        let tag = self.get_tag(addr);
-        let index = self.get_index(addr);
-        let offset = self.get_offset(addr);
-        let cache_line_candidates = &self.values[index];
+        let (tag, index, offset) = self.get_status(addr);
+        let cache_line_candidates = self.values[index].clone();
         let cache_line = cache_line_candidates.get(&tag);
         match cache_line {
             Some(cache_line) => {
@@ -153,11 +164,7 @@ impl Cache {
                 for i in 0..4 {
                     value += (cache_line.value[offset + i] as u32) << (8 * i);
                 }
-                let mut cache_line = (*cache_line).clone();
-                cache_line.accessed = true;
-                cache_line.valid = true;
-                self.values[index].swap_remove(&tag);
-                self.values[index].insert(tag, cache_line);
+                self.update_on_get(cache_line, tag, index);
                 return CacheAccess::HitWord(u32_to_i32(value));
             }
             None => {
@@ -185,7 +192,8 @@ impl Cache {
                 let cache_line = self.values[index].get(&k).unwrap();
                 if cache_line.dirty {
                     dirty_line_evicted = true;
-                    let addr = (tag << (self.index_bit_num + self.offset_bit_num)) as Address
+                    let addr = (cache_line.tag << (self.index_bit_num + self.offset_bit_num))
+                        as Address
                         + (index << self.offset_bit_num) as Address;
                     for i in 0..LINE_SIZE {
                         evicted_values[i] = (addr + i as Address, cache_line.value[i]);
@@ -198,6 +206,7 @@ impl Cache {
             valid: true,
             dirty: false,
             accessed: true,
+            tag,
             value: [0; LINE_SIZE],
         };
         for i in 0..LINE_SIZE {
@@ -213,10 +222,8 @@ impl Cache {
     }
 
     pub fn set_ubyte(&mut self, addr: Address, value: UByte) -> CacheAccess {
-        let tag = self.get_tag(addr);
-        let index = self.get_index(addr);
-        let offset = self.get_offset(addr);
-        let cache_line_candidates = &self.values[index];
+        let (tag, index, offset) = self.get_status(addr);
+        let cache_line_candidates = self.values[index].clone();
         let cache_line = cache_line_candidates.get(&tag);
         match cache_line {
             Some(cache_line) => {
@@ -225,11 +232,7 @@ impl Cache {
                 }
                 let mut cache_line = (*cache_line).clone();
                 cache_line.value[offset] = value;
-                cache_line.dirty = true;
-                cache_line.accessed = true;
-                cache_line.valid = true;
-                self.values[index].swap_remove(&tag);
-                self.values[index].insert(tag, cache_line);
+                self.update_on_set(cache_line, tag, index);
                 return CacheAccess::HitSet;
             }
             None => {
@@ -239,9 +242,7 @@ impl Cache {
     }
 
     pub fn set_uhalf(&mut self, addr: Address, value: UHalf) -> CacheAccess {
-        let tag = self.get_tag(addr);
-        let index = self.get_index(addr);
-        let offset = self.get_offset(addr);
+        let (tag, index, offset) = self.get_status(addr);
         let cache_line_candidates = &self.values[index];
         let cache_line = cache_line_candidates.get(&tag);
         match cache_line {
@@ -253,11 +254,7 @@ impl Cache {
                 for i in 0..2 {
                     cache_line.value[offset + i] = ((value >> (i * 8)) & 0xff) as UByte;
                 }
-                cache_line.dirty = true;
-                cache_line.accessed = true;
-                cache_line.valid = true;
-                self.values[index].swap_remove(&tag);
-                self.values[index].insert(tag, cache_line);
+                self.update_on_set(cache_line, tag, index);
                 return CacheAccess::HitSet;
             }
             None => {
@@ -267,9 +264,7 @@ impl Cache {
     }
 
     pub fn set_word(&mut self, addr: Address, value: Word) -> CacheAccess {
-        let tag = self.get_tag(addr);
-        let index = self.get_index(addr);
-        let offset = self.get_offset(addr);
+        let (tag, index, offset) = self.get_status(addr);
         let cache_line_candidates = &self.values[index];
         let cache_line = cache_line_candidates.get(&tag);
         match cache_line {
@@ -282,11 +277,7 @@ impl Cache {
                 for i in 0..4 {
                     cache_line.value[offset + i] = (value >> (i * 8)) as UByte & 0xff;
                 }
-                cache_line.dirty = true;
-                cache_line.accessed = true;
-                cache_line.valid = true;
-                self.values[index].swap_remove(&tag);
-                self.values[index].insert(tag, cache_line);
+                self.update_on_set(cache_line, tag, index);
                 return CacheAccess::HitSet;
             }
             None => {

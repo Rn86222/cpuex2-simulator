@@ -1127,7 +1127,7 @@ pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) 
                     // lui
                     let imm = sign_extention_i32(imm, 20);
                     if verbose {
-                        println_inst(&format!("lui x{}, {}", rd, imm << 12));
+                        println_inst(&format!("lui x{}, {}", rd, imm));
                     }
                     core.set_int_register(rd as usize, (imm as Int) << 12);
                 }

@@ -3,6 +3,7 @@ use std::time::Instant;
 
 use crate::cache::*;
 use crate::instruction::exec_instruction;
+use crate::instruction_memory::*;
 use crate::memory::*;
 use crate::register::*;
 use crate::types::*;
@@ -16,6 +17,8 @@ pub struct Core {
     cache: Cache,
     memory_access_count: usize,
     cache_hit_count: usize,
+    instruction_memory: InstructionMemory,
+    instruction_memory_access_count: usize,
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
@@ -29,6 +32,8 @@ impl Core {
         let cache = Cache::new();
         let memory_access_count = 0;
         let cache_hit_count = 0;
+        let instruction_memory = InstructionMemory::new();
+        let instruction_memory_access_count = 0;
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
@@ -39,6 +44,8 @@ impl Core {
             cache,
             memory_access_count,
             cache_hit_count,
+            instruction_memory,
+            instruction_memory_access_count,
             int_registers,
             float_registers,
             pc,
@@ -57,6 +64,20 @@ impl Core {
 
     pub fn set_pc(&mut self, new_pc: Address) {
         self.pc = new_pc;
+    }
+
+    fn increment_instruction_memory_access_count(&mut self) {
+        self.instruction_memory_access_count += 1;
+    }
+
+    pub fn get_instruction(&mut self, addr: Address) -> InstructionValue {
+        self.increment_instruction_memory_access_count();
+        self.instruction_memory.load(addr)
+    }
+
+    pub fn store_instruction(&mut self, addr: Address, inst: InstructionValue) {
+        self.increment_instruction_memory_access_count();
+        self.instruction_memory.store(addr, inst);
     }
 
     pub fn get_int_register(&self, index: usize) -> Int {
@@ -86,6 +107,16 @@ impl Core {
         self.cache_hit_count += 1;
     }
 
+    fn process_cache_miss(&mut self, addr: Address) {
+        let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
+        let line = self.memory.get_cache_line(line_addr);
+        let set_line_result = self.cache.set_line(line_addr, line);
+        if set_line_result.is_some() {
+            let evicted_line = set_line_result.unwrap();
+            self.memory.set_cache_line(evicted_line);
+        }
+    }
+
     pub fn load_byte(&mut self, addr: Address) -> Byte {
         self.increment_memory_access_count();
         let cache_access = self.cache.get_ubyte(addr);
@@ -96,13 +127,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_byte(addr);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
                 return value;
             }
             _ => {
@@ -121,13 +146,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_ubyte(addr);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
                 return value;
             }
             _ => {
@@ -145,13 +164,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 self.memory.store_byte(addr, value);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
             }
             _ => {
                 panic!("invalid cache access");
@@ -169,13 +182,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_half(addr);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
                 return value;
             }
             _ => {
@@ -194,13 +201,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_uhalf(addr);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
                 return value;
             }
             _ => {
@@ -219,13 +220,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_word(addr);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
                 return value;
             }
             _ => {
@@ -243,13 +238,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 self.memory.store_half(addr, value);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
             }
             _ => {
                 panic!("invalid cache access");
@@ -266,13 +255,7 @@ impl Core {
             }
             CacheAccess::Miss => {
                 self.memory.store_word(addr, value);
-                let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
-                let line = self.memory.get_cache_line(line_addr);
-                let set_line_result = self.cache.set_line(line_addr, line);
-                if set_line_result.is_some() {
-                    let evicted_line = set_line_result.unwrap();
-                    self.memory.set_cache_line(evicted_line);
-                }
+                self.process_cache_miss(addr);
             }
             _ => {
                 panic!("invalid cache access");
@@ -286,7 +269,7 @@ impl Core {
 
     pub fn show_registers(&self) {
         for i in 0..INT_REGISTER_SIZE {
-            print!("x{: <2} 0x{:>04x} ", i, self.get_int_register(i));
+            print!("x{: <2} 0x{:>08x} ", i, self.get_int_register(i));
             if i % 8 == 7 {
                 println!("");
             }
@@ -351,6 +334,40 @@ impl Core {
         }
     }
 
+    fn show_memory_access_info(&self) {
+        println!("memory access count: {}", self.memory_access_count);
+        println!("cache hit count: {}", self.cache_hit_count);
+        println!(
+            "cache hit rate: {:.5}%",
+            self.cache_hit_count as f64 / self.memory_access_count as f64 * 100.0
+        );
+        println!(
+            "instruction memory access count: {}",
+            self.instruction_memory_access_count
+        );
+    }
+
+    fn show_pc_stats(&self) {
+        let mut pc_stats = vec![0; 1 << 20];
+        for i in 0..self.pc_history.len() {
+            pc_stats[self.pc_history[i] as usize] += 1;
+        }
+        let mut pc_stats_with_index = vec![];
+        for i in 0..pc_stats.len() {
+            pc_stats_with_index.push((i, pc_stats[i]));
+        }
+        pc_stats_with_index.sort_by(|a, b| b.1.cmp(&a.1));
+        for i in 0..pc_stats_with_index.len() {
+            if pc_stats_with_index[i].1 == 0 {
+                break;
+            }
+            println!(
+                "pc: {:>08x} count: {}",
+                pc_stats_with_index[i].0, pc_stats_with_index[i].1
+            );
+        }
+    }
+
     pub fn run(&mut self, verbose: bool, interval: u64) {
         // let start_time = Instant::now();
         let mut inst_count = 0;
@@ -380,8 +397,12 @@ impl Core {
                 before_pc = current_pc;
             }
             let mut inst: [MemoryValue; 4] = [0; 4];
+            // for i in 0..4 {
+            //     inst[i] = self.load_ubyte(current_pc + i as Address);
+            // }
+            let instruction = self.get_instruction(current_pc);
             for i in 0..4 {
-                inst[i] = self.load_ubyte(current_pc + i as Address);
+                inst[i] = ((instruction >> (i * 8)) & 0xff) as MemoryValue;
             }
             exec_instruction(self, inst, verbose);
             inst_count += 1;
@@ -399,18 +420,16 @@ impl Core {
             self.save_pc();
             self.save_int_registers();
         }
-        print!("    ");
-        for i in 0..self.pc_history.len() {
-            print!("{:>8}  ", i);
+        if verbose {
+            print!("    ");
+            for i in 0..self.pc_history.len() {
+                print!("{:>8}  ", i);
+            }
+            println!("");
+            self.show_pc_buffer();
+            self.show_int_registers_buffer();
         }
-        println!("");
-        self.show_pc_buffer();
-        self.show_int_registers_buffer();
-        println!("memory access count: {}", self.memory_access_count);
-        println!("cache hit count: {}", self.cache_hit_count);
-        println!(
-            "cache hit rate: {}%",
-            self.cache_hit_count as f64 / self.memory_access_count as f64 * 100.0
-        );
+        self.show_memory_access_info();
+        self.show_pc_stats();
     }
 }

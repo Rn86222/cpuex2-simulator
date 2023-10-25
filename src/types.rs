@@ -8,3 +8,4 @@ pub type Int = i32;
 pub type Float = f32;
 pub type MemoryValue = u8;
 pub type Address = u32;
+pub type InstructionValue = u32;

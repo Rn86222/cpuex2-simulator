@@ -2,6 +2,7 @@ mod cache;
 mod core;
 mod decoder;
 mod instruction;
+mod instruction_memory;
 mod memory;
 mod register;
 mod types;
@@ -13,11 +14,11 @@ use std::{
     io::{self, stdout, BufRead, BufReader, Write},
 };
 // use types::*;
-use utils::*;
+// use utils::*;
 
 fn main() {
     let mut core = Core::new();
-    core.set_int_register(2, 5000);
+    core.set_int_register(2, 100000);
     print!("binary file name: ");
     stdout().flush().unwrap();
     let mut input = String::new();
@@ -35,16 +36,21 @@ fn main() {
             for line in reader.lines() {
                 let input = line.unwrap();
                 let input: Vec<char> = input.chars().collect();
+                let mut inst = 0;
                 for c in input {
-                    let inst = c as u8;
-                    core.store_byte(inst_count, u8_to_i8(inst));
+                    inst += ((c as u32) << (inst_count % 4) * 8) as u32;
+                    // core.store_byte(inst_count, u8_to_i8(inst));
                     inst_count += 1;
+                    if inst_count % 4 == 0 {
+                        core.store_instruction(inst_count - 4, inst);
+                        inst = 0;
+                    }
                 }
             }
             if inst_count % 4 != 0 {
                 eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
             }
-            core.run(true, 1);
+            core.run(true, 0);
         }
     }
     // loop {
