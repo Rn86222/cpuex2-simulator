@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 
 type CacheValue = [MemoryValue; LINE_SIZE];
 
-const CACHE_SIZE: usize = 2 * 1024 * 1024;
+const CACHE_SIZE: usize = 2 * 128 * 1024;
 const WAY_NUM: usize = 2;
 pub const LINE_SIZE: usize = 64;
 const TOTAL_LINE_NUM: usize = CACHE_SIZE / LINE_SIZE;

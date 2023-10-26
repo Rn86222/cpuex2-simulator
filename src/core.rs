@@ -22,6 +22,7 @@ pub struct Core {
     instruction_cache: InstructionCache,
     instruction_memory_access_count: usize,
     instruction_cache_hit_count: usize,
+    instruction_maps: InstructionMaps,
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
@@ -39,6 +40,7 @@ impl Core {
         let instruction_cache = InstructionCache::new();
         let instruction_memory_access_count = 0;
         let instruction_cache_hit_count = 0;
+        let instruction_maps = InstructionMaps::new();
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
@@ -53,12 +55,17 @@ impl Core {
             instruction_cache,
             instruction_memory_access_count,
             instruction_cache_hit_count,
+            instruction_maps,
             int_registers,
             float_registers,
             pc,
             int_registers_history,
             pc_history,
         }
+    }
+
+    pub fn get_instruction_maps(&self) -> &InstructionMaps {
+        &self.instruction_maps
     }
 
     pub fn get_pc(&self) -> Address {
@@ -429,7 +436,7 @@ impl Core {
     }
 
     pub fn run(&mut self, verbose: bool, interval: u64) {
-        // let start_time = Instant::now();
+        let start_time = Instant::now();
         let mut inst_count = 0;
         let mut before_pc = std::u32::MAX;
         let mut same_pc_cnt = 0;
@@ -462,10 +469,6 @@ impl Core {
             if verbose {
                 self.show_registers();
             }
-            // if start_time.elapsed() > Duration::from_millis(1000) {
-            //     println!("instruction counts: {}", inst_count);
-            //     return;
-            // }
             if same_pc_cnt >= same_pc_limit {
                 println!("infinite loop detected.");
                 break;
@@ -473,6 +476,12 @@ impl Core {
             self.save_pc();
             self.save_int_registers();
         }
+        println!(
+            "inst_count: {}\nelapsed time: {:?}\n{:.2} MIPS",
+            inst_count,
+            start_time.elapsed(),
+            inst_count as f64 / start_time.elapsed().as_micros() as f64
+        );
         if verbose {
             print!("    ");
             for i in 0..self.pc_history.len() {
