@@ -2,6 +2,7 @@ mod cache;
 mod core;
 mod decoder;
 mod instruction;
+mod instruction_cache;
 mod instruction_memory;
 mod memory;
 mod register;
@@ -18,7 +19,7 @@ use std::{
 
 fn main() {
     let mut core = Core::new();
-    core.set_int_register(2, 100000);
+    core.set_int_register(2, 10000000);
     print!("binary file name: ");
     stdout().flush().unwrap();
     let mut input = String::new();

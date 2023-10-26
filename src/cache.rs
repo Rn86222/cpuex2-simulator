@@ -2,8 +2,6 @@ use crate::{types::*, utils::*};
 use indexmap::IndexMap;
 
 type CacheValue = [MemoryValue; LINE_SIZE];
-type CacheIndex = usize;
-type Tag = u32;
 
 const CACHE_SIZE: usize = 4096 * 1024 / 8;
 const WAY_NUM: usize = 4;

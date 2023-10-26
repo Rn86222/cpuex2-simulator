@@ -2,7 +2,8 @@ use std::time::Duration;
 use std::time::Instant;
 
 use crate::cache::*;
-use crate::instruction::exec_instruction;
+use crate::instruction::*;
+use crate::instruction_cache::*;
 use crate::instruction_memory::*;
 use crate::memory::*;
 use crate::register::*;
@@ -18,7 +19,9 @@ pub struct Core {
     memory_access_count: usize,
     cache_hit_count: usize,
     instruction_memory: InstructionMemory,
+    instruction_cache: InstructionCache,
     instruction_memory_access_count: usize,
+    instruction_cache_hit_count: usize,
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
@@ -33,7 +36,9 @@ impl Core {
         let memory_access_count = 0;
         let cache_hit_count = 0;
         let instruction_memory = InstructionMemory::new();
+        let instruction_cache = InstructionCache::new();
         let instruction_memory_access_count = 0;
+        let instruction_cache_hit_count = 0;
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
@@ -45,7 +50,9 @@ impl Core {
             memory_access_count,
             cache_hit_count,
             instruction_memory,
+            instruction_cache,
             instruction_memory_access_count,
+            instruction_cache_hit_count,
             int_registers,
             float_registers,
             pc,
@@ -70,14 +77,58 @@ impl Core {
         self.instruction_memory_access_count += 1;
     }
 
-    pub fn get_instruction(&mut self, addr: Address) -> InstructionValue {
+    fn increment_instruction_cache_hit_count(&mut self) {
+        self.instruction_cache_hit_count += 1;
+    }
+
+    fn process_instruction_cache_miss(&mut self, addr: Address) {
+        let line_addr = addr & !((1 << self.instruction_cache.get_offset_bit_num()) - 1);
+        let line = self.instruction_memory.get_cache_line(line_addr);
+        let set_line_result = self.instruction_cache.set_line(line_addr, line);
+        if set_line_result.is_some() {
+            let evicted_line = set_line_result.unwrap();
+            self.instruction_memory.set_cache_line(evicted_line);
+        }
+    }
+
+    pub fn load_instruction(&mut self, addr: Address) -> InstructionValue {
         self.increment_instruction_memory_access_count();
-        self.instruction_memory.load(addr)
+        let cache_access = self.instruction_cache.get(addr);
+        match cache_access {
+            InstructionCacheAccess::HitGet(value) => {
+                self.increment_instruction_cache_hit_count();
+                return value;
+            }
+            InstructionCacheAccess::Miss => {
+                let value = self.instruction_memory.load(addr);
+                self.process_instruction_cache_miss(addr);
+                return value;
+            }
+            _ => {
+                panic!("invalid cache access");
+            }
+        }
     }
 
     pub fn store_instruction(&mut self, addr: Address, inst: InstructionValue) {
-        self.increment_instruction_memory_access_count();
+        // self.increment_instruction_memory_access_count();
         self.instruction_memory.store(addr, inst);
+
+        // let cache_access = self.instruction_cache.set(addr, inst);
+        // match cache_access {
+        //     InstructionCacheAccess::HitSet => {
+        //         println!("store hit");
+        //         self.increment_instruction_cache_hit_count();
+        //     }
+        //     InstructionCacheAccess::Miss => {
+        //         println!("store miss");
+        //         self.instruction_memory.store(addr, inst);
+        //         self.process_instruction_cache_miss(addr);
+        //     }
+        //     _ => {
+        //         panic!("invalid cache access");
+        //     }
+        // }
     }
 
     pub fn get_int_register(&self, index: usize) -> Int {
@@ -345,6 +396,15 @@ impl Core {
             "instruction memory access count: {}",
             self.instruction_memory_access_count
         );
+        println!(
+            "instruction cache hit count: {}",
+            self.instruction_cache_hit_count
+        );
+        println!(
+            "instruction cache hit rate: {:.5}%",
+            self.instruction_cache_hit_count as f64 / self.instruction_memory_access_count as f64
+                * 100.0
+        );
     }
 
     fn show_pc_stats(&self) {
@@ -400,7 +460,7 @@ impl Core {
             // for i in 0..4 {
             //     inst[i] = self.load_ubyte(current_pc + i as Address);
             // }
-            let instruction = self.get_instruction(current_pc);
+            let instruction = self.load_instruction(current_pc);
             for i in 0..4 {
                 inst[i] = ((instruction >> (i * 8)) & 0xff) as MemoryValue;
             }
