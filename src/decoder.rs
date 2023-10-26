@@ -77,8 +77,8 @@ enum InstructionType {
     Other,
 }
 
-fn instruction_typeof(inst: [MemoryValue; 4]) -> InstructionType {
-    let op = inst[0] & 127;
+fn instruction_typeof(inst: InstructionValue) -> InstructionType {
+    let op = inst & 127;
     match op {
         3 | 19 | 27 | 103 => InstructionType::I,
         51 | 59 | 83 => InstructionType::R,
@@ -91,102 +91,75 @@ fn instruction_typeof(inst: [MemoryValue; 4]) -> InstructionType {
     }
 }
 
-fn decode_i_instruction(inst: [MemoryValue; 4]) -> Instruction {
-    let imm: i16 = ((inst[3] as i16) << 4) + (((inst[2] as i16) >> 4) & 0xf);
-    // let imm_string = format!("{:>08b}{:>04b}", inst[3], inst[2] >> 4);
-    let rs1 = ((inst[2] & 15) << 1) + (inst[1] >> 7);
-    let funct3 = (inst[1] & 127) >> 4;
-    let rd = ((inst[1] & 15) << 1) + (inst[0] >> 7);
-    let op = inst[0] & 127;
+fn decode_i_instruction(inst: InstructionValue) -> Instruction {
+    let imm: i16 = (inst >> 20) as i16;
+    let rs1 = ((inst >> 15) & 31) as u8;
+    let funct3 = ((inst >> 12) & 7) as u8;
+    let rd = ((inst >> 7) & 31) as u8;
+    let op = (inst & 127) as u8;
     Instruction::IInstruction(imm, rs1, funct3, rd, op)
 }
 
-fn decode_r_instruction(inst: [MemoryValue; 4]) -> Instruction {
-    let funct7 = inst[3] >> 1;
-    let rs2 = ((inst[3] & 1) << 4) + (inst[2] >> 4);
-    let rs1 = ((inst[2] & 15) << 1) + (inst[1] >> 7);
-    let funct3 = (inst[1] & 127) >> 4;
-    let rd = ((inst[1] & 15) << 1) + (inst[0] >> 7);
-    let op = inst[0] & 127;
+fn decode_r_instruction(inst: InstructionValue) -> Instruction {
+    let funct7 = (inst >> 25) as u8;
+    let rs2 = ((inst >> 20) & 31) as u8;
+    let rs1 = ((inst >> 15) & 31) as u8;
+    let funct3 = ((inst >> 12) & 7) as u8;
+    let rd = ((inst >> 7) & 31) as u8;
+    let op = (inst & 127) as u8;
     Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op)
 }
 
-fn decode_s_instruction(inst: [MemoryValue; 4]) -> Instruction {
-    let imm: i16 =
-        ((inst[3] as i16 >> 1) << 5) + ((inst[1] as i16 & 15) << 1) + ((inst[0] as i16 >> 7) & 1);
-    // let imm_string = format!(
-    //     "{:>07b}{:>04b}{:>01b}",
-    //     inst[3] >> 1,
-    //     inst[1] & 15,
-    //     inst[0] >> 7
-    // );
-    let rs2 = ((inst[3] & 1) << 4) + (inst[2] >> 4);
-    let rs1 = ((inst[2] & 15) << 1) + (inst[1] >> 7);
-    let funct3 = (inst[1] & 127) >> 4;
-    let op = inst[0] & 127;
+fn decode_s_instruction(inst: InstructionValue) -> Instruction {
+    let imm: i16 = ((inst >> 25) << 5) as i16 + (((inst >> 7) & 31) as i16);
+    let rs2 = ((inst >> 20) & 31) as u8;
+    let rs1 = ((inst >> 15) & 31) as u8;
+    let funct3 = ((inst >> 12) & 7) as u8;
+    let op = (inst & 127) as u8;
     Instruction::SInstruction(imm, rs2, rs1, funct3, op)
 }
 
-fn decode_j_instruction(inst: [MemoryValue; 4]) -> Instruction {
-    let imm: i32 = ((inst[3] as i32 >> 7) << 19)
-        + ((inst[2] as i32 & 15) << 15)
-        + ((inst[1] as i32 >> 4) << 11)
-        + (((inst[2] as i32 >> 4) & 1) << 10)
-        + ((inst[3] as i32 & 127) << 3)
-        + (inst[2] as i32 >> 5);
-    // let imm_string = format!(
-    //     "{:>01b}{:>04b}{:>04b}{:>01b}{:>07b}{:>03b}",
-    //     inst[3] >> 7,
-    //     inst[2] & 15,
-    //     inst[1] >> 4,
-    //     (inst[2] >> 4) & 1,
-    //     inst[3] & 127,
-    //     inst[2] >> 5
-    // );
-    let rd = ((inst[1] & 15) << 1) + (inst[0] >> 7);
-    let op = inst[0] & 127;
+fn decode_j_instruction(inst: InstructionValue) -> Instruction {
+    let imm: i32 = ((inst >> 31) << 19) as i32
+        + (((inst >> 12) & 255) << 11) as i32
+        + (((inst >> 20) & 1) << 10) as i32
+        + ((inst >> 21) & 1023) as i32;
+    let rd = ((inst >> 7) & 31) as u8;
+    let op = (inst & 127) as u8;
     Instruction::JInstruction(imm, rd, op)
 }
 
-fn decode_b_instruction(inst: [MemoryValue; 4]) -> Instruction {
-    let imm: i16 = ((inst[3] as i16 >> 7) << 11)
-        + ((inst[3] as i16 & 126) << 3)
-        + (inst[1] as i16 & 15)
-        + ((inst[0] as i16 >> 7) << 10);
-    // let imm_string = format!(
-    //     "{:>01b}{:>01b}{:>06b}{:>04b}",
-    //     inst[3] >> 7,
-    //     inst[0] >> 7,
-    //     (inst[3] & 126) >> 1,
-    //     inst[1] & 15
-    // );
-    let rs2 = ((inst[3] & 1) << 4) + (inst[2] >> 4);
-    let rs1 = ((inst[2] & 15) << 1) + (inst[1] >> 7);
-    let funct3 = (inst[1] & 127) >> 4;
-    let op = inst[0] & 127;
+fn decode_b_instruction(inst: InstructionValue) -> Instruction {
+    let imm: i16 = ((inst >> 31) << 11) as i16
+        + (((inst >> 7) & 1) << 10) as i16
+        + (((inst >> 25) & 63) << 4) as i16
+        + ((inst >> 8) & 15) as i16;
+    let rs2 = ((inst >> 20) & 31) as u8;
+    let rs1 = ((inst >> 15) & 31) as u8;
+    let funct3 = ((inst >> 12) & 7) as u8;
+    let op = (inst & 127) as u8;
     Instruction::BInstruction(imm, rs2, rs1, funct3, op)
 }
 
-fn decode_u_instruction(inst: [MemoryValue; 4]) -> Instruction {
-    let imm: i32 = ((inst[3] as i32) << 12) + ((inst[2] as i32) << 4) + ((inst[1] as i32) >> 4);
-    // let imm_string = format!("{:>08b}{:>08b}{:>04b}", inst[3], inst[2], inst[1] >> 4);
-    let rd = ((inst[1] & 15) << 1) + (inst[0] >> 7);
-    let op = inst[0] & 127;
+fn decode_u_instruction(inst: InstructionValue) -> Instruction {
+    let imm: i32 = (inst >> 12) as i32;
+    let rd = ((inst >> 7) & 31) as u8;
+    let op = (inst & 127) as u8;
     Instruction::UInstruction(imm, rd, op)
 }
 
-fn decode_r4_instruction(inst: [MemoryValue; 4]) -> Instruction {
-    let fs3 = inst[3] >> 3;
-    let funct2 = (inst[3] >> 1) & 3;
-    let fs2 = ((inst[3] & 1) << 4) + (inst[2] >> 4);
-    let fs1 = ((inst[2] & 15) << 1) + (inst[1] >> 7);
-    let funct3 = (inst[1] & 127) >> 4;
-    let fd = ((inst[1] & 15) << 1) + (inst[0] >> 7);
-    let op = inst[0] & 127;
+fn decode_r4_instruction(inst: InstructionValue) -> Instruction {
+    let fs3 = (inst >> 27) as u8;
+    let funct2 = ((inst >> 25) & 3) as u8;
+    let fs2 = ((inst >> 20) & 31) as u8;
+    let fs1 = ((inst >> 15) & 31) as u8;
+    let funct3 = ((inst >> 12) & 7) as u8;
+    let fd = ((inst >> 7) & 31) as u8;
+    let op = (inst & 127) as u8;
     Instruction::R4Instruction(fs3, funct2, fs2, fs1, funct3, fd, op)
 }
 
-pub fn decode_instruction(inst: [MemoryValue; 4]) -> Instruction {
+pub fn decode_instruction(inst: InstructionValue) -> Instruction {
     let instruction_type = instruction_typeof(inst);
     match instruction_type {
         InstructionType::I => decode_i_instruction(inst),

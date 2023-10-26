@@ -32,7 +32,7 @@ fn println_inst(text: &str) {
     // colorized_println(text, RED);
 }
 
-pub fn exec_instruction(core: &mut Core, inst: [MemoryValue; 4], verbose: bool) {
+pub fn exec_instruction(core: &mut Core, inst: InstructionValue, verbose: bool) {
     match decode_instruction(inst) {
         Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
             match op {

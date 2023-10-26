@@ -456,15 +456,8 @@ impl Core {
                 same_pc_cnt = 0;
                 before_pc = current_pc;
             }
-            let mut inst: [MemoryValue; 4] = [0; 4];
-            // for i in 0..4 {
-            //     inst[i] = self.load_ubyte(current_pc + i as Address);
-            // }
             let instruction = self.load_instruction(current_pc);
-            for i in 0..4 {
-                inst[i] = ((instruction >> (i * 8)) & 0xff) as MemoryValue;
-            }
-            exec_instruction(self, inst, verbose);
+            exec_instruction(self, instruction, verbose);
             inst_count += 1;
             if verbose {
                 self.show_registers();
