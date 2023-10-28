@@ -28,8 +28,8 @@ pub struct Core {
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
-    pc_history: Vec<(Address, &'static str)>,
-    instruction_stats: HashMap<&'static str, usize>,
+    pc_history: Vec<(Address, String)>,
+    instruction_stats: HashMap<String, usize>,
 }
 
 impl Core {
@@ -102,25 +102,25 @@ impl Core {
     //     }
     // }
 
-    pub fn load_instruction(&mut self, addr: Address) -> InstructionValue {
-        self.increment_instruction_memory_access_count();
-        self.instruction_memory.load(addr)
-        // let cache_access = self.instruction_cache.get(addr);
-        // match cache_access {
-        //     InstructionCacheAccess::HitGet(value) => {
-        //         self.increment_instruction_cache_hit_count();
-        //         return value;
-        //     }
-        //     InstructionCacheAccess::Miss => {
-        //         let value = self.instruction_memory.load(addr);
-        //         self.process_instruction_cache_miss(addr);
-        //         return value;
-        //     }
-        //     _ => {
-        //         panic!("invalid cache access");
-        //     }
-        // }
-    }
+    // pub fn load_instruction(&mut self, addr: Address) -> InstructionValue {
+    //     self.increment_instruction_memory_access_count();
+    //     self.instruction_memory.load(addr)
+    // let cache_access = self.instruction_cache.get(addr);
+    // match cache_access {
+    //     InstructionCacheAccess::HitGet(value) => {
+    //         self.increment_instruction_cache_hit_count();
+    //         return value;
+    //     }
+    //     InstructionCacheAccess::Miss => {
+    //         let value = self.instruction_memory.load(addr);
+    //         self.process_instruction_cache_miss(addr);
+    //         return value;
+    //     }
+    //     _ => {
+    //         panic!("invalid cache access");
+    //     }
+    // }
+    // }
 
     pub fn store_instruction(&mut self, addr: Address, inst: InstructionValue) {
         self.instruction_memory.store(addr, inst);
@@ -357,11 +357,11 @@ impl Core {
         self.int_registers_history.push(int_registers);
     }
 
-    fn save_pc(&mut self, pc: Address, inst_name: &'static str) {
+    fn save_pc(&mut self, pc: Address, inst_name: String) {
         self.pc_history.push((pc, inst_name));
     }
 
-    fn save_inst_name(&mut self, inst_name: &'static str) {
+    fn save_inst_name(&mut self, inst_name: String) {
         if self.instruction_stats.contains_key(&inst_name) {
             let count = self.instruction_stats.get(&inst_name).unwrap();
             self.instruction_stats.insert(inst_name, count + 1);
@@ -440,14 +440,14 @@ impl Core {
 
     fn show_pc_stats(&self) {
         println!("----------------pc stats-----------------");
-        let mut pc_stats = vec![(0, ""); 1 << 20];
+        let mut pc_stats = vec![(0, "".to_string()); 1 << 20];
         for i in 0..self.pc_history.len() {
             pc_stats[self.pc_history[i].0 as usize].0 += 1;
-            pc_stats[self.pc_history[i].0 as usize].1 = self.pc_history[i].1;
+            pc_stats[self.pc_history[i].0 as usize].1 = self.pc_history[i].clone().1;
         }
         let mut pc_stats_with_index = vec![];
         for i in 0..pc_stats.len() {
-            pc_stats_with_index.push((i, pc_stats[i]));
+            pc_stats_with_index.push((i, pc_stats[i].clone()));
         }
         pc_stats_with_index.sort_by(|a, b| b.1.cmp(&a.1));
         for i in 0..pc_stats_with_index.len() {
@@ -481,7 +481,9 @@ impl Core {
     }
 
     pub fn run(&mut self, verbose: bool, interval: u64) {
-        // let start_time = Instant::now();
+        let executors =
+            create_instruction_executors(&self.instruction_memory, &self.get_instruction_maps());
+        let start_time = Instant::now();
         let mut inst_count = 0;
         self.save_int_registers();
         if verbose {
@@ -502,9 +504,12 @@ impl Core {
                 let interval_start_time = Instant::now();
                 while interval_start_time.elapsed() < Duration::from_millis(interval) {}
             }
-            let instruction = self.load_instruction(current_pc);
-            let inst_name = exec_instruction(self, instruction, verbose);
-            self.save_pc(current_pc, inst_name);
+            let executor = &executors[(current_pc as usize) >> 2];
+            let inst_name = executor.get_name().to_string();
+            let exec = executor.get_exec();
+            exec(self, verbose);
+            self.increment_instruction_memory_access_count();
+            self.save_pc(current_pc, inst_name.clone());
             self.save_int_registers();
             self.save_inst_name(inst_name);
             if verbose {

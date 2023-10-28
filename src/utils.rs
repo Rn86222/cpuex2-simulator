@@ -46,6 +46,30 @@ pub fn i32_to_u32(value: i32) -> u32 {
     }
 }
 
+pub fn sign_extention_i16(value: i16, before_bit: usize) -> i16 {
+    if (value >> (before_bit - 1)) & 1 == 0 {
+        value
+    } else {
+        let mut extention: i16 = 0;
+        for i in 0..16 - before_bit {
+            extention += 1 << (before_bit + i);
+        }
+        value | extention
+    }
+}
+
+pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
+    if (value >> (before_bit - 1)) & 1 == 0 {
+        value
+    } else {
+        let mut extention: i32 = 0;
+        for i in 0..32 - before_bit {
+            extention += 1 << (before_bit + i);
+        }
+        value | extention
+    }
+}
+
 #[allow(dead_code)]
 pub const RED: &str = "31";
 #[allow(dead_code)]

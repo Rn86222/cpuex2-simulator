@@ -66,7 +66,8 @@ pub enum Instruction {
     OtherInstruction,
 }
 
-enum InstructionType {
+#[derive(Clone)]
+pub enum InstructionType {
     I,
     R,
     S,
@@ -77,7 +78,7 @@ enum InstructionType {
     Other,
 }
 
-fn instruction_typeof(inst: InstructionValue) -> InstructionType {
+pub fn instruction_typeof(inst: InstructionValue) -> InstructionType {
     let op = inst & 127;
     match op {
         3 | 19 | 27 | 103 | 115 => InstructionType::I,

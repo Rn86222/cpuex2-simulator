@@ -2,32 +2,9 @@ use std::collections::HashMap;
 
 use crate::core::*;
 use crate::decoder::*;
+use crate::instruction_memory::InstructionMemory;
 use crate::types::*;
 use crate::utils::*;
-
-pub fn sign_extention_i16(value: i16, before_bit: usize) -> i16 {
-    if (value >> (before_bit - 1)) & 1 == 0 {
-        value
-    } else {
-        let mut extention: i16 = 0;
-        for i in 0..16 - before_bit {
-            extention += 1 << (before_bit + i);
-        }
-        value | extention
-    }
-}
-
-pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
-    if (value >> (before_bit - 1)) & 1 == 0 {
-        value
-    } else {
-        let mut extention: i32 = 0;
-        for i in 0..32 - before_bit {
-            extention += 1 << (before_bit + i);
-        }
-        value | extention
-    }
-}
 
 fn println_inst(text: &str) {
     println!("{}", text);
@@ -42,35 +19,6 @@ type JInstructionMap = HashMap<u8, JInstructionExecutor>;
 type UInstructionMap = HashMap<u8, UInstructionExecutor>;
 type R4InstructionMap = HashMap<u8, R4InstructionExecutor>;
 
-struct IInstructionExecutor {
-    exec: fn(&mut Core, i16, u8, u8, bool),
-    name: &'static str,
-}
-struct RInstructionExecutor {
-    exec: fn(&mut Core, u8, u8, u8, bool),
-    name: &'static str,
-}
-struct SInstructionExecutor {
-    exec: fn(&mut Core, i16, u8, u8, bool),
-    name: &'static str,
-}
-struct BInstructionExecutor {
-    exec: fn(&mut Core, i16, u8, u8, bool),
-    name: &'static str,
-}
-struct UInstructionExecutor {
-    exec: fn(&mut Core, i32, u8, bool),
-    name: &'static str,
-}
-struct JInstructionExecutor {
-    exec: fn(&mut Core, i32, u8, bool),
-    name: &'static str,
-}
-struct R4InstructionExecutor {
-    exec: fn(&mut Core, u8, u8, u8, u8, bool),
-    name: &'static str,
-}
-
 pub struct InstructionMaps {
     i_instruction_map: IInstructionMap,
     r_instruction_map: RInstructionMap,
@@ -79,6 +27,196 @@ pub struct InstructionMaps {
     j_instruction_map: JInstructionMap,
     u_instruction_map: UInstructionMap,
     r4_instruction_map: R4InstructionMap,
+}
+
+#[derive(Clone)]
+struct IInstructionExecutor {
+    exec: fn(&mut Core, i16, u8, u8, bool),
+    name: String,
+}
+
+#[derive(Clone)]
+struct RInstructionExecutor {
+    exec: fn(&mut Core, u8, u8, u8, bool),
+    name: String,
+}
+
+#[derive(Clone)]
+struct SInstructionExecutor {
+    exec: fn(&mut Core, i16, u8, u8, bool),
+    name: String,
+}
+
+#[derive(Clone)]
+struct BInstructionExecutor {
+    exec: fn(&mut Core, i16, u8, u8, bool),
+    name: String,
+}
+
+#[derive(Clone)]
+struct UInstructionExecutor {
+    exec: fn(&mut Core, i32, u8, bool),
+    name: String,
+}
+
+#[derive(Clone)]
+struct JInstructionExecutor {
+    exec: fn(&mut Core, i32, u8, bool),
+    name: String,
+}
+
+#[derive(Clone)]
+struct R4InstructionExecutor {
+    exec: fn(&mut Core, u8, u8, u8, u8, bool),
+    name: String,
+}
+
+pub struct InstructionExecutor {
+    pub exec: Box<dyn Fn(&mut Core, bool)>,
+    pub name: String,
+}
+
+impl InstructionExecutor {
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+    pub fn get_exec(&self) -> &dyn Fn(&mut Core, bool) {
+        &self.exec
+    }
+}
+
+pub fn create_instruction_executors(
+    inst_memory: &InstructionMemory,
+    inst_maps: &InstructionMaps,
+) -> Vec<InstructionExecutor> {
+    let mut executors = Vec::new();
+    let mut count = 0;
+    loop {
+        let inst = inst_memory.load(count as Address);
+        match decode_instruction(inst) {
+            Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
+                let i_inst_executor = inst_maps.get_i_instruction_map().get(&(op, funct3));
+                if i_inst_executor.is_none() {
+                    println!("unexpected op: {}, funct3: {}", op, funct3);
+                    panic!();
+                }
+                let i_inst_executor = i_inst_executor.unwrap().clone();
+                let name = i_inst_executor.name;
+                let executor = InstructionExecutor {
+                    exec: Box::new(move |core: &mut Core, verbose: bool| {
+                        (i_inst_executor.exec)(core, imm, rs1, rd, verbose);
+                    }),
+                    name,
+                };
+                executors.push(executor);
+            }
+            Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op) => {
+                let r_inst_executor = inst_maps.get_r_instruction_map().get(&(op, funct3, funct7));
+                if r_inst_executor.is_none() {
+                    println!(
+                        "unexpected op: {}, funct3: {}, funct7: {}",
+                        op, funct3, funct7
+                    );
+                    panic!();
+                }
+                let r_inst_executor = r_inst_executor.unwrap().clone();
+                let name = r_inst_executor.name;
+                let executor = InstructionExecutor {
+                    exec: Box::new(move |core: &mut Core, verbose: bool| {
+                        (r_inst_executor.exec)(core, rs2, rs1, rd, verbose);
+                    }),
+                    name,
+                };
+                executors.push(executor);
+            }
+            Instruction::SInstruction(imm, rs2, rs1, funct3, op) => {
+                let s_inst_executor = inst_maps.get_s_instruction_map().get(&(op, funct3));
+                if s_inst_executor.is_none() {
+                    println!("unexpected op: {}, funct3: {}", op, funct3);
+                    panic!();
+                }
+                let s_inst_executor = s_inst_executor.unwrap().clone();
+                let name = s_inst_executor.name;
+                let executor = InstructionExecutor {
+                    exec: Box::new(move |core: &mut Core, verbose: bool| {
+                        (s_inst_executor.exec)(core, imm, rs2, rs1, verbose);
+                    }),
+                    name,
+                };
+                executors.push(executor);
+            }
+            Instruction::BInstruction(imm, rs2, rs1, funct3, op) => {
+                let b_inst_executor = inst_maps.get_b_instruction_map().get(&(op, funct3));
+                if b_inst_executor.is_none() {
+                    println!("unexpected op: {}, funct3: {}", op, funct3);
+                    panic!();
+                }
+                let b_inst_executor = b_inst_executor.unwrap().clone();
+                let name = b_inst_executor.name;
+                let executor = InstructionExecutor {
+                    exec: Box::new(move |core: &mut Core, verbose: bool| {
+                        (b_inst_executor.exec)(core, imm, rs2, rs1, verbose);
+                    }),
+                    name,
+                };
+                executors.push(executor);
+            }
+            Instruction::JInstruction(imm, rd, op) => {
+                let j_inst_executor = inst_maps.get_j_instruction_map().get(&(op));
+                if j_inst_executor.is_none() {
+                    println!("unexpected op: {}", op);
+                    panic!();
+                }
+                let j_inst_executor = j_inst_executor.unwrap().clone();
+                let name = j_inst_executor.name;
+                let executor = InstructionExecutor {
+                    exec: Box::new(move |core: &mut Core, verbose: bool| {
+                        (j_inst_executor.exec)(core, imm, rd, verbose);
+                    }),
+                    name,
+                };
+                executors.push(executor);
+            }
+            Instruction::UInstruction(imm, rd, op) => {
+                let u_inst_executor = inst_maps.get_u_instruction_map().get(&(op));
+                if u_inst_executor.is_none() {
+                    println!("unexpected op: {}", op);
+                    panic!();
+                }
+                let u_inst_executor = u_inst_executor.unwrap().clone();
+                let name = u_inst_executor.name;
+                let executor = InstructionExecutor {
+                    exec: Box::new(move |core: &mut Core, verbose: bool| {
+                        (u_inst_executor.exec)(core, imm, rd, verbose);
+                    }),
+                    name,
+                };
+                executors.push(executor);
+            }
+            Instruction::R4Instruction(fs3, _, fs2, fs1, _, fd, op) => {
+                let r4_inst_executor = inst_maps.get_r4_instruction_map().get(&(op));
+                if r4_inst_executor.is_none() {
+                    println!("unexpected op: {}", op);
+                    panic!();
+                }
+                let r4_inst_executor = r4_inst_executor.unwrap().clone();
+                let name = r4_inst_executor.name;
+                let executor = InstructionExecutor {
+                    exec: Box::new(move |core: &mut Core, verbose: bool| {
+                        (r4_inst_executor.exec)(core, fs3, fs2, fs1, fd, verbose);
+                    }),
+                    name,
+                };
+                executors.push(executor);
+            }
+            _ => {
+                break;
+            }
+        }
+        count += 4;
+    }
+    println!("{} instructions are loaded.", count / 4);
+    executors
 }
 
 impl InstructionMaps {
@@ -123,155 +261,6 @@ impl InstructionMaps {
     }
 }
 
-fn exec_i_instruction(
-    core: &mut Core,
-    imm: i16,
-    rs1: u8,
-    funct3: u8,
-    rd: u8,
-    op: u8,
-    verbose: bool,
-) -> &'static str {
-    let executor = core
-        .get_instruction_maps()
-        .get_i_instruction_map()
-        .get(&(op, funct3));
-    if executor.is_none() {
-        println!("unexpected op: {}, funct3: {}", op, funct3);
-        return "";
-    }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rs1, rd, verbose);
-    name
-}
-
-fn exec_r_instruction(
-    core: &mut Core,
-    funct7: u8,
-    rs2: u8,
-    rs1: u8,
-    funct3: u8,
-    rd: u8,
-    op: u8,
-    verbose: bool,
-) -> &'static str {
-    let executor = core
-        .get_instruction_maps()
-        .get_r_instruction_map()
-        .get(&(op, funct3, funct7));
-    if executor.is_none() {
-        println!(
-            "unexpected op: {}, funct3: {}, funct7: {}",
-            op, funct3, funct7
-        );
-        return "";
-    }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, rs2, rs1, rd, verbose);
-    name
-}
-
-fn exec_s_instruction(
-    core: &mut Core,
-    imm: i16,
-    rs2: u8,
-    rs1: u8,
-    funct3: u8,
-    op: u8,
-    verbose: bool,
-) -> &'static str {
-    let executor = core
-        .get_instruction_maps()
-        .get_s_instruction_map()
-        .get(&(op, funct3));
-    if executor.is_none() {
-        println!("unexpected op: {}, funct3: {}", op, funct3);
-        return "";
-    }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rs2, rs1, verbose);
-    name
-}
-
-fn exec_b_instruction(
-    core: &mut Core,
-    imm: i16,
-    rs2: u8,
-    rs1: u8,
-    funct3: u8,
-    op: u8,
-    verbose: bool,
-) -> &'static str {
-    let executor = core
-        .get_instruction_maps()
-        .get_b_instruction_map()
-        .get(&(op, funct3));
-    if executor.is_none() {
-        println!("unexpected op: {}, funct3: {}", op, funct3);
-        return "";
-    }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rs2, rs1, verbose);
-    name
-}
-
-fn exec_j_instruction(core: &mut Core, imm: i32, rd: u8, op: u8, verbose: bool) -> &'static str {
-    let executor = core
-        .get_instruction_maps()
-        .get_j_instruction_map()
-        .get(&(op));
-    if executor.is_none() {
-        println!("unexpected op: {}", op);
-        return "";
-    }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rd, verbose);
-    name
-}
-
-fn exec_u_instruction(core: &mut Core, imm: i32, rd: u8, op: u8, verbose: bool) -> &'static str {
-    let executor = core
-        .get_instruction_maps()
-        .get_u_instruction_map()
-        .get(&(op));
-    if executor.is_none() {
-        println!("unexpected op: {}", op);
-        return "";
-    }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rd, verbose);
-    name
-}
-
-fn exec_r4_instruction(
-    core: &mut Core,
-    fs3: u8,
-    fs2: u8,
-    fs1: u8,
-    fd: u8,
-    op: u8,
-    verbose: bool,
-) -> &'static str {
-    let executor = core
-        .get_instruction_maps()
-        .get_r4_instruction_map()
-        .get(&(op));
-    if executor.is_none() {
-        println!("unexpected op: {}", op);
-        return "";
-    }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, fs3, fs2, fs1, fd, verbose);
-    name
-}
-
 fn create_i_instruction_map() -> IInstructionMap {
     let mut map = IInstructionMap::new();
     let lb = IInstructionExecutor {
@@ -283,8 +272,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             let value = core
                 .load_byte((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
             core.set_int_register(rd as usize, value as Int);
+            core.increment_pc();
         },
-        name: "lb",
+        name: "lb".to_string(),
     };
     map.insert((3, 0b000), lb);
     let lh = IInstructionExecutor {
@@ -296,8 +286,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             let value = core
                 .load_half((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
             core.set_int_register(rd as usize, value as Int);
+            core.increment_pc();
         },
-        name: "lh",
+        name: "lh".to_string(),
     };
     map.insert((3, 0b001), lh);
     let lw = IInstructionExecutor {
@@ -309,8 +300,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             let value = core
                 .load_word((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
             core.set_int_register(rd as usize, value as Int);
+            core.increment_pc();
         },
-        name: "lw",
+        name: "lw".to_string(),
     };
     map.insert((3, 0b010), lw);
     let lbu = IInstructionExecutor {
@@ -322,8 +314,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             let value = core
                 .load_ubyte((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
             core.set_int_register(rd as usize, value as Int);
+            core.increment_pc();
         },
-        name: "lbu",
+        name: "lbu".to_string(),
     };
     map.insert((3, 0b100), lbu);
     let lhu = IInstructionExecutor {
@@ -335,8 +328,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             let value = core
                 .load_uhalf((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
             core.set_int_register(rd as usize, value as Int);
+            core.increment_pc();
         },
-        name: "lhu",
+        name: "lhu".to_string(),
     };
     map.insert((3, 0b101), lhu);
     let addi = IInstructionExecutor {
@@ -347,8 +341,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             }
             let value = core.get_int_register(rs1 as usize) + imm as i32;
             core.set_int_register(rd as usize, value);
+            core.increment_pc();
         },
-        name: "addi",
+        name: "addi".to_string(),
     };
     map.insert((19, 0b000), addi);
     let slli = IInstructionExecutor {
@@ -361,8 +356,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             }
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value << imm);
+            core.increment_pc();
         },
-        name: "slli",
+        name: "slli".to_string(),
     };
     map.insert((19, 0b001), slli);
     let slti = IInstructionExecutor {
@@ -377,8 +373,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             } else {
                 core.set_int_register(rd as usize, 0);
             }
+            core.increment_pc();
         },
-        name: "slti",
+        name: "slti".to_string(),
     };
     map.insert((19, 0b010), slti);
     let sltiu = IInstructionExecutor {
@@ -393,8 +390,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             } else {
                 core.set_int_register(rd as usize, 0);
             }
+            core.increment_pc();
         },
-        name: "sltiu",
+        name: "sltiu".to_string(),
     };
     map.insert((19, 0b011), sltiu);
     let xori = IInstructionExecutor {
@@ -405,8 +403,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             }
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value ^ imm as i32);
+            core.increment_pc();
         },
-        name: "xori",
+        name: "xori".to_string(),
     };
     map.insert((19, 0b100), xori);
     let srli_srai = IInstructionExecutor {
@@ -420,6 +419,7 @@ fn create_i_instruction_map() -> IInstructionMap {
                 }
                 let rs1_value = core.get_int_register(rs1 as usize);
                 core.set_int_register(rd as usize, u32_to_i32(i32_to_u32(rs1_value) >> imm));
+                core.increment_pc();
             } else if funct7 == 0b0100000 {
                 // srai
                 if verbose {
@@ -427,11 +427,12 @@ fn create_i_instruction_map() -> IInstructionMap {
                 }
                 let rs1_value = core.get_int_register(rs1 as usize);
                 core.set_int_register(rd as usize, rs1_value >> imm);
+                core.increment_pc();
             } else {
                 println!("unexpected funct7: {}", funct7);
             }
         },
-        name: "srli_srai",
+        name: "srli_srai".to_string(),
     };
     map.insert((19, 0b101), srli_srai);
     let ori = IInstructionExecutor {
@@ -442,8 +443,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             }
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value | imm as i32);
+            core.increment_pc();
         },
-        name: "ori",
+        name: "ori".to_string(),
     };
     map.insert((19, 0b110), ori);
     let andi = IInstructionExecutor {
@@ -454,8 +456,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             }
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value & imm as i32);
+            core.increment_pc();
         },
-        name: "andi",
+        name: "andi".to_string(),
     };
     map.insert((19, 0b111), andi);
     let jalr = IInstructionExecutor {
@@ -468,7 +471,7 @@ fn create_i_instruction_map() -> IInstructionMap {
             core.set_int_register(rd as usize, u32_to_i32(core.get_pc() as u32 + 4));
             core.set_pc(new_pc as Address);
         },
-        name: "jalr",
+        name: "jalr".to_string(),
     };
     map.insert((103, 0b000), jalr);
     let flw = IInstructionExecutor {
@@ -480,19 +483,21 @@ fn create_i_instruction_map() -> IInstructionMap {
             let value = core
                 .load_word((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
             core.set_float_register(rd as usize, f32::from_bits(i32_to_u32(value)));
+            core.increment_pc();
         },
-        name: "flw",
+        name: "flw".to_string(),
     };
     map.insert((7, 0b010), flw);
     let in_ = IInstructionExecutor {
-        exec: |_: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
+        exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
             assert_eq!(imm, 0);
             assert_eq!(rd, 0);
             if verbose {
                 println_inst(&format!("in x{}", rs1));
             }
+            core.increment_pc();
         },
-        name: "in",
+        name: "in".to_string(),
     };
     map.insert((115, 0b000), in_);
     let outuart = IInstructionExecutor {
@@ -504,8 +509,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             }
             let rs1_value = core.get_int_register(rs1 as usize);
             eprintln!("{:>08x}", rs1_value);
+            core.increment_pc();
         },
-        name: "outuart",
+        name: "outuart".to_string(),
     };
     map.insert((115, 0b100), outuart);
     let out7seg8 = IInstructionExecutor {
@@ -514,8 +520,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             assert_eq!(rd, 0);
             let rs1_value = core.get_int_register(rs1 as usize);
             eprintln!("{:>08x}", rs1_value);
+            core.increment_pc();
         },
-        name: "out7seg8",
+        name: "out7seg8".to_string(),
     };
     map.insert((115, 0b101), out7seg8);
     let out7seg1 = IInstructionExecutor {
@@ -524,8 +531,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             assert_eq!(rd, 0);
             let rs1_value = core.get_int_register(rs1 as usize);
             eprintln!("{:>01x}", i32_to_u32(rs1_value) & 0b1111);
+            core.increment_pc();
         },
-        name: "out7seg16",
+        name: "out7seg1".to_string(),
     };
     map.insert((115, 0b110), out7seg1);
     let outled = IInstructionExecutor {
@@ -534,8 +542,9 @@ fn create_i_instruction_map() -> IInstructionMap {
             assert_eq!(rd, 0);
             let rs1_value = core.get_int_register(rs1 as usize);
             eprintln!("{:>016b}", i32_to_u32(rs1_value) & 65535);
+            core.increment_pc();
         },
-        name: "outled",
+        name: "outled".to_string(),
     };
     map.insert((115, 0b111), outled);
     map
@@ -551,8 +560,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_int_register(rs2 as usize);
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value + rs2_value);
+            core.increment_pc();
         },
-        name: "add",
+        name: "add".to_string(),
     };
     map.insert((51, 0b000, 0b0000000), add);
     let sub = RInstructionExecutor {
@@ -563,8 +573,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_int_register(rs2 as usize);
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value - rs2_value);
+            core.increment_pc();
         },
-        name: "sub",
+        name: "sub".to_string(),
     };
     map.insert((51, 0b000, 0b0100000), sub);
     let mul = RInstructionExecutor {
@@ -575,8 +586,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_int_register(rs2 as usize) as i64;
             let rs1_value = core.get_int_register(rs1 as usize) as i64;
             core.set_int_register(rd as usize, ((rs1_value * rs2_value) & 0xffffffff) as i32);
+            core.increment_pc();
         },
-        name: "mul",
+        name: "mul".to_string(),
     };
     map.insert((51, 0b000, 0b0000001), mul);
     let absdiff = RInstructionExecutor {
@@ -591,8 +603,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, rs2_value - rs1_value);
             }
+            core.increment_pc();
         },
-        name: "absdiff",
+        name: "absdiff".to_string(),
     };
     map.insert((51, 0b000, 0b0110000), absdiff);
     let sll = RInstructionExecutor {
@@ -606,8 +619,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd as usize,
                 u32_to_i32(i32_to_u32(rs1_value) << (rs2_value & 0b11111)) as Int,
             );
+            core.increment_pc();
         },
-        name: "sll",
+        name: "sll".to_string(),
     };
     map.insert((51, 0b001, 0b0000000), sll);
     let mulh = RInstructionExecutor {
@@ -621,8 +635,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd as usize,
                 (((rs1_value * rs2_value) >> 32) & 0xffffffff) as i32,
             );
+            core.increment_pc();
         },
-        name: "mulh",
+        name: "mulh".to_string(),
     };
     map.insert((51, 0b001, 0b0000001), mulh);
     let slt = RInstructionExecutor {
@@ -637,8 +652,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, 0);
             }
+            core.increment_pc();
         },
-        name: "slt",
+        name: "slt".to_string(),
     };
     map.insert((51, 0b010, 0b0000000), slt);
     let mulhsu = RInstructionExecutor {
@@ -652,8 +668,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd as usize,
                 (((rs1_value * rs2_value) >> 32) & 0xffffffff) as i32,
             );
+            core.increment_pc();
         },
-        name: "mulhsu",
+        name: "mulhsu".to_string(),
     };
     map.insert((51, 0b010, 0b0000001), mulhsu);
     let sltu = RInstructionExecutor {
@@ -668,8 +685,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, 0);
             }
+            core.increment_pc();
         },
-        name: "slty",
+        name: "slty".to_string(),
     };
     map.insert((51, 0b011, 0b0000000), sltu);
     let mulhu = RInstructionExecutor {
@@ -683,8 +701,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd as usize,
                 u32_to_i32((((rs1_value * rs2_value) >> 32) & 0xffffffff) as u32),
             );
+            core.increment_pc();
         },
-        name: "mulhu",
+        name: "mulhu".to_string(),
     };
     map.insert((51, 0b011, 0b0000001), mulhu);
     let xor = RInstructionExecutor {
@@ -695,8 +714,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_int_register(rs2 as usize);
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value ^ rs2_value);
+            core.increment_pc();
         },
-        name: "xor",
+        name: "xor".to_string(),
     };
     map.insert((51, 0b100, 0b0000000), xor);
     let div = RInstructionExecutor {
@@ -711,8 +731,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, ((rs1_value / rs2_value) & 0xffffffff) as i32);
             }
+            core.increment_pc();
         },
-        name: "div",
+        name: "div".to_string(),
     };
     map.insert((51, 0b100, 0b0000001), div);
     let srl = RInstructionExecutor {
@@ -726,8 +747,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd as usize,
                 u32_to_i32(i32_to_u32(rs1_value) >> (rs2_value & 0b11111)),
             );
+            core.increment_pc();
         },
-        name: "srl",
+        name: "srl".to_string(),
     };
     map.insert((51, 0b101, 0b0000000), srl);
     let sra = RInstructionExecutor {
@@ -738,8 +760,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_int_register(rs2 as usize);
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value >> (rs2_value & 0b11111));
+            core.increment_pc();
         },
-        name: "sra",
+        name: "sra".to_string(),
     };
     map.insert((51, 0b101, 0b0100000), sra);
     let divu = RInstructionExecutor {
@@ -757,8 +780,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                     u32_to_i32((rs1_value / rs2_value) & 0xffffffff),
                 );
             }
+            core.increment_pc();
         },
-        name: "divu",
+        name: "divu".to_string(),
     };
     map.insert((51, 0b101, 0b0000001), divu);
     let or = RInstructionExecutor {
@@ -769,8 +793,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_int_register(rs2 as usize);
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value | rs2_value);
+            core.increment_pc();
         },
-        name: "or",
+        name: "or".to_string(),
     };
     map.insert((51, 0b110, 0b0000000), or);
     let rem = RInstructionExecutor {
@@ -785,8 +810,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, ((rs1_value % rs2_value) & 0xffffffff) as i32);
             }
+            core.increment_pc();
         },
-        name: "rem",
+        name: "rem".to_string(),
     };
     map.insert((51, 0b110, 0b0000001), rem);
     let and = RInstructionExecutor {
@@ -797,8 +823,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_int_register(rs2 as usize);
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value & rs2_value);
+            core.increment_pc();
         },
-        name: "and",
+        name: "and".to_string(),
     };
     map.insert((51, 0b111, 0b0000000), and);
     let remu = RInstructionExecutor {
@@ -816,8 +843,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                     u32_to_i32((rs1_value % rs2_value) & 0xffffffff),
                 );
             }
+            core.increment_pc();
         },
-        name: "remu",
+        name: "remu".to_string(),
     };
     map.insert((51, 0b111, 0b0000001), remu);
     let fadd = RInstructionExecutor {
@@ -828,8 +856,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_float_register(rs2 as usize);
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_float_register(rd as usize, rs1_value + rs2_value);
+            core.increment_pc();
         },
-        name: "fadd",
+        name: "fadd".to_string(),
     };
     map.insert((83, 0b000, 0b0000000), fadd);
     let fsub = RInstructionExecutor {
@@ -840,8 +869,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_float_register(rs2 as usize);
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_float_register(rd as usize, rs1_value - rs2_value);
+            core.increment_pc();
         },
-        name: "fsub",
+        name: "fsub".to_string(),
     };
     map.insert((83, 0b000, 0b0000100), fsub);
     let fmul = RInstructionExecutor {
@@ -852,8 +882,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_float_register(rs2 as usize);
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_float_register(rd as usize, rs1_value * rs2_value);
+            core.increment_pc();
         },
-        name: "fmul",
+        name: "fmul".to_string(),
     };
     map.insert((83, 0b000, 0b0001000), fmul);
     let fdiv = RInstructionExecutor {
@@ -864,8 +895,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             let rs2_value = core.get_float_register(rs2 as usize);
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_float_register(rd as usize, rs1_value / rs2_value);
+            core.increment_pc();
         },
-        name: "fdiv",
+        name: "fdiv".to_string(),
     };
     map.insert((83, 0b000, 0b0001100), fdiv);
     let fsqrt = RInstructionExecutor {
@@ -875,8 +907,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             }
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_float_register(rd as usize, rs1_value.sqrt());
+            core.increment_pc();
         },
-        name: "fsqrt",
+        name: "fsqrt".to_string(),
     };
     map.insert((83, 0b000, 0b0101100), fsqrt);
     let fsgnj = RInstructionExecutor {
@@ -891,8 +924,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd_value = -rd_value;
             }
             core.set_float_register(rd as usize, rd_value);
+            core.increment_pc();
         },
-        name: "fsgnj",
+        name: "fsgnj".to_string(),
     };
     map.insert((83, 0b000, 0b0010000), fsgnj);
     let fsgnjn = RInstructionExecutor {
@@ -907,8 +941,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd_value = -rd_value;
             }
             core.set_float_register(rd as usize, rd_value);
+            core.increment_pc();
         },
-        name: "fsgnjn",
+        name: "fsgnjn".to_string(),
     };
     map.insert((83, 0b001, 0b0010000), fsgnjn);
     let fsgnjx = RInstructionExecutor {
@@ -923,8 +958,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 rd_value = -rd_value;
             }
             core.set_float_register(rd as usize, rd_value);
+            core.increment_pc();
         },
-        name: "fsgnjx",
+        name: "fsgnjx".to_string(),
     };
     map.insert((83, 0b010, 0b0010000), fsgnjx);
     let fmin = RInstructionExecutor {
@@ -943,8 +979,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_float_register(rd as usize, rs2_value);
             }
+            core.increment_pc();
         },
-        name: "fmin",
+        name: "fmin".to_string(),
     };
     map.insert((83, 0b000, 0b0010100), fmin);
     let fmax = RInstructionExecutor {
@@ -963,8 +1000,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_float_register(rd as usize, rs2_value);
             }
+            core.increment_pc();
         },
-        name: "fmax",
+        name: "fmax".to_string(),
     };
     map.insert((83, 0b001, 0b0010100), fmax);
     let feq = RInstructionExecutor {
@@ -980,8 +1018,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, 0);
             }
+            core.increment_pc();
         },
-        name: "feq",
+        name: "feq".to_string(),
     };
     map.insert((83, 0b010, 0b1010000), feq);
     let flt = RInstructionExecutor {
@@ -996,8 +1035,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, 0);
             }
+            core.increment_pc();
         },
-        name: "flt",
+        name: "flt".to_string(),
     };
     map.insert((83, 0b001, 0b1010000), flt);
     let fle = RInstructionExecutor {
@@ -1012,8 +1052,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             } else {
                 core.set_int_register(rd as usize, 0);
             }
+            core.increment_pc();
         },
-        name: "fle",
+        name: "fle".to_string(),
     };
     map.insert((83, 0b000, 0b1010000), fle);
     let fclass = RInstructionExecutor {
@@ -1055,8 +1096,9 @@ fn create_r_instruction_map() -> RInstructionMap {
                 }
             }
             core.set_int_register(rd as usize, rd_value);
+            core.increment_pc();
         },
-        name: "fclass",
+        name: "fclass".to_string(),
     };
     map.insert((83, 0b001, 0b1110000), fclass);
 
@@ -1068,8 +1110,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             }
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value as i32);
+            core.increment_pc();
         },
-        name: "fcvt.w.s",
+        name: "fcvt.w.s".to_string(),
     };
     map.insert((83, 0b000, 0b1100000), fcvt_w_s);
 
@@ -1081,8 +1124,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             }
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value.abs() as i32);
+            core.increment_pc();
         },
-        name: "fcvt.wu.s",
+        name: "fcvt.wu.s".to_string(),
     };
     map.insert((83, 0b000, 0b1100001), fcvt_wu_s);
     let fcvt_s_w = RInstructionExecutor {
@@ -1093,8 +1137,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             }
             let rs1_value = core.get_int_register(rs1 as usize);
             core.set_float_register(rd as usize, rs1_value as f32);
+            core.increment_pc();
         },
-        name: "fcvt.s.w",
+        name: "fcvt.s.w".to_string(),
     };
     map.insert((83, 0b000, 0b1101000), fcvt_s_w);
     let fcvt_s_wu = RInstructionExecutor {
@@ -1105,27 +1150,26 @@ fn create_r_instruction_map() -> RInstructionMap {
             }
             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
             core.set_float_register(rd as usize, rs1_value as f32);
+            core.increment_pc();
         },
-        name: "fcvt.s.wu",
+        name: "fcvt.s.wu".to_string(),
     };
     map.insert((83, 0b000, 0b1101001), fcvt_s_wu);
     let fmv_x_w = RInstructionExecutor {
-        exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| match rs2 {
-            0b00000 => {
-                if verbose {
-                    println_inst(&format!("fmvs.x.w f{}, x{}", rd, rs1));
-                }
-                let rs1_value = core.get_int_register(rs1 as usize);
-                core.set_float_register(rd as usize, rs1_value as f32);
+        exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
+            assert_eq!(rs2, 0b00000);
+
+            if verbose {
+                println_inst(&format!("fmvs.x.w f{}, x{}", rd, rs1));
             }
-            _ => {
-                println!("unexpected rs2: {}", rs2)
-            }
+            let rs1_value = core.get_int_register(rs1 as usize);
+            core.set_float_register(rd as usize, rs1_value as f32);
+            core.increment_pc();
         },
-        name: "fmv.x.w",
+        name: "fmv.x.w".to_string(),
     };
     map.insert((83, 0b000, 0b1110000), fmv_x_w);
-    let fmv_x_w = RInstructionExecutor {
+    let fmv_w_x = RInstructionExecutor {
         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
             assert_eq!(rs2, 0b00000);
             if verbose {
@@ -1133,10 +1177,11 @@ fn create_r_instruction_map() -> RInstructionMap {
             }
             let rs1_value = core.get_float_register(rs1 as usize);
             core.set_int_register(rd as usize, rs1_value as i32);
+            core.increment_pc();
         },
-        name: "fmv.x.w",
+        name: "fmv.w.x".to_string(),
     };
-    map.insert((83, 0b000, 0b1111000), fmv_x_w);
+    map.insert((83, 0b000, 0b1111000), fmv_w_x);
     let swapw = RInstructionExecutor {
         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
             if verbose {
@@ -1147,8 +1192,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             core.set_int_register(rd as usize, rs2_value);
             core.set_int_register(rs2 as usize, rs1_value);
             core.set_int_register(rs1 as usize, rs2_value);
+            core.increment_pc();
         },
-        name: "swapw",
+        name: "swapw".to_string(),
     };
     map.insert((52, 0b000, 0b0000000), swapw);
     let swaph = RInstructionExecutor {
@@ -1161,8 +1207,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             core.set_int_register(rd as usize, rs2_value);
             core.set_int_register(rs2 as usize, rs1_value);
             core.set_int_register(rs1 as usize, rs2_value);
+            core.increment_pc();
         },
-        name: "swaph",
+        name: "swaph".to_string(),
     };
     map.insert((52, 0b001, 0b0000000), swaph);
     let swapb = RInstructionExecutor {
@@ -1175,8 +1222,9 @@ fn create_r_instruction_map() -> RInstructionMap {
             core.set_int_register(rd as usize, rs2_value);
             core.set_int_register(rs2 as usize, rs1_value);
             core.set_int_register(rs1 as usize, rs2_value);
+            core.increment_pc();
         },
-        name: "swapb",
+        name: "swapb".to_string(),
     };
     map.insert((52, 0b010, 0b0000000), swapb);
     map
@@ -1194,9 +1242,10 @@ fn create_s_instruction_map() -> SInstructionMap {
             core.store_byte(
                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                 (value & 255) as Byte,
-            )
+            );
+            core.increment_pc();
         },
-        name: "sb",
+        name: "sb".to_string(),
     };
     map.insert((35, 0b000), sb);
     let sh = SInstructionExecutor {
@@ -1209,9 +1258,10 @@ fn create_s_instruction_map() -> SInstructionMap {
             core.store_half(
                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                 (value & 65535) as Half,
-            )
+            );
+            core.increment_pc();
         },
-        name: "sh",
+        name: "sh".to_string(),
     };
     map.insert((35, 0b001), sh);
     let sw = SInstructionExecutor {
@@ -1224,9 +1274,10 @@ fn create_s_instruction_map() -> SInstructionMap {
             core.store_word(
                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                 value as Word,
-            )
+            );
+            core.increment_pc();
         },
-        name: "sw",
+        name: "sw".to_string(),
     };
     map.insert((35, 0b010), sw);
     let fsw = SInstructionExecutor {
@@ -1239,9 +1290,10 @@ fn create_s_instruction_map() -> SInstructionMap {
             core.store_word(
                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
                 value.to_bits() as Word,
-            )
+            );
+            core.increment_pc();
         },
-        name: "fsw",
+        name: "fsw".to_string(),
     };
     map.insert((39, 0b010), fsw);
     map
@@ -1270,7 +1322,7 @@ fn create_b_instruction_map() -> BInstructionMap {
                 core.increment_pc();
             }
         },
-        name: "beq",
+        name: "beq".to_string(),
     };
     map.insert((99, 0b000), beq);
     let bne = BInstructionExecutor {
@@ -1294,7 +1346,7 @@ fn create_b_instruction_map() -> BInstructionMap {
                 core.increment_pc();
             }
         },
-        name: "bne",
+        name: "bne".to_string(),
     };
     map.insert((99, 0b001), bne);
     let blt = BInstructionExecutor {
@@ -1318,7 +1370,7 @@ fn create_b_instruction_map() -> BInstructionMap {
                 core.increment_pc();
             }
         },
-        name: "blt",
+        name: "blt".to_string(),
     };
     map.insert((99, 0b100), blt);
     let bge = BInstructionExecutor {
@@ -1342,7 +1394,7 @@ fn create_b_instruction_map() -> BInstructionMap {
                 core.increment_pc();
             }
         },
-        name: "bge",
+        name: "bge".to_string(),
     };
     map.insert((99, 0b101), bge);
     let bltu = BInstructionExecutor {
@@ -1366,7 +1418,7 @@ fn create_b_instruction_map() -> BInstructionMap {
                 core.increment_pc();
             }
         },
-        name: "bltu",
+        name: "bltu".to_string(),
     };
     map.insert((99, 0b110), bltu);
     let bgeu = BInstructionExecutor {
@@ -1390,7 +1442,7 @@ fn create_b_instruction_map() -> BInstructionMap {
                 core.increment_pc();
             }
         },
-        name: "bgeu",
+        name: "bgeu".to_string(),
     };
     map.insert((99, 0b111), bgeu);
     map
@@ -1408,7 +1460,7 @@ fn create_j_instruction_map() -> JInstructionMap {
             core.set_int_register(rd as usize, u32_to_i32(core.get_pc() as u32 + 4));
             core.set_pc(new_pc as Address);
         },
-        name: "jal",
+        name: "jal".to_string(),
     };
     map.insert(111, jal);
     map
@@ -1426,8 +1478,9 @@ fn create_u_instruction_map() -> UInstructionMap {
                 rd as usize,
                 (core.get_pc() as i64 + (imm << 12) as i64) as Int,
             );
+            core.increment_pc();
         },
-        name: "auipc",
+        name: "auipc".to_string(),
     };
     map.insert(23, auipc);
     let lui = UInstructionExecutor {
@@ -1437,8 +1490,9 @@ fn create_u_instruction_map() -> UInstructionMap {
                 println_inst(&format!("lui x{}, {}", rd, imm));
             }
             core.set_int_register(rd as usize, (imm as Int) << 12);
+            core.increment_pc();
         },
-        name: "lui",
+        name: "lui".to_string(),
     };
     map.insert(55, lui);
     map
@@ -1455,8 +1509,9 @@ fn create_r4_instruction_map() -> R4InstructionMap {
             let fs2_value = core.get_float_register(fs2 as usize);
             let fs3_value = core.get_float_register(fs3 as usize);
             core.set_float_register(fd as usize, fs1_value * fs2_value + fs3_value);
+            core.increment_pc();
         },
-        name: "fmadd",
+        name: "fmadd".to_string(),
     };
     map.insert(67, fmadd);
     let fmsub = R4InstructionExecutor {
@@ -1468,8 +1523,9 @@ fn create_r4_instruction_map() -> R4InstructionMap {
             let fs2_value = core.get_float_register(fs2 as usize);
             let fs3_value = core.get_float_register(fs3 as usize);
             core.set_float_register(fd as usize, fs1_value * fs2_value - fs3_value);
+            core.increment_pc();
         },
-        name: "fmsub",
+        name: "fmsub".to_string(),
     };
     map.insert(71, fmsub);
     let fnmsub = R4InstructionExecutor {
@@ -1481,8 +1537,9 @@ fn create_r4_instruction_map() -> R4InstructionMap {
             let fs2_value = core.get_float_register(fs2 as usize);
             let fs3_value = core.get_float_register(fs3 as usize);
             core.set_float_register(fd as usize, -(fs1_value * fs2_value) - fs3_value);
+            core.increment_pc();
         },
-        name: "fnmsub",
+        name: "fnmsub".to_string(),
     };
     map.insert(75, fnmsub);
     let fnmadd = R4InstructionExecutor {
@@ -1494,53 +1551,10 @@ fn create_r4_instruction_map() -> R4InstructionMap {
             let fs2_value = core.get_float_register(fs2 as usize);
             let fs3_value = core.get_float_register(fs3 as usize);
             core.set_float_register(fd as usize, -(fs1_value * fs2_value - fs3_value));
+            core.increment_pc();
         },
-        name: "fnmadd",
+        name: "fnmadd".to_string(),
     };
     map.insert(79, fnmadd);
     map
-}
-
-pub fn exec_instruction(core: &mut Core, inst: InstructionValue, verbose: bool) -> &'static str {
-    match decode_instruction(inst) {
-        Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
-            let name = exec_i_instruction(core, imm, rs1, funct3, rd, op, verbose);
-            if op != 103 {
-                core.increment_pc();
-            }
-            name
-        }
-        Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op) => {
-            let name = exec_r_instruction(core, funct7, rs2, rs1, funct3, rd, op, verbose);
-            core.increment_pc();
-            name
-        }
-        Instruction::SInstruction(imm, rs2, rs1, funct3, op) => {
-            let name = exec_s_instruction(core, imm, rs2, rs1, funct3, op, verbose);
-            core.increment_pc();
-            name
-        }
-        Instruction::BInstruction(imm, rs2, rs1, funct3, op) => {
-            let name = exec_b_instruction(core, imm, rs2, rs1, funct3, op, verbose);
-            name
-        }
-        Instruction::JInstruction(imm, rd, op) => {
-            let name = exec_j_instruction(core, imm, rd, op, verbose);
-            name
-        }
-        Instruction::UInstruction(imm, rd, op) => {
-            let name = exec_u_instruction(core, imm, rd, op, verbose);
-            core.increment_pc();
-            name
-        }
-        Instruction::R4Instruction(fs1, _, fs2, fs3, _, fd, op) => {
-            let name = exec_r4_instruction(core, fs3, fs2, fs1, fd, op, verbose);
-            core.increment_pc();
-            name
-        }
-        Instruction::OtherInstruction => {
-            println!("other instruction {:>032b}", inst);
-            "???"
-        }
-    }
 }
