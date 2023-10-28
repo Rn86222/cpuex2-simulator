@@ -2,7 +2,7 @@ mod cache;
 mod core;
 mod decoder;
 mod instruction;
-mod instruction_cache;
+// mod instruction_cache;
 mod instruction_memory;
 mod memory;
 mod register;
