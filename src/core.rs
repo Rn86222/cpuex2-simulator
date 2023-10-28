@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -27,7 +28,8 @@ pub struct Core {
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
-    pc_history: Vec<Address>,
+    pc_history: Vec<(Address, &'static str)>,
+    instruction_stats: HashMap<&'static str, usize>,
 }
 
 impl Core {
@@ -46,6 +48,7 @@ impl Core {
         let pc = 0;
         let int_registers_history = Vec::new();
         let pc_history = Vec::new();
+        let instruction_stats = HashMap::new();
         Core {
             memory,
             cache,
@@ -61,6 +64,7 @@ impl Core {
             pc,
             int_registers_history,
             pc_history,
+            instruction_stats,
         }
     }
 
@@ -354,14 +358,23 @@ impl Core {
         self.int_registers_history.push(int_registers);
     }
 
-    fn save_pc(&mut self) {
-        self.pc_history.push(self.get_pc());
+    fn save_pc(&mut self, pc: Address, inst_name: &'static str) {
+        self.pc_history.push((pc, inst_name));
+    }
+
+    fn save_inst_name(&mut self, inst_name: &'static str) {
+        if self.instruction_stats.contains_key(&inst_name) {
+            let count = self.instruction_stats.get(&inst_name).unwrap();
+            self.instruction_stats.insert(inst_name, count + 1);
+        } else {
+            self.instruction_stats.insert(inst_name, 1);
+        }
     }
 
     fn show_pc_buffer(&self) {
         print!("pc  ");
         for i in 0..self.pc_history.len() {
-            print!("{:>8}  ", self.pc_history[i]);
+            print!("{:>8}  ", self.pc_history[i].0);
         }
         println!("");
     }
@@ -416,9 +429,11 @@ impl Core {
     }
 
     fn show_pc_stats(&self) {
-        let mut pc_stats = vec![0; 1 << 20];
+        println!("-----------pc stats-----------");
+        let mut pc_stats = vec![(0, ""); 1 << 20];
         for i in 0..self.pc_history.len() {
-            pc_stats[self.pc_history[i] as usize] += 1;
+            pc_stats[self.pc_history[i].0 as usize].0 += 1;
+            pc_stats[self.pc_history[i].0 as usize].1 = self.pc_history[i].1;
         }
         let mut pc_stats_with_index = vec![];
         for i in 0..pc_stats.len() {
@@ -426,13 +441,26 @@ impl Core {
         }
         pc_stats_with_index.sort_by(|a, b| b.1.cmp(&a.1));
         for i in 0..pc_stats_with_index.len() {
-            if pc_stats_with_index[i].1 == 0 {
+            if pc_stats_with_index[i].1 .0 == 0 {
                 break;
             }
-            println!(
-                "pc: {:>08x} count: {}",
-                pc_stats_with_index[i].0, pc_stats_with_index[i].1
+            let pc_inst = format!(
+                "{:>08x}({})",
+                pc_stats_with_index[i].0, pc_stats_with_index[i].1 .1
             );
+            println!("{:<20}  {}", pc_inst, pc_stats_with_index[i].1 .0);
+        }
+    }
+
+    fn show_inst_stats(&self) {
+        println!("-----------instruction stats-----------");
+        let mut inst_stats = vec![];
+        for (inst_name, count) in &self.instruction_stats {
+            inst_stats.push((inst_name, count));
+        }
+        inst_stats.sort_by(|a, b| b.1.cmp(&a.1));
+        for i in 0..inst_stats.len() {
+            println!("{:<8} {}", inst_stats[i].0, inst_stats[i].1);
         }
     }
 
@@ -442,22 +470,26 @@ impl Core {
         let mut before_pc = std::u32::MAX;
         let mut same_pc_cnt = 0;
         let same_pc_limit = 5;
-        self.save_pc();
+        // self.save_pc("");
         self.save_int_registers();
         if verbose {
             println!("");
             self.show_registers();
         }
         loop {
+            let current_pc = self.get_pc();
+            if current_pc >= INSTRUCTION_MEMORY_SIZE as Address {
+                println!("end of program.");
+                break;
+            }
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
-                println!("pc: {} ({})", self.get_pc(), inst_count);
+                println!("pc: {} ({})", current_pc, inst_count);
             }
             if interval != 0 {
                 let interval_start_time = Instant::now();
                 while interval_start_time.elapsed() < Duration::from_millis(interval) {}
             }
-            let current_pc = self.get_pc();
             if current_pc == before_pc {
                 same_pc_cnt += 1;
             } else {
@@ -465,7 +497,7 @@ impl Core {
                 before_pc = current_pc;
             }
             let instruction = self.load_instruction(current_pc);
-            exec_instruction(self, instruction, verbose);
+            let inst_name = exec_instruction(self, instruction, verbose);
             inst_count += 1;
             if verbose {
                 self.show_registers();
@@ -474,8 +506,9 @@ impl Core {
                 println!("infinite loop detected.");
                 break;
             }
-            // self.save_pc();
-            // self.save_int_registers();
+            self.save_pc(current_pc, inst_name);
+            self.save_int_registers();
+            self.save_inst_name(inst_name);
         }
         if verbose {
             print!("    ");
@@ -494,5 +527,6 @@ impl Core {
         );
         self.show_memory_access_info();
         self.show_pc_stats();
+        self.show_inst_stats();
     }
 }

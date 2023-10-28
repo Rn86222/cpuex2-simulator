@@ -1,5 +1,5 @@
 use crate::types::*;
-const INSTRUCTION_MEMORY_SIZE: usize = 4 * 1024 * 1024;
+pub const INSTRUCTION_MEMORY_SIZE: usize = 4 * 1024 * 1024;
 
 pub struct InstructionMemory {
     values: [InstructionValue; INSTRUCTION_MEMORY_SIZE],

@@ -8,7 +8,8 @@ mod memory;
 mod register;
 mod types;
 mod utils;
-use crate::core::*;
+use crate::types::*;
+use crate::{core::*, instruction_memory::INSTRUCTION_MEMORY_SIZE};
 // use instruction::*;
 use std::{
     fs::File,
@@ -19,6 +20,7 @@ use std::{
 
 fn main() {
     let mut core = Core::new();
+    core.set_int_register(1, INSTRUCTION_MEMORY_SIZE as Int);
     core.set_int_register(2, 10000000);
     print!("binary file name: ");
     stdout().flush().unwrap();
