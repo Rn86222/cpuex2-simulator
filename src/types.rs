@@ -9,6 +9,7 @@ pub type Float = f32;
 pub type MemoryValue = u8;
 pub type Address = u32;
 pub type InstructionValue = u32;
+#[allow(dead_code)]
 pub type InstructionCacheIndex = usize;
 pub type Tag = u32;
 pub type CacheIndex = usize;
