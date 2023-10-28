@@ -104,6 +104,7 @@ impl Core {
 
     pub fn load_instruction(&mut self, addr: Address) -> InstructionValue {
         self.increment_instruction_memory_access_count();
+        self.instruction_memory.load(addr)
         // let cache_access = self.instruction_cache.get(addr);
         // match cache_access {
         //     InstructionCacheAccess::HitGet(value) => {
@@ -119,13 +120,11 @@ impl Core {
         //         panic!("invalid cache access");
         //     }
         // }
-        self.instruction_memory.load(addr)
     }
 
     pub fn store_instruction(&mut self, addr: Address, inst: InstructionValue) {
-        // self.increment_instruction_memory_access_count();
         self.instruction_memory.store(addr, inst);
-
+        // self.increment_instruction_memory_access_count();
         // let cache_access = self.instruction_cache.set(addr, inst);
         // match cache_access {
         //     InstructionCacheAccess::HitSet => {
@@ -406,7 +405,18 @@ impl Core {
         }
     }
 
-    fn show_memory_access_info(&self) {
+    fn show_history(&self) {
+        print!("    ");
+        for i in 0..self.pc_history.len() {
+            print!("{:>8}  ", i);
+        }
+        println!("");
+        self.show_pc_buffer();
+        self.show_int_registers_buffer();
+    }
+
+    fn show_memory_access_stats(&self) {
+        println!("-----------memory access stats-----------");
         println!("memory access count: {}", self.memory_access_count);
         println!("cache hit count: {}", self.cache_hit_count);
         println!(
@@ -429,7 +439,7 @@ impl Core {
     }
 
     fn show_pc_stats(&self) {
-        println!("-----------pc stats-----------");
+        println!("----------------pc stats-----------------");
         let mut pc_stats = vec![(0, ""); 1 << 20];
         for i in 0..self.pc_history.len() {
             pc_stats[self.pc_history[i].0 as usize].0 += 1;
@@ -453,7 +463,7 @@ impl Core {
     }
 
     fn show_inst_stats(&self) {
-        println!("-----------instruction stats-----------");
+        println!("------------instruction stats------------");
         let mut inst_stats = vec![];
         for (inst_name, count) in &self.instruction_stats {
             inst_stats.push((inst_name, count));
@@ -464,13 +474,15 @@ impl Core {
         }
     }
 
+    fn show_stats(&self) {
+        self.show_memory_access_stats();
+        self.show_pc_stats();
+        self.show_inst_stats();
+    }
+
     pub fn run(&mut self, verbose: bool, interval: u64) {
-        let start_time = Instant::now();
+        // let start_time = Instant::now();
         let mut inst_count = 0;
-        let mut before_pc = std::u32::MAX;
-        let mut same_pc_cnt = 0;
-        let same_pc_limit = 5;
-        // self.save_pc("");
         self.save_int_registers();
         if verbose {
             println!("");
@@ -479,7 +491,7 @@ impl Core {
         loop {
             let current_pc = self.get_pc();
             if current_pc >= INSTRUCTION_MEMORY_SIZE as Address {
-                println!("end of program.");
+                println!("End of program.");
                 break;
             }
             if verbose {
@@ -490,43 +502,25 @@ impl Core {
                 let interval_start_time = Instant::now();
                 while interval_start_time.elapsed() < Duration::from_millis(interval) {}
             }
-            if current_pc == before_pc {
-                same_pc_cnt += 1;
-            } else {
-                same_pc_cnt = 0;
-                before_pc = current_pc;
-            }
             let instruction = self.load_instruction(current_pc);
             let inst_name = exec_instruction(self, instruction, verbose);
-            inst_count += 1;
-            if verbose {
-                self.show_registers();
-            }
-            if same_pc_cnt >= same_pc_limit {
-                println!("infinite loop detected.");
-                break;
-            }
             self.save_pc(current_pc, inst_name);
             self.save_int_registers();
             self.save_inst_name(inst_name);
+            if verbose {
+                self.show_registers();
+            }
+            inst_count += 1;
         }
         if verbose {
-            print!("    ");
-            for i in 0..self.pc_history.len() {
-                print!("{:>8}  ", i);
-            }
-            println!("");
-            self.show_pc_buffer();
-            self.show_int_registers_buffer();
+            self.show_history();
         }
-        println!(
-            "inst_count: {}\nelapsed time: {:?}\n{:.2} MIPS",
-            inst_count,
-            start_time.elapsed(),
-            inst_count as f64 / start_time.elapsed().as_micros() as f64
-        );
-        self.show_memory_access_info();
-        self.show_pc_stats();
-        self.show_inst_stats();
+        // println!(
+        //     "inst_count: {}\nelapsed time: {:?}\n{:.2} MIPS",
+        //     inst_count,
+        //     start_time.elapsed(),
+        //     inst_count as f64 / start_time.elapsed().as_micros() as f64
+        // );
+        self.show_stats();
     }
 }
