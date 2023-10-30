@@ -46,17 +46,13 @@ pub fn i32_to_u32(value: i32) -> u32 {
     }
 }
 
-#[allow(dead_code)]
 pub const RED: &str = "31";
-#[allow(dead_code)]
 pub const BLUE: &str = "34";
 
-#[allow(dead_code)]
 pub fn colorize(text: &str, color: &str) -> String {
     format!("\x1b[{}m{}\x1b[0m", color, text)
 }
 
-#[allow(dead_code)]
 pub fn colorized_println(text: &str, color: &str) {
     println!("{}", colorize(text, color));
 }
