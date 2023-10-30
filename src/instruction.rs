@@ -72,8 +72,8 @@ struct R4InstructionExecutor {
 }
 
 pub struct InstructionExecutor {
-    exec: Box<dyn Fn(&mut Core, bool)>,
-    name: String,
+    pub exec: Box<dyn Fn(&mut Core, bool)>,
+    pub name: String,
 }
 
 impl InstructionExecutor {

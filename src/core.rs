@@ -483,7 +483,7 @@ impl Core {
     pub fn run(&mut self, verbose: bool, interval: u64) {
         let executors =
             create_instruction_executors(&self.instruction_memory, &self.get_instruction_maps());
-        // let start_time = Instant::now();
+        let start_time = Instant::now();
         let mut inst_count = 0;
         self.save_int_registers();
         if verbose {
