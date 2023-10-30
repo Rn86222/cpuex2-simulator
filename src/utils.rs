@@ -75,6 +75,7 @@ pub const RED: &str = "31";
 #[allow(dead_code)]
 pub const BLUE: &str = "34";
 
+#[allow(dead_code)]
 pub fn colorize(text: &str, color: &str) -> String {
     format!("\x1b[{}m{}\x1b[0m", color, text)
 }
