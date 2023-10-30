@@ -131,19 +131,16 @@ fn exec_i_instruction(
     rd: u8,
     op: u8,
     verbose: bool,
-) -> &'static str {
+) {
     let executor = core
         .get_instruction_maps()
         .get_i_instruction_map()
         .get(&(op, funct3));
     if executor.is_none() {
         println!("unexpected op: {}, funct3: {}", op, funct3);
-        return "";
+        return;
     }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rs1, rd, verbose);
-    name
+    (executor.unwrap().exec)(core, imm, rs1, rd, verbose);
 }
 
 fn exec_r_instruction(
@@ -155,7 +152,7 @@ fn exec_r_instruction(
     rd: u8,
     op: u8,
     verbose: bool,
-) -> &'static str {
+) {
     let executor = core
         .get_instruction_maps()
         .get_r_instruction_map()
@@ -165,12 +162,9 @@ fn exec_r_instruction(
             "unexpected op: {}, funct3: {}, funct7: {}",
             op, funct3, funct7
         );
-        return "";
+        return;
     }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, rs2, rs1, rd, verbose);
-    name
+    (executor.unwrap().exec)(core, rs2, rs1, rd, verbose);
 }
 
 fn exec_s_instruction(
@@ -181,19 +175,16 @@ fn exec_s_instruction(
     funct3: u8,
     op: u8,
     verbose: bool,
-) -> &'static str {
+) {
     let executor = core
         .get_instruction_maps()
         .get_s_instruction_map()
         .get(&(op, funct3));
     if executor.is_none() {
         println!("unexpected op: {}, funct3: {}", op, funct3);
-        return "";
+        return;
     }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rs2, rs1, verbose);
-    name
+    (executor.unwrap().exec)(core, imm, rs2, rs1, verbose);
 }
 
 fn exec_b_instruction(
@@ -204,72 +195,52 @@ fn exec_b_instruction(
     funct3: u8,
     op: u8,
     verbose: bool,
-) -> &'static str {
+) {
     let executor = core
         .get_instruction_maps()
         .get_b_instruction_map()
         .get(&(op, funct3));
     if executor.is_none() {
         println!("unexpected op: {}, funct3: {}", op, funct3);
-        return "";
+        return;
     }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rs2, rs1, verbose);
-    name
+    (executor.unwrap().exec)(core, imm, rs2, rs1, verbose);
 }
 
-fn exec_j_instruction(core: &mut Core, imm: i32, rd: u8, op: u8, verbose: bool) -> &'static str {
+fn exec_j_instruction(core: &mut Core, imm: i32, rd: u8, op: u8, verbose: bool) {
     let executor = core
         .get_instruction_maps()
         .get_j_instruction_map()
         .get(&(op));
     if executor.is_none() {
         println!("unexpected op: {}", op);
-        return "";
+        return;
     }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rd, verbose);
-    name
+    (executor.unwrap().exec)(core, imm, rd, verbose);
 }
 
-fn exec_u_instruction(core: &mut Core, imm: i32, rd: u8, op: u8, verbose: bool) -> &'static str {
+fn exec_u_instruction(core: &mut Core, imm: i32, rd: u8, op: u8, verbose: bool) {
     let executor = core
         .get_instruction_maps()
         .get_u_instruction_map()
         .get(&(op));
     if executor.is_none() {
         println!("unexpected op: {}", op);
-        return "";
+        return;
     }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, imm, rd, verbose);
-    name
+    (executor.unwrap().exec)(core, imm, rd, verbose);
 }
 
-fn exec_r4_instruction(
-    core: &mut Core,
-    fs3: u8,
-    fs2: u8,
-    fs1: u8,
-    fd: u8,
-    op: u8,
-    verbose: bool,
-) -> &'static str {
+fn exec_r4_instruction(core: &mut Core, fs3: u8, fs2: u8, fs1: u8, fd: u8, op: u8, verbose: bool) {
     let executor = core
         .get_instruction_maps()
         .get_r4_instruction_map()
         .get(&(op));
     if executor.is_none() {
         println!("unexpected op: {}", op);
-        return "";
+        return;
     }
-    let executor = executor.unwrap();
-    let name = executor.name;
-    (executor.exec)(core, fs3, fs2, fs1, fd, verbose);
-    name
+    (executor.unwrap().exec)(core, fs3, fs2, fs1, fd, verbose);
 }
 
 fn create_i_instruction_map() -> IInstructionMap {
@@ -1501,46 +1472,38 @@ fn create_r4_instruction_map() -> R4InstructionMap {
     map
 }
 
-pub fn exec_instruction(core: &mut Core, inst: InstructionValue, verbose: bool) -> &'static str {
+pub fn exec_instruction(core: &mut Core, inst: InstructionValue, verbose: bool) {
     match decode_instruction(inst) {
         Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
-            let name = exec_i_instruction(core, imm, rs1, funct3, rd, op, verbose);
+            exec_i_instruction(core, imm, rs1, funct3, rd, op, verbose);
             if op != 103 {
                 core.increment_pc();
             }
-            name
         }
         Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op) => {
-            let name = exec_r_instruction(core, funct7, rs2, rs1, funct3, rd, op, verbose);
+            exec_r_instruction(core, funct7, rs2, rs1, funct3, rd, op, verbose);
             core.increment_pc();
-            name
         }
         Instruction::SInstruction(imm, rs2, rs1, funct3, op) => {
-            let name = exec_s_instruction(core, imm, rs2, rs1, funct3, op, verbose);
+            exec_s_instruction(core, imm, rs2, rs1, funct3, op, verbose);
             core.increment_pc();
-            name
         }
         Instruction::BInstruction(imm, rs2, rs1, funct3, op) => {
-            let name = exec_b_instruction(core, imm, rs2, rs1, funct3, op, verbose);
-            name
+            exec_b_instruction(core, imm, rs2, rs1, funct3, op, verbose);
         }
         Instruction::JInstruction(imm, rd, op) => {
-            let name = exec_j_instruction(core, imm, rd, op, verbose);
-            name
+            exec_j_instruction(core, imm, rd, op, verbose);
         }
         Instruction::UInstruction(imm, rd, op) => {
-            let name = exec_u_instruction(core, imm, rd, op, verbose);
+            exec_u_instruction(core, imm, rd, op, verbose);
             core.increment_pc();
-            name
         }
         Instruction::R4Instruction(fs1, _, fs2, fs3, _, fd, op) => {
-            let name = exec_r4_instruction(core, fs3, fs2, fs1, fd, op, verbose);
+            exec_r4_instruction(core, fs3, fs2, fs1, fd, op, verbose);
             core.increment_pc();
-            name
         }
         Instruction::OtherInstruction => {
             println!("other instruction {:>032b}", inst);
-            "???"
         }
     }
 }
