@@ -1,4 +1,4 @@
-use crate::types::*;
+use crate::{instruction_cache::VALUE_IN_LINE_NUM, types::*};
 const INSTRUCTION_MEMORY_SIZE: usize = 4 * 1024 * 1024;
 
 pub struct InstructionMemory {
@@ -21,17 +21,17 @@ impl InstructionMemory {
         self.values[(addr >> 2) as usize] = value;
     }
 
-    // pub fn get_cache_line(&self, addr: Address) -> [InstructionValue; VALUE_IN_LINE_NUM] {
-    //     let mut line = [0; VALUE_IN_LINE_NUM];
-    //     for i in 0..VALUE_IN_LINE_NUM {
-    //         line[i] = self.load(addr + (4 * i) as Address);
-    //     }
-    //     line
-    // }
+    pub fn get_cache_line(&self, addr: Address) -> [InstructionValue; VALUE_IN_LINE_NUM] {
+        let mut line = [0; VALUE_IN_LINE_NUM];
+        for i in 0..VALUE_IN_LINE_NUM {
+            line[i] = self.load(addr + (4 * i) as Address);
+        }
+        line
+    }
 
-    // pub fn set_cache_line(&mut self, line: [(Address, InstructionValue); VALUE_IN_LINE_NUM]) {
-    //     for i in 0..VALUE_IN_LINE_NUM {
-    //         self.store(line[i].0, line[i].1);
-    //     }
-    // }
+    pub fn set_cache_line(&mut self, line: [(Address, InstructionValue); VALUE_IN_LINE_NUM]) {
+        for i in 0..VALUE_IN_LINE_NUM {
+            self.store(line[i].0, line[i].1);
+        }
+    }
 }
