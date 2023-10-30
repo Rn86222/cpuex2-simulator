@@ -53,7 +53,7 @@ fn main() {
             if inst_count % 4 != 0 {
                 eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
             }
-            core.run(true, 0);
+            core.run(false, 0);
         }
     }
     // loop {
