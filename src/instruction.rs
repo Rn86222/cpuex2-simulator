@@ -72,6 +72,11 @@ pub trait InstructionTrait: Clone + Debug {
         None
     }
     fn get_instruction_count(&self) -> Option<InstructionCount>;
+    fn get_name(&self) -> String {
+        let debug = format!("{:?}", self);
+        let mut split = debug.split_whitespace();
+        split.next().unwrap().to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -129,6 +134,16 @@ struct JInstructionData {
     inst_count: Option<InstructionCount>,
     origin_pc: Option<Address>,
     jump_address: Option<Address>,
+}
+
+#[derive(Clone)]
+struct UInstructionData {
+    imm: Imm20,
+    rd: Rd,
+    upimm: Option<i32>,
+    rd_value: Option<Int>,
+    inst_count: Option<InstructionCount>,
+    origin_pc: Option<Address>,
 }
 
 #[derive(Clone)]
@@ -388,6 +403,162 @@ impl InstructionTrait for Lw {
 }
 
 #[derive(Clone)]
+pub struct Lbu {
+    data: IInstructionData,
+    addr: Option<Address>,
+}
+
+impl Lbu {
+    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+        let data = IInstructionData {
+            imm,
+            rs1,
+            rd,
+            extended_imm: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Lbu { data, addr: None }
+    }
+}
+
+impl Debug for Lbu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "lbu x{}, {}(x{})",
+            self.data.rd, self.data.imm, self.data.rs1
+        )
+    }
+}
+
+impl InstructionTrait for Lbu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        let forwarding_source = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source.is_some() {
+            let (_, rs1_value) = forwarding_source.unwrap();
+            self.data.rs1_value = Some(*rs1_value as Int);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        self.addr = Some((self.data.rs1_value.unwrap() + extended_imm) as Address);
+    }
+
+    fn memory(&mut self, core: &mut Core) {
+        let addr = self.addr.unwrap();
+        let value = core.load_ubyte(addr) as Int;
+        self.data.rd_value = Some(value);
+        core.set_forwarding_source(self.data.rd, self.data.inst_count.unwrap(), value);
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let load_value = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, load_value as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn is_load_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Lhu {
+    data: IInstructionData,
+    addr: Option<Address>,
+}
+
+impl Lhu {
+    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+        let data = IInstructionData {
+            imm,
+            rs1,
+            rd,
+            extended_imm: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Lhu { data, addr: None }
+    }
+}
+
+impl Debug for Lhu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "lhu x{}, {}(x{})",
+            self.data.rd, self.data.imm, self.data.rs1
+        )
+    }
+}
+
+impl InstructionTrait for Lhu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        let forwarding_source = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source.is_some() {
+            let (_, rs1_value) = forwarding_source.unwrap();
+            self.data.rs1_value = Some(*rs1_value as Int);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        self.addr = Some((self.data.rs1_value.unwrap() + extended_imm) as Address);
+    }
+
+    fn memory(&mut self, core: &mut Core) {
+        let addr = self.addr.unwrap();
+        let value = core.load_uhalf(addr) as Int;
+        self.data.rd_value = Some(value);
+        core.set_forwarding_source(self.data.rd, self.data.inst_count.unwrap(), value);
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let load_value = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, load_value as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn is_load_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
 pub struct Addi {
     data: IInstructionData,
 }
@@ -440,6 +611,70 @@ impl InstructionTrait for Addi {
             self.data.inst_count.unwrap(),
             self.data.rd_value.unwrap(),
         );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Slli {
+    data: IInstructionData,
+    uimm: Option<u32>,
+}
+
+impl Slli {
+    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+        let data = IInstructionData {
+            imm,
+            rs1,
+            rd,
+            extended_imm: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Slli { data, uimm: None }
+    }
+}
+
+impl Debug for Slli {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let uimm = self.data.imm & 0x1f;
+        write!(f, "slli x{}, x{}, {}", self.data.rd, self.data.rs1, uimm)
+    }
+}
+
+impl InstructionTrait for Slli {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.uimm = Some((self.data.imm & 0x1f) as u32);
+        let forwarding_source = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source.is_some() {
+            let (_, rs1_value) = forwarding_source.unwrap();
+            self.data.rs1_value = Some(*rs1_value as Int);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let uimm = self.uimm.unwrap();
+        self.data.rd_value = Some(self.data.rs1_value.unwrap() << uimm);
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -517,6 +752,286 @@ impl InstructionTrait for Slti {
             self.data.inst_count.unwrap(),
             self.data.rd_value.unwrap(),
         );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Sltiu {
+    data: IInstructionData,
+}
+
+impl Sltiu {
+    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+        let data = IInstructionData {
+            imm,
+            rs1,
+            rd,
+            extended_imm: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Sltiu { data }
+    }
+}
+
+impl Debug for Sltiu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        write!(
+            f,
+            "sltiu x{}, x{}, {}",
+            self.data.rd, self.data.rs1, extended_imm
+        )
+    }
+}
+
+impl InstructionTrait for Sltiu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        let forwarding_source = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source.is_some() {
+            let (_, rs1_value) = forwarding_source.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = i32_to_u32(self.data.rs1_value.unwrap());
+        self.data.rd_value = if (rs1_value as i64) < (extended_imm as i64) {
+            Some(1)
+        } else {
+            Some(0)
+        };
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Xori {
+    data: IInstructionData,
+}
+
+impl Xori {
+    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+        let data = IInstructionData {
+            imm,
+            rs1,
+            rd,
+            extended_imm: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Xori { data }
+    }
+}
+
+impl Debug for Xori {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        write!(
+            f,
+            "xori x{}, x{}, {}",
+            self.data.rd, self.data.rs1, extended_imm
+        )
+    }
+}
+
+impl InstructionTrait for Xori {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        let forwarding_source = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source.is_some() {
+            let (_, rs1_value) = forwarding_source.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        self.data.rd_value = Some(rs1_value ^ extended_imm);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Srli {
+    data: IInstructionData,
+    uimm: Option<u32>,
+}
+
+impl Srli {
+    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+        let data = IInstructionData {
+            imm,
+            rs1,
+            rd,
+            extended_imm: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Srli { data, uimm: None }
+    }
+}
+
+impl Debug for Srli {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let uimm = self.data.imm & 0x1f;
+        write!(f, "srli x{}, x{}, {}", self.data.rd, self.data.rs1, uimm)
+    }
+}
+
+impl InstructionTrait for Srli {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.uimm = Some((self.data.imm & 0x1f) as u32);
+        let forwarding_source = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source.is_some() {
+            let (_, rs1_value) = forwarding_source.unwrap();
+            self.data.rs1_value = Some(*rs1_value as Int);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let uimm = self.uimm.unwrap();
+        self.data.rd_value = Some(u32_to_i32(
+            i32_to_u32(self.data.rs1_value.unwrap()) >> uimm as u32,
+        ));
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Srai {
+    data: IInstructionData,
+    uimm: Option<u32>,
+}
+
+impl Srai {
+    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+        let data = IInstructionData {
+            imm,
+            rs1,
+            rd,
+            extended_imm: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Srai { data, uimm: None }
+    }
+}
+
+impl Debug for Srai {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let uimm = self.data.imm & 0x1f;
+        write!(f, "srai x{}, x{}, {}", self.data.rd, self.data.rs1, uimm)
+    }
+}
+
+impl InstructionTrait for Srai {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.uimm = Some((self.data.imm & 0x1f) as u32);
+        let forwarding_source = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source.is_some() {
+            let (_, rs1_value) = forwarding_source.unwrap();
+            self.data.rs1_value = Some(*rs1_value as Int);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let uimm = self.uimm.unwrap();
+        self.data.rd_value = Some(self.data.rs1_value.unwrap() >> uimm);
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -676,6 +1191,204 @@ impl InstructionTrait for Andi {
 
     fn get_destination_register(&self) -> Option<Rd> {
         Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Auipc {
+    data: UInstructionData,
+}
+
+impl Auipc {
+    fn new(imm: Imm20, rd: Rd) -> Self {
+        let data = UInstructionData {
+            imm,
+            rd,
+            upimm: None,
+            rd_value: None,
+            inst_count: None,
+            origin_pc: None,
+        };
+        Auipc { data }
+    }
+}
+
+impl Debug for Auipc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "auipc x{}, {}", self.data.rd, self.data.imm)
+    }
+}
+
+impl InstructionTrait for Auipc {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.upimm = Some(self.data.imm << 12);
+        self.data.origin_pc = Some(core.get_pc() - 4);
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let upimm = self.data.upimm.unwrap();
+        let origin_pc = self.data.origin_pc.unwrap();
+        self.data.rd_value = Some((upimm + origin_pc as i32) as Int);
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Sb {
+    data: SInstructionData,
+    addr: Option<Address>,
+}
+
+impl Sb {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = SInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+        };
+        Sb { data, addr: None }
+    }
+}
+
+impl Debug for Sb {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        write!(
+            f,
+            "sb x{}, {}(x{})",
+            self.data.rs2, extended_imm, self.data.rs1
+        )
+    }
+}
+
+impl InstructionTrait for Sb {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        self.addr = Some((rs1_value + extended_imm) as Address);
+    }
+
+    fn memory(&mut self, core: &mut Core) {
+        let addr = self.addr.unwrap();
+        core.store_byte(addr, (self.data.rs2_value.unwrap() & 0xff) as Byte);
+        // println!("store word: {} to {:x}", self.data.rs2_value.unwrap(), addr);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Sh {
+    data: SInstructionData,
+    addr: Option<Address>,
+}
+
+impl Sh {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = SInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+        };
+        Sh { data, addr: None }
+    }
+}
+
+impl Debug for Sh {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        write!(
+            f,
+            "sh x{}, {}(x{})",
+            self.data.rs2, extended_imm, self.data.rs1
+        )
+    }
+}
+
+impl InstructionTrait for Sh {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        self.addr = Some((rs1_value + extended_imm) as Address);
+    }
+
+    fn memory(&mut self, core: &mut Core) {
+        let addr = self.addr.unwrap();
+        core.store_half(addr, (self.data.rs2_value.unwrap() & 0xffff) as Half);
+        // println!("store word: {} to {:x}", self.data.rs2_value.unwrap(), addr);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -913,6 +1626,80 @@ impl InstructionTrait for Sub {
 }
 
 #[derive(Clone)]
+pub struct Sll {
+    data: RInstructionData,
+}
+
+impl Sll {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Sll { data }
+    }
+}
+
+impl Debug for Sll {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "sll x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Sll {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value as Int);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value as Int);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        let shift_value = rs2_value & 0x1f;
+        self.data.rd_value = Some(u32_to_i32(i32_to_u32(rs1_value) << (shift_value as u32)));
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
 pub struct Slt {
     data: RInstructionData,
 }
@@ -979,6 +1766,314 @@ impl InstructionTrait for Slt {
     fn write_back(&self, core: &mut Core) {
         let result = self.data.rd_value.unwrap();
         core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Sltu {
+    data: RInstructionData,
+}
+
+impl Sltu {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Sltu { data }
+    }
+}
+
+impl Debug for Sltu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "sltu x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Sltu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value = if i32_to_u32(rs1_value) < i32_to_u32(rs2_value) {
+            Some(1)
+        } else {
+            Some(0)
+        };
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Xor {
+    data: RInstructionData,
+}
+
+impl Xor {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Xor { data }
+    }
+}
+
+impl Debug for Xor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "xor x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Xor {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value = Some(rs1_value ^ rs2_value);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Srl {
+    data: RInstructionData,
+}
+
+impl Srl {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Srl { data }
+    }
+}
+
+impl Debug for Srl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "srl x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Srl {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        let shift_value = rs2_value & 0x1f;
+        self.data.rd_value = Some(u32_to_i32(i32_to_u32(rs1_value) >> (shift_value as u32)));
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Sra {
+    data: RInstructionData,
+}
+
+impl Sra {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Sra { data }
+    }
+}
+
+impl Debug for Sra {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "sra x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Sra {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        let shift_value = rs2_value & 0x1f;
+        self.data.rd_value = Some(rs1_value >> shift_value);
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result);
     }
 
     fn get_source_registers(&self) -> Vec<Rs> {
@@ -1151,6 +2246,56 @@ impl InstructionTrait for And {
 }
 
 #[derive(Clone)]
+pub struct Lui {
+    data: UInstructionData,
+}
+
+impl Lui {
+    fn new(imm: Imm20, rd: Rd) -> Self {
+        let data = UInstructionData {
+            imm,
+            rd,
+            upimm: None,
+            rd_value: None,
+            inst_count: None,
+            origin_pc: None,
+        };
+        Lui { data }
+    }
+}
+
+impl Debug for Lui {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "lui x{}, {}", self.data.rd, self.data.imm)
+    }
+}
+
+impl InstructionTrait for Lui {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.upimm = Some(self.data.imm << 12);
+        self.data.origin_pc = Some(core.get_pc() - 4);
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        self.data.rd_value = Some(self.data.upimm.unwrap());
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
 pub struct Beq {
     data: BInstructionData,
 }
@@ -1175,10 +2320,14 @@ impl Beq {
 impl Debug for Beq {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = self.data.origin_pc.unwrap();
         write!(
             f,
-            "beq x{}, x{}, {}",
-            self.data.rs1, self.data.rs2, extended_imm
+            "beq x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
         )
     }
 }
@@ -1256,10 +2405,14 @@ impl Bne {
 impl Debug for Bne {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = self.data.origin_pc.unwrap();
         write!(
             f,
-            "bne x{}, x{}, {}",
-            self.data.rs1, self.data.rs2, extended_imm
+            "bne x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
         )
     }
 }
@@ -1337,10 +2490,14 @@ impl Blt {
 impl Debug for Blt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = self.data.origin_pc.unwrap();
         write!(
             f,
-            "blt x{}, x{}, {}",
-            self.data.rs1, self.data.rs2, extended_imm
+            "blt x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
         )
     }
 }
@@ -1418,10 +2575,14 @@ impl Bge {
 impl Debug for Bge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = self.data.origin_pc.unwrap();
         write!(
             f,
-            "bge x{}, x{}, {}",
-            self.data.rs1, self.data.rs2, extended_imm
+            "bge x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
         )
     }
 }
@@ -1451,7 +2612,177 @@ impl InstructionTrait for Bge {
         let extended_imm = self.data.extended_imm.unwrap();
         let rs1_value = self.data.rs1_value.unwrap();
         let rs2_value = self.data.rs2_value.unwrap();
-        if rs1_value == rs2_value {
+        if rs1_value >= rs2_value {
+            self.data.jump_address =
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+        }
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn is_branch_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_jump_address(&self) -> Option<Address> {
+        self.data.jump_address
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Bltu {
+    data: BInstructionData,
+}
+
+impl Bltu {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = BInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+            origin_pc: None,
+            jump_address: None,
+        };
+        Bltu { data }
+    }
+}
+
+impl Debug for Bltu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = self.data.origin_pc.unwrap();
+        write!(
+            f,
+            "bltu x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
+        )
+    }
+}
+
+impl InstructionTrait for Bltu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.origin_pc = Some(core.get_pc() - 4);
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        if i32_to_u32(rs1_value) < i32_to_u32(rs2_value) {
+            self.data.jump_address =
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+        }
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn is_branch_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_jump_address(&self) -> Option<Address> {
+        self.data.jump_address
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+}
+
+#[derive(Clone)]
+pub struct Bgeu {
+    data: BInstructionData,
+}
+
+impl Bgeu {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = BInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+            origin_pc: None,
+            jump_address: None,
+        };
+        Bgeu { data }
+    }
+}
+
+impl Debug for Bgeu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = self.data.origin_pc.unwrap();
+        write!(
+            f,
+            "bgeu x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
+        )
+    }
+}
+
+impl InstructionTrait for Bgeu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.origin_pc = Some(core.get_pc() - 4);
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        if i32_to_u32(rs1_value) == i32_to_u32(rs2_value) {
             self.data.jump_address =
                 Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
         }
@@ -1636,20 +2967,38 @@ pub enum InstructionEnum {
     Lb(Lb),
     Lh(Lh),
     Lw(Lw),
+    Lbu(Lbu),
+    Lhu(Lhu),
     Addi(Addi),
+    Slli(Slli),
     Slti(Slti),
+    Sltiu(Sltiu),
+    Xori(Xori),
+    Srli(Srli),
+    Srai(Srai),
     Ori(Ori),
     Andi(Andi),
+    Auipc(Auipc),
+    Sb(Sb),
+    Sh(Sh),
     Sw(Sw),
     Add(Add),
     Sub(Sub),
+    Sll(Sll),
     Slt(Slt),
+    Sltu(Sltu),
+    Xor(Xor),
+    Srl(Srl),
+    Sra(Sra),
     Or(Or),
     And(And),
+    Lui(Lui),
     Beq(Beq),
     Bne(Bne),
     Blt(Blt),
     Bge(Bge),
+    Bltu(Bltu),
+    Bgeu(Bgeu),
     Jalr(Jalr),
     Jal(Jal),
 }
@@ -1660,20 +3009,38 @@ impl Debug for InstructionEnum {
             InstructionEnum::Lb(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Lh(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Lw(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Lbu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Lhu(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Addi(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Slli(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Slti(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Sltiu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Xori(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Srli(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Srai(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Ori(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Andi(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Auipc(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Sb(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Sh(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Sw(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Add(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Sub(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Sll(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Slt(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Sltu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Xor(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Srl(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Sra(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Or(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::And(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Lui(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Beq(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Bne(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Blt(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Bge(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Bltu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Bgeu(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Jalr(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Jal(instruction) => write!(f, "{:?}", instruction),
         }
@@ -1686,20 +3053,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.register_fetch(core),
             InstructionEnum::Lh(instruction) => instruction.register_fetch(core),
             InstructionEnum::Lw(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Lbu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Lhu(instruction) => instruction.register_fetch(core),
             InstructionEnum::Addi(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Slli(instruction) => instruction.register_fetch(core),
             InstructionEnum::Slti(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Sltiu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Xori(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Srli(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Srai(instruction) => instruction.register_fetch(core),
             InstructionEnum::Ori(instruction) => instruction.register_fetch(core),
             InstructionEnum::Andi(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Auipc(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Sb(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Sh(instruction) => instruction.register_fetch(core),
             InstructionEnum::Sw(instruction) => instruction.register_fetch(core),
             InstructionEnum::Add(instruction) => instruction.register_fetch(core),
             InstructionEnum::Sub(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Sll(instruction) => instruction.register_fetch(core),
             InstructionEnum::Slt(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Sltu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Xor(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Srl(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Sra(instruction) => instruction.register_fetch(core),
             InstructionEnum::Or(instruction) => instruction.register_fetch(core),
             InstructionEnum::And(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Lui(instruction) => instruction.register_fetch(core),
             InstructionEnum::Beq(instruction) => instruction.register_fetch(core),
             InstructionEnum::Bne(instruction) => instruction.register_fetch(core),
             InstructionEnum::Blt(instruction) => instruction.register_fetch(core),
             InstructionEnum::Bge(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Bltu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Bgeu(instruction) => instruction.register_fetch(core),
             InstructionEnum::Jalr(instruction) => instruction.register_fetch(core),
             InstructionEnum::Jal(instruction) => instruction.register_fetch(core),
         }
@@ -1710,20 +3095,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.exec(core),
             InstructionEnum::Lh(instruction) => instruction.exec(core),
             InstructionEnum::Lw(instruction) => instruction.exec(core),
+            InstructionEnum::Lbu(instruction) => instruction.exec(core),
+            InstructionEnum::Lhu(instruction) => instruction.exec(core),
             InstructionEnum::Addi(instruction) => instruction.exec(core),
+            InstructionEnum::Slli(instruction) => instruction.exec(core),
             InstructionEnum::Slti(instruction) => instruction.exec(core),
+            InstructionEnum::Sltiu(instruction) => instruction.exec(core),
+            InstructionEnum::Xori(instruction) => instruction.exec(core),
+            InstructionEnum::Srli(instruction) => instruction.exec(core),
+            InstructionEnum::Srai(instruction) => instruction.exec(core),
             InstructionEnum::Ori(instruction) => instruction.exec(core),
             InstructionEnum::Andi(instruction) => instruction.exec(core),
+            InstructionEnum::Auipc(instruction) => instruction.exec(core),
+            InstructionEnum::Sb(instruction) => instruction.exec(core),
+            InstructionEnum::Sh(instruction) => instruction.exec(core),
             InstructionEnum::Sw(instruction) => instruction.exec(core),
             InstructionEnum::Add(instruction) => instruction.exec(core),
             InstructionEnum::Sub(instruction) => instruction.exec(core),
+            InstructionEnum::Sll(instruction) => instruction.exec(core),
             InstructionEnum::Slt(instruction) => instruction.exec(core),
+            InstructionEnum::Sltu(instruction) => instruction.exec(core),
+            InstructionEnum::Xor(instruction) => instruction.exec(core),
+            InstructionEnum::Srl(instruction) => instruction.exec(core),
+            InstructionEnum::Sra(instruction) => instruction.exec(core),
             InstructionEnum::Or(instruction) => instruction.exec(core),
             InstructionEnum::And(instruction) => instruction.exec(core),
+            InstructionEnum::Lui(instruction) => instruction.exec(core),
             InstructionEnum::Beq(instruction) => instruction.exec(core),
             InstructionEnum::Bne(instruction) => instruction.exec(core),
             InstructionEnum::Blt(instruction) => instruction.exec(core),
             InstructionEnum::Bge(instruction) => instruction.exec(core),
+            InstructionEnum::Bltu(instruction) => instruction.exec(core),
+            InstructionEnum::Bgeu(instruction) => instruction.exec(core),
             InstructionEnum::Jalr(instruction) => instruction.exec(core),
             InstructionEnum::Jal(instruction) => instruction.exec(core),
         }
@@ -1734,20 +3137,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.memory(core),
             InstructionEnum::Lh(instruction) => instruction.memory(core),
             InstructionEnum::Lw(instruction) => instruction.memory(core),
+            InstructionEnum::Lbu(instruction) => instruction.memory(core),
+            InstructionEnum::Lhu(instruction) => instruction.memory(core),
             InstructionEnum::Addi(instruction) => instruction.memory(core),
+            InstructionEnum::Slli(instruction) => instruction.memory(core),
             InstructionEnum::Slti(instruction) => instruction.memory(core),
+            InstructionEnum::Sltiu(instruction) => instruction.memory(core),
+            InstructionEnum::Xori(instruction) => instruction.memory(core),
+            InstructionEnum::Srli(instruction) => instruction.memory(core),
+            InstructionEnum::Srai(instruction) => instruction.memory(core),
             InstructionEnum::Ori(instruction) => instruction.memory(core),
             InstructionEnum::Andi(instruction) => instruction.memory(core),
+            InstructionEnum::Auipc(instruction) => instruction.memory(core),
+            InstructionEnum::Sb(instruction) => instruction.memory(core),
+            InstructionEnum::Sh(instruction) => instruction.memory(core),
             InstructionEnum::Sw(instruction) => instruction.memory(core),
             InstructionEnum::Add(instruction) => instruction.memory(core),
             InstructionEnum::Sub(instruction) => instruction.memory(core),
+            InstructionEnum::Sll(instruction) => instruction.memory(core),
             InstructionEnum::Slt(instruction) => instruction.memory(core),
+            InstructionEnum::Sltu(instruction) => instruction.memory(core),
+            InstructionEnum::Xor(instruction) => instruction.memory(core),
+            InstructionEnum::Srl(instruction) => instruction.memory(core),
+            InstructionEnum::Sra(instruction) => instruction.memory(core),
             InstructionEnum::Or(instruction) => instruction.memory(core),
             InstructionEnum::And(instruction) => instruction.memory(core),
+            InstructionEnum::Lui(instruction) => instruction.memory(core),
             InstructionEnum::Beq(instruction) => instruction.memory(core),
             InstructionEnum::Bne(instruction) => instruction.memory(core),
             InstructionEnum::Blt(instruction) => instruction.memory(core),
             InstructionEnum::Bge(instruction) => instruction.memory(core),
+            InstructionEnum::Bltu(instruction) => instruction.memory(core),
+            InstructionEnum::Bgeu(instruction) => instruction.memory(core),
             InstructionEnum::Jalr(instruction) => instruction.memory(core),
             InstructionEnum::Jal(instruction) => instruction.memory(core),
         }
@@ -1758,20 +3179,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.write_back(core),
             InstructionEnum::Lh(instruction) => instruction.write_back(core),
             InstructionEnum::Lw(instruction) => instruction.write_back(core),
+            InstructionEnum::Lbu(instruction) => instruction.write_back(core),
+            InstructionEnum::Lhu(instruction) => instruction.write_back(core),
             InstructionEnum::Addi(instruction) => instruction.write_back(core),
+            InstructionEnum::Slli(instruction) => instruction.write_back(core),
             InstructionEnum::Slti(instruction) => instruction.write_back(core),
+            InstructionEnum::Sltiu(instruction) => instruction.write_back(core),
+            InstructionEnum::Xori(instruction) => instruction.write_back(core),
+            InstructionEnum::Srli(instruction) => instruction.write_back(core),
+            InstructionEnum::Srai(instruction) => instruction.write_back(core),
             InstructionEnum::Ori(instruction) => instruction.write_back(core),
             InstructionEnum::Andi(instruction) => instruction.write_back(core),
+            InstructionEnum::Auipc(instruction) => instruction.write_back(core),
+            InstructionEnum::Sb(instruction) => instruction.write_back(core),
+            InstructionEnum::Sh(instruction) => instruction.write_back(core),
             InstructionEnum::Sw(instruction) => instruction.write_back(core),
             InstructionEnum::Add(instruction) => instruction.write_back(core),
             InstructionEnum::Sub(instruction) => instruction.write_back(core),
+            InstructionEnum::Sll(instruction) => instruction.write_back(core),
             InstructionEnum::Slt(instruction) => instruction.write_back(core),
+            InstructionEnum::Sltu(instruction) => instruction.write_back(core),
+            InstructionEnum::Xor(instruction) => instruction.write_back(core),
+            InstructionEnum::Srl(instruction) => instruction.write_back(core),
+            InstructionEnum::Sra(instruction) => instruction.write_back(core),
             InstructionEnum::Or(instruction) => instruction.write_back(core),
             InstructionEnum::And(instruction) => instruction.write_back(core),
+            InstructionEnum::Lui(instruction) => instruction.write_back(core),
             InstructionEnum::Beq(instruction) => instruction.write_back(core),
             InstructionEnum::Bne(instruction) => instruction.write_back(core),
             InstructionEnum::Blt(instruction) => instruction.write_back(core),
             InstructionEnum::Bge(instruction) => instruction.write_back(core),
+            InstructionEnum::Bltu(instruction) => instruction.write_back(core),
+            InstructionEnum::Bgeu(instruction) => instruction.write_back(core),
             InstructionEnum::Jalr(instruction) => instruction.write_back(core),
             InstructionEnum::Jal(instruction) => instruction.write_back(core),
         }
@@ -1782,20 +3221,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.get_source_registers(),
             InstructionEnum::Lh(instruction) => instruction.get_source_registers(),
             InstructionEnum::Lw(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Lbu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Lhu(instruction) => instruction.get_source_registers(),
             InstructionEnum::Addi(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Slli(instruction) => instruction.get_source_registers(),
             InstructionEnum::Slti(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Sltiu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Xori(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Srli(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Srai(instruction) => instruction.get_source_registers(),
             InstructionEnum::Ori(instruction) => instruction.get_source_registers(),
             InstructionEnum::Andi(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Auipc(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Sb(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Sh(instruction) => instruction.get_source_registers(),
             InstructionEnum::Sw(instruction) => instruction.get_source_registers(),
             InstructionEnum::Add(instruction) => instruction.get_source_registers(),
             InstructionEnum::Sub(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Sll(instruction) => instruction.get_source_registers(),
             InstructionEnum::Slt(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Sltu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Xor(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Srl(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Sra(instruction) => instruction.get_source_registers(),
             InstructionEnum::Or(instruction) => instruction.get_source_registers(),
             InstructionEnum::And(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Lui(instruction) => instruction.get_source_registers(),
             InstructionEnum::Beq(instruction) => instruction.get_source_registers(),
             InstructionEnum::Bne(instruction) => instruction.get_source_registers(),
             InstructionEnum::Blt(instruction) => instruction.get_source_registers(),
             InstructionEnum::Bge(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Bltu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Bgeu(instruction) => instruction.get_source_registers(),
             InstructionEnum::Jalr(instruction) => instruction.get_source_registers(),
             InstructionEnum::Jal(instruction) => instruction.get_source_registers(),
         }
@@ -1806,20 +3263,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.get_destination_register(),
             InstructionEnum::Lh(instruction) => instruction.get_destination_register(),
             InstructionEnum::Lw(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Lbu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Lhu(instruction) => instruction.get_destination_register(),
             InstructionEnum::Addi(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Slli(instruction) => instruction.get_destination_register(),
             InstructionEnum::Slti(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Sltiu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Xori(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Srli(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Srai(instruction) => instruction.get_destination_register(),
             InstructionEnum::Ori(instruction) => instruction.get_destination_register(),
             InstructionEnum::Andi(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Auipc(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Sb(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Sh(instruction) => instruction.get_destination_register(),
             InstructionEnum::Sw(instruction) => instruction.get_destination_register(),
             InstructionEnum::Add(instruction) => instruction.get_destination_register(),
             InstructionEnum::Sub(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Sll(instruction) => instruction.get_destination_register(),
             InstructionEnum::Slt(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Sltu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Xor(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Srl(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Sra(instruction) => instruction.get_destination_register(),
             InstructionEnum::Or(instruction) => instruction.get_destination_register(),
             InstructionEnum::And(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Lui(instruction) => instruction.get_destination_register(),
             InstructionEnum::Beq(instruction) => instruction.get_destination_register(),
             InstructionEnum::Bne(instruction) => instruction.get_destination_register(),
             InstructionEnum::Blt(instruction) => instruction.get_destination_register(),
             InstructionEnum::Bge(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Bltu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Bgeu(instruction) => instruction.get_destination_register(),
             InstructionEnum::Jalr(instruction) => instruction.get_destination_register(),
             InstructionEnum::Jal(instruction) => instruction.get_destination_register(),
         }
@@ -1839,20 +3314,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Lh(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Lw(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Lbu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Lhu(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Addi(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Slli(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Slti(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Sltiu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Xori(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Srli(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Srai(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Ori(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Andi(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Auipc(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Sb(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Sh(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Sw(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Add(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Sub(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Sll(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Slt(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Sltu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Xor(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Srl(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Sra(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Or(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::And(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Lui(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Beq(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Bne(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Blt(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Bge(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Bltu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Bgeu(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Jalr(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Jal(instruction) => instruction.is_branch_instruction(),
         }
@@ -1863,20 +3356,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.get_jump_address(),
             InstructionEnum::Lh(instruction) => instruction.get_jump_address(),
             InstructionEnum::Lw(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Lbu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Lhu(instruction) => instruction.get_jump_address(),
             InstructionEnum::Addi(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Slli(instruction) => instruction.get_jump_address(),
             InstructionEnum::Slti(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Sltiu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Xori(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Srli(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Srai(instruction) => instruction.get_jump_address(),
             InstructionEnum::Ori(instruction) => instruction.get_jump_address(),
             InstructionEnum::Andi(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Auipc(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Sb(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Sh(instruction) => instruction.get_jump_address(),
             InstructionEnum::Sw(instruction) => instruction.get_jump_address(),
             InstructionEnum::Add(instruction) => instruction.get_jump_address(),
             InstructionEnum::Sub(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Sll(instruction) => instruction.get_jump_address(),
             InstructionEnum::Slt(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Sltu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Xor(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Srl(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Sra(instruction) => instruction.get_jump_address(),
             InstructionEnum::Or(instruction) => instruction.get_jump_address(),
             InstructionEnum::And(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Lui(instruction) => instruction.get_jump_address(),
             InstructionEnum::Beq(instruction) => instruction.get_jump_address(),
             InstructionEnum::Bne(instruction) => instruction.get_jump_address(),
             InstructionEnum::Blt(instruction) => instruction.get_jump_address(),
             InstructionEnum::Bge(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Bltu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Bgeu(instruction) => instruction.get_jump_address(),
             InstructionEnum::Jalr(instruction) => instruction.get_jump_address(),
             InstructionEnum::Jal(instruction) => instruction.get_jump_address(),
         }
@@ -1887,20 +3398,38 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Lb(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Lh(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Lw(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Lbu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Lhu(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Addi(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Slli(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Slti(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Sltiu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Xori(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Srli(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Srai(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Ori(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Andi(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Auipc(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Sb(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Sh(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Sw(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Add(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Sub(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Sll(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Slt(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Sltu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Xor(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Srl(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Sra(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Or(instruction) => instruction.get_instruction_count(),
             InstructionEnum::And(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Lui(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Beq(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Bne(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Blt(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Bge(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Bltu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Bgeu(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jalr(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jal(instruction) => instruction.get_instruction_count(),
         }
@@ -1919,12 +3448,8 @@ fn create_i_instruction_struct(
             0b000 => InstructionEnum::Lb(Lb::new(imm, rs1, rd)),
             0b001 => InstructionEnum::Lh(Lh::new(imm, rs1, rd)),
             0b010 => InstructionEnum::Lw(Lw::new(imm, rs1, rd)),
-            // 0b100 => {
-            //     // lbu
-            // }
-            // 0b101 => {
-            //     // lhu
-            // }
+            0b100 => InstructionEnum::Lbu(Lbu::new(imm, rs1, rd)),
+            0b101 => InstructionEnum::Lhu(Lhu::new(imm, rs1, rd)),
             _ => {
                 println!("unexpected funct3: {}", funct3);
                 panic!();
@@ -1932,30 +3457,21 @@ fn create_i_instruction_struct(
         },
         19 => match funct3 {
             0b000 => InstructionEnum::Addi(Addi::new(imm, rs1, rd)),
-            // 0b001 => {
-            //     // slli;
-            // }
+            0b001 => InstructionEnum::Slli(Slli::new(imm, rs1, rd)),
             0b010 => InstructionEnum::Slti(Slti::new(imm, rs1, rd)),
-            // 0b011 => {
-            //     // sltiu
-            // }
-            // 0b100 => {
-            //     // xori
-            // }
-            // 0b101 => {
-            //     let funct7 = (imm >> 5) & 0b1111111;
-            //     match funct7 {
-            //         0b0000000 => {
-            //             // srli
-            //         }
-            //         0b0100000 => {
-            //             // srai
-            //         }
-            //         _ => {
-            //             println!("unexpected funct7: {}", funct7)
-            //         }
-            //     }
-            // }
+            0b011 => InstructionEnum::Sltiu(Sltiu::new(imm, rs1, rd)),
+            0b100 => InstructionEnum::Xori(Xori::new(imm, rs1, rd)),
+            0b101 => {
+                let funct7 = (imm >> 5) & 0b1111111;
+                match funct7 {
+                    0b0000000 => InstructionEnum::Srli(Srli::new(imm, rs1, rd)),
+                    0b0100000 => InstructionEnum::Srai(Srai::new(imm, rs1, rd)),
+                    _ => {
+                        println!("unexpected funct7: {}", funct7);
+                        panic!();
+                    }
+                }
+            }
             0b110 => InstructionEnum::Ori(Ori::new(imm, rs1, rd)),
             0b111 => InstructionEnum::Andi(Andi::new(imm, rs1, rd)),
             _ => {
@@ -2012,17 +3528,16 @@ fn create_r_instruction_struct(
                     panic!();
                 }
             },
-            // 0b001 => match funct7 {
-            //     0b0000000 => {
-            //         // sll
-            //     }
-            //     0b0000001 => {
-            //         // mulh
-            //     }
-            //     _ => {
-            //         println!("unexpected funct7: {}", funct7)
-            //     }
-            // },
+            0b001 => match funct7 {
+                0b0000000 => InstructionEnum::Sll(Sll::new(rs2, rs1, rd)),
+                // 0b0000001 => {
+                //     // mulh
+                // }
+                _ => {
+                    println!("unexpected funct7: {}", funct7);
+                    panic!();
+                }
+            },
             0b010 => match funct7 {
                 0b0000000 => InstructionEnum::Slt(Slt::new(rs2, rs1, rd)),
                 // 0b0000001 => {
@@ -2033,42 +3548,37 @@ fn create_r_instruction_struct(
                     panic!();
                 }
             },
-            // 0b011 => match funct7 {
-            //     0b0000000 => {
-            //         // sltu
-            //     }
-            //     0b0000001 => {
-            //         // mulhu
-            //     }
-            //     _ => {
-            //         println!("unexpected funct7: {}", funct7)
-            //     }
-            // },
-            // 0b100 => match funct7 {
-            //     0b0000000 => {
-            //         // xor
-            //     }
-            //     0b0000001 => {
-            //         // div
-            //     }
-            //     _ => {
-            //         println!("unexpected funct7: {}", funct7)
-            //     }
-            // },
-            // 0b101 => match funct7 {
-            //     0b0000000 => {
-            //         // srl
-            //     }
-            //     0b0100000 => {
-            //         // sra
-            //     }
-            //     0b0000001 => {
-            //         // divu
-            //     }
-            //     _ => {
-            //         println!("unexpected funct7: {}", funct7)
-            //     }
-            // },
+            0b011 => match funct7 {
+                0b0000000 => InstructionEnum::Sltu(Sltu::new(rs2, rs1, rd)),
+                // 0b0000001 => {
+                //     // mulhu
+                // }
+                _ => {
+                    println!("unexpected funct7: {}", funct7);
+                    panic!();
+                }
+            },
+            0b100 => match funct7 {
+                0b0000000 => InstructionEnum::Xor(Xor::new(rs2, rs1, rd)),
+                // 0b0000001 => {
+                //     // div
+                // }
+                _ => {
+                    println!("unexpected funct7: {}", funct7);
+                    panic!();
+                }
+            },
+            0b101 => match funct7 {
+                0b0000000 => InstructionEnum::Srl(Srl::new(rs2, rs1, rd)),
+                0b0100000 => InstructionEnum::Sra(Sra::new(rs2, rs1, rd)),
+                // 0b0000001 => {
+                //     // divu
+                // }
+                _ => {
+                    println!("unexpected funct7: {}", funct7);
+                    panic!();
+                }
+            },
             0b110 => match funct7 {
                 0b0000000 => InstructionEnum::Or(Or::new(rs2, rs1, rd)),
                 // 0b0000001 => {
@@ -2264,12 +3774,8 @@ fn create_s_instruction_struct(
 ) -> InstructionEnum {
     match op {
         35 => match funct3 {
-            // 0b000 => {
-            //     // sb
-            // }
-            // 0b001 => {
-            //     // sh
-            // }
+            0b000 => InstructionEnum::Sb(Sb::new(imm, rs2, rs1)),
+            0b001 => InstructionEnum::Sh(Sh::new(imm, rs2, rs1)),
             0b010 => InstructionEnum::Sw(Sw::new(imm, rs2, rs1)),
             _ => {
                 println!("unexpected funct3: {}", funct3);
@@ -2306,12 +3812,8 @@ fn create_b_instruction_struct(
             0b001 => InstructionEnum::Bne(Bne::new(imm, rs2, rs1)),
             0b100 => InstructionEnum::Blt(Blt::new(imm, rs2, rs1)),
             0b101 => InstructionEnum::Bge(Bge::new(imm, rs2, rs1)),
-            // 0b110 => {
-            //     // bltu
-            // }
-            // 0b111 => {
-            //     // bgeu
-            // }
+            0b110 => InstructionEnum::Bltu(Bltu::new(imm, rs2, rs1)),
+            0b111 => InstructionEnum::Bgeu(Bgeu::new(imm, rs2, rs1)),
             _ => {
                 println!("unexpected funct3: {}", funct3);
                 panic!();
@@ -2336,12 +3838,8 @@ fn create_j_instruction_struct(imm: Imm20, rd: Rd, op: Op) -> InstructionEnum {
 
 fn create_u_instruction_struct(imm: Imm20, rd: Rd, op: Op) -> InstructionEnum {
     match op {
-        // 23 => {
-        //     // auipc
-        // }
-        // 55 => {
-        //     // lui
-        // }
+        23 => InstructionEnum::Auipc(Auipc::new(imm, rd)),
+        55 => InstructionEnum::Lui(Lui::new(imm, rd)),
         _ => {
             println!("unexpected op: {}", op);
             panic!();
@@ -2465,392 +3963,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 
 // fn create_i_instruction_map() -> IInstructionMap {
 //     let mut map = IInstructionMap::new();
-//     let lb = IInstructionExecutor {
-//         exec: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_exec_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(imm, rs1, 0b000, _, 3) => {
-//                     let extended_imm = core.get_extended_imm();
-//                     let rs1_value = core.get_int_register(rs1 as usize);
-//                     let addr = rs1_value + extended_imm;
-//                     ExecResult::I32(addr)
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         memory: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_memory_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(_, _, 0b000, _, 3) => {
-//                     let exec_result = core.get_exec_result().unwrap();
-//                     match exec_result {
-//                         ExecResult::I32(addr) => {
-//                             let value = core.load_byte(addr as Address);
-//                             LoadValue::Byte(value)
-//                         }
-//                         _ => {
-//                             println!("unexpected addr: {:?}", exec_result);
-//                             panic!();
-//                         }
-//                     }
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         write_back: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_write_back_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(_, _, 0b000, rd, 3) => {
-//                     let load_value = core.get_load_value().unwrap();
-//                     match load_value {
-//                         LoadValue::Byte(value) => {
-//                             core.set_int_register(rd as usize, value as Int);
-//                         }
-//                         _ => {
-//                             println!("unexpected load_value: {:?}", load_value);
-//                             panic!();
-//                         }
-//                     }
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                 }
-//             }
-//         },
-//         debug: |core: &Core| {
-//             let instruction = core.get_instruction_in_exec_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(imm, rs1, 0b000, rd, 3) => {
-//                     let extended_imm = sign_extention_i16(imm, 12);
-//                     format!("lb x{}, {}(x{})", rd, extended_imm, rs1)
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         name: "lb",
-//     };
-//     map.insert((3, 0b000), lb);
-//     // let lh = IInstructionExecutor {
-//     //     exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//     //         let imm = sign_extention_i16(imm, 12);
-//     //         if verbose {
-//     //             println_inst(&format!("lh x{}, {}(x{})", rd, imm, rs1));
-//     //         }
-//     //         let value = core
-//     //             .load_half((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
-//     //         core.set_int_register(rd as usize, value as Int);
-//     //     },
-//     //     name: "lh",
-//     // };
-//     // map.insert((3, 0b001), lh);
-//     let lw = IInstructionExecutor {
-//         exec: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_exec_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(imm, rs1, 0b010, _, 3) => {
-//                     let extended_imm = core.get_extended_imm();
-//                     let rs1_value = core.get_int_register(rs1 as usize);
-//                     let addr = rs1_value + extended_imm;
-//                     ExecResult::I32(addr)
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         memory: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_memory_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(_, _, 0b010, _, 3) => {
-//                     let exec_result = core.get_exec_result().unwrap();
-//                     match exec_result {
-//                         ExecResult::I32(addr) => {
-//                             let value = core.load_word(addr as Address);
-//                             LoadValue::Word(value)
-//                         }
-//                         _ => {
-//                             println!("unexpected addr: {:?}", exec_result);
-//                             panic!();
-//                         }
-//                     }
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         write_back: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_write_back_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(_, _, 0b010, rd, 3) => {
-//                     let load_value = core.get_load_value().unwrap();
-//                     match load_value {
-//                         LoadValue::Byte(value) => {
-//                             core.set_int_register(rd as usize, value as Int);
-//                         }
-//                         _ => {
-//                             println!("unexpected load_value: {:?}", load_value);
-//                             panic!();
-//                         }
-//                     }
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                 }
-//             }
-//         },
-//         debug: |core: &Core| {
-//             let instruction = core.get_instruction_in_exec_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(imm, rs1, 0b010, rd, 3) => {
-//                     let extended_imm = sign_extention_i16(imm, 12);
-//                     format!("lw x{}, {}(x{})", rd, extended_imm, rs1)
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         name: "lw",
-//     };
-//     map.insert((3, 0b010), lw);
-//     // let lbu = IInstructionExecutor {
-//     //     exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//     //         let imm = sign_extention_i16(imm, 12);
-//     //         if verbose {
-//     //             println_inst(&format!("lbu x{}, {}(x{})", rd, imm, rs1));
-//     //         }
-//     //         let value = core
-//     //             .load_ubyte((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
-//     //         core.set_int_register(rd as usize, value as Int);
-//     //     },
-//     //     name: "lbu",
-//     // };
-//     // map.insert((3, 0b100), lbu);
-//     // let lhu = IInstructionExecutor {
-//     //     exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//     //         let imm = sign_extention_i16(imm, 12);
-//     //         if verbose {
-//     //             println_inst(&format!("lhu x{}, {}(x{})", rd, imm, rs1));
-//     //         }
-//     //         let value = core
-//     //             .load_uhalf((imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address);
-//     //         core.set_int_register(rd as usize, value as Int);
-//     //     },
-//     //     name: "lhu",
-//     // };
-//     // map.insert((3, 0b101), lhu);
-//     let addi = IInstructionExecutor {
-//         exec: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_exec_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(imm, rs1, 0b000, _, 19) => {
-//                     let extended_imm = core.get_extended_imm();
-//                     let rs1_value = core.get_int_register(rs1 as usize);
-//                     let value = rs1_value + extended_imm;
-//                     ExecResult::I32(value)
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         memory: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_memory_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(_, _, 0b000, _, 19) => {
-//                     let exec_result = core.get_exec_result().unwrap();
-//                     match exec_result {
-//                         ExecResult::I32(addr) => LoadValue::None,
-//                         _ => {
-//                             println!("unexpected addr: {:?}", exec_result);
-//                             panic!();
-//                         }
-//                     }
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         write_back: |core: &mut Core| {
-//             let instruction = core.get_instruction_in_write_back_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(_, _, 0b000, rd, 19) => {
-//                     let before_exec_result = core.get_before_exec_result();
-//                     match before_exec_result {
-//                         ExecResult::I32(value) => {
-//                             core.set_int_register(rd as usize, value as Int);
-//                         }
-//                         _ => {
-//                             println!("unexpected before_exec_value: {:?}", before_exec_result);
-//                             panic!();
-//                         }
-//                     }
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                 }
-//             }
-//         },
-//         debug: |core: &Core| {
-//             let instruction = core.get_instruction_in_exec_stage().unwrap();
-//             match instruction {
-//                 Instruction::IInstruction(imm, rs1, 0b000, rd, 19) => {
-//                     let extended_imm = sign_extention_i16(imm, 12);
-//                     format!("addi x{}, x{}, {}", rd, rs1, extended_imm)
-//                 }
-//                 _ => {
-//                     println!("unexpected instruction: {:?}", instruction);
-//                     panic!();
-//                 }
-//             }
-//         },
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("addi x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let value = core.get_int_register(rs1 as usize) + imm as i32;
-//             core.set_int_register(rd as usize, value);
-//         },
-//         name: "addi",
-//     };
-//     map.insert((19, 0b000), addi);
-//     let slli = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = imm & 0b11111;
-//             let funct7 = (imm >> 5) & 0b1111111;
-//             assert_eq!(funct7, 0);
-//             if verbose {
-//                 println_inst(&format!("slli x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value << imm);
-//         },
-//         name: "slli",
-//     };
-//     map.insert((19, 0b001), slli);
-//     let slti = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("slti x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if rs1_value < imm as i32 {
-//                 core.set_int_register(rd as usize, 1);
-//             } else {
-//                 core.set_int_register(rd as usize, 0);
-//             }
-//         },
-//         name: "slti",
-//     };
-//     map.insert((19, 0b010), slti);
-//     let sltiu = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("sltiu x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
-//             if (rs1_value as i64) < (imm as i64) {
-//                 core.set_int_register(rd as usize, 1);
-//             } else {
-//                 core.set_int_register(rd as usize, 0);
-//             }
-//         },
-//         name: "sltiu",
-//     };
-//     map.insert((19, 0b011), sltiu);
-//     let xori = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("xori x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value ^ imm as i32);
-//         },
-//         name: "xori",
-//     };
-//     map.insert((19, 0b100), xori);
-//     let srli_srai = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let funct7 = (imm >> 5) & 0b1111111;
-//             let imm = imm & 0b11111;
-//             if funct7 == 0b0000000 {
-//                 // srli
-//                 if verbose {
-//                     println_inst(&format!("srli x{}, x{}, {}", rd, rs1, imm));
-//                 }
-//                 let rs1_value = core.get_int_register(rs1 as usize);
-//                 core.set_int_register(rd as usize, u32_to_i32(i32_to_u32(rs1_value) >> imm));
-//             } else if funct7 == 0b0100000 {
-//                 // srai
-//                 if verbose {
-//                     println_inst(&format!("srai x{}, x{}, {}", rd, rs1, imm));
-//                 }
-//                 let rs1_value = core.get_int_register(rs1 as usize);
-//                 core.set_int_register(rd as usize, rs1_value >> imm);
-//             } else {
-//                 println!("unexpected funct7: {}", funct7);
-//             }
-//         },
-//         name: "srli_srai",
-//     };
-//     map.insert((19, 0b101), srli_srai);
-//     let ori = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("ori x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value | imm as i32);
-//         },
-//         name: "ori",
-//     };
-//     map.insert((19, 0b110), ori);
-//     let andi = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("andi x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value & imm as i32);
-//         },
-//         name: "andi",
-//     };
-//     map.insert((19, 0b111), andi);
-//     let jalr = IInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("jalr x{}, x{}, {}", rd, rs1, imm));
-//             }
-//             let new_pc = core.get_int_register(rs1 as usize) + imm as i32;
-//             core.set_int_register(rd as usize, u32_to_i32(core.get_pc() as u32 + 4));
-//             core.set_pc(new_pc as Address);
-//         },
-//         name: "jalr",
-//     };
-//     map.insert((103, 0b000), jalr);
 //     let flw = IInstructionExecutor {
 //         exec: |core: &mut Core, imm: i16, rs1: u8, rd: u8, verbose: bool| {
 //             let imm = sign_extention_i16(imm, 12);
@@ -2923,29 +4035,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 
 // fn create_r_instruction_map() -> RInstructionMap {
 //     let mut map = RInstructionMap::new();
-//     let add = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("add x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value + rs2_value);
-//         },
-//         name: "add",
-//     };
-//     map.insert((51, 0b000, 0b0000000), add);
-//     let sub = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("sub x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value - rs2_value);
-//         },
-//         name: "sub",
-//     };
 //     map.insert((51, 0b000, 0b0100000), sub);
 //     let mul = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
@@ -2975,20 +4064,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "absdiff",
 //     };
 //     map.insert((51, 0b000, 0b0110000), absdiff);
-//     let sll = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("sll x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(
-//                 rd as usize,
-//                 u32_to_i32(i32_to_u32(rs1_value) << (rs2_value & 0b11111)) as Int,
-//             );
-//         },
-//         name: "sll",
-//     };
 //     map.insert((51, 0b001, 0b0000000), sll);
 //     let mulh = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
@@ -3005,22 +4080,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "mulh",
 //     };
 //     map.insert((51, 0b001, 0b0000001), mulh);
-//     let slt = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("slt x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if rs1_value < rs2_value {
-//                 core.set_int_register(rd as usize, 1);
-//             } else {
-//                 core.set_int_register(rd as usize, 0);
-//             }
-//         },
-//         name: "slt",
-//     };
-//     map.insert((51, 0b010, 0b0000000), slt);
 //     let mulhsu = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
@@ -3036,22 +4095,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "mulhsu",
 //     };
 //     map.insert((51, 0b010, 0b0000001), mulhsu);
-//     let sltu = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("sltu x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
-//             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
-//             if rs1_value < rs2_value {
-//                 core.set_int_register(rd as usize, 1);
-//             } else {
-//                 core.set_int_register(rd as usize, 0);
-//             }
-//         },
-//         name: "slty",
-//     };
-//     map.insert((51, 0b011, 0b0000000), sltu);
 //     let mulhu = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
@@ -3067,18 +4110,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "mulhu",
 //     };
 //     map.insert((51, 0b011, 0b0000001), mulhu);
-//     let xor = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("xor x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value ^ rs2_value);
-//         },
-//         name: "xor",
-//     };
-//     map.insert((51, 0b100, 0b0000000), xor);
 //     let div = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
@@ -3095,33 +4126,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "div",
 //     };
 //     map.insert((51, 0b100, 0b0000001), div);
-//     let srl = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("srl x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(
-//                 rd as usize,
-//                 u32_to_i32(i32_to_u32(rs1_value) >> (rs2_value & 0b11111)),
-//             );
-//         },
-//         name: "srl",
-//     };
-//     map.insert((51, 0b101, 0b0000000), srl);
-//     let sra = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("sra x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value >> (rs2_value & 0b11111));
-//         },
-//         name: "sra",
-//     };
-//     map.insert((51, 0b101, 0b0100000), sra);
 //     let divu = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
@@ -3141,18 +4145,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "divu",
 //     };
 //     map.insert((51, 0b101, 0b0000001), divu);
-//     let or = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("or x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value | rs2_value);
-//         },
-//         name: "or",
-//     };
-//     map.insert((51, 0b110, 0b0000000), or);
 //     let rem = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
@@ -3169,18 +4161,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "rem",
 //     };
 //     map.insert((51, 0b110, 0b0000001), rem);
-//     let and = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("and x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             core.set_int_register(rd as usize, rs1_value & rs2_value);
-//         },
-//         name: "and",
-//     };
-//     map.insert((51, 0b111, 0b0000000), and);
 //     let remu = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
@@ -3564,51 +4544,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 
 // fn create_s_instruction_map() -> SInstructionMap {
 //     let mut map = SInstructionMap::new();
-//     let sb = SInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("sb x{}, {}(x{})", rs2, imm, rs1));
-//             }
-//             let value = core.get_int_register(rs2 as usize);
-//             core.store_byte(
-//                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
-//                 (value & 255) as Byte,
-//             )
-//         },
-//         name: "sb",
-//     };
-//     map.insert((35, 0b000), sb);
-//     let sh = SInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("sh x{}, {}(x{})", rs2, imm, rs1));
-//             }
-//             let value = core.get_int_register(rs2 as usize);
-//             core.store_half(
-//                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
-//                 (value & 65535) as Half,
-//             )
-//         },
-//         name: "sh",
-//     };
-//     map.insert((35, 0b001), sh);
-//     let sw = SInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("sw x{}, {}(x{})", rs2, imm, rs1));
-//             }
-//             let value = core.get_int_register(rs2 as usize);
-//             core.store_word(
-//                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
-//                 value as Word,
-//             )
-//         },
-//         name: "sw",
-//     };
-//     map.insert((35, 0b010), sw);
 //     let fsw = SInstructionExecutor {
 //         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
 //             let imm = sign_extention_i16(imm, 12);
@@ -3624,203 +4559,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "fsw",
 //     };
 //     map.insert((39, 0b010), fsw);
-//     map
-// }
-
-// fn create_b_instruction_map() -> BInstructionMap {
-//     let mut map = BInstructionMap::new();
-//     let beq = BInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!(
-//                     "beq x{}, x{}, {} + {}",
-//                     rs2,
-//                     rs1,
-//                     core.get_pc(),
-//                     imm << 1,
-//                 ));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if rs1_value == rs2_value {
-//                 let new_pc = core.get_pc() as i64 + (imm << 1) as i64;
-//                 core.set_pc(new_pc as Address);
-//             } else {
-//                 core.increment_pc();
-//             }
-//         },
-//         name: "beq",
-//     };
-//     map.insert((99, 0b000), beq);
-//     let bne = BInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!(
-//                     "bne x{}, x{}, {} + {}",
-//                     rs2,
-//                     rs1,
-//                     core.get_pc(),
-//                     imm << 1,
-//                 ));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if rs1_value != rs2_value {
-//                 let new_pc = core.get_pc() as i64 + (imm << 1) as i64;
-//                 core.set_pc(new_pc as Address);
-//             } else {
-//                 core.increment_pc();
-//             }
-//         },
-//         name: "bne",
-//     };
-//     map.insert((99, 0b001), bne);
-//     let blt = BInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!(
-//                     "blt x{}, x{}, {} + {}",
-//                     rs2,
-//                     rs1,
-//                     core.get_pc(),
-//                     imm << 1,
-//                 ));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if rs1_value < rs2_value {
-//                 let new_pc = core.get_pc() as i64 + (imm << 1) as i64;
-//                 core.set_pc(new_pc as Address);
-//             } else {
-//                 core.increment_pc();
-//             }
-//         },
-//         name: "blt",
-//     };
-//     map.insert((99, 0b100), blt);
-//     let bge = BInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!(
-//                     "bge x{}, x{}, {} + {}",
-//                     rs2,
-//                     rs1,
-//                     core.get_pc(),
-//                     imm << 1,
-//                 ));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if rs1_value >= rs2_value {
-//                 let new_pc = core.get_pc() as i64 + (imm << 1) as i64;
-//                 core.set_pc(new_pc as Address);
-//             } else {
-//                 core.increment_pc();
-//             }
-//         },
-//         name: "bge",
-//     };
-//     map.insert((99, 0b101), bge);
-//     let bltu = BInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!(
-//                     "bltu x{}, x{}, {} + {}",
-//                     rs2,
-//                     rs1,
-//                     core.get_pc(),
-//                     imm << 1,
-//                 ));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if i32_to_u32(rs1_value) < i32_to_u32(rs2_value) {
-//                 let new_pc = core.get_pc() as i64 + (imm << 1) as i64;
-//                 core.set_pc(new_pc as Address);
-//             } else {
-//                 core.increment_pc();
-//             }
-//         },
-//         name: "bltu",
-//     };
-//     map.insert((99, 0b110), bltu);
-//     let bgeu = BInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!(
-//                     "bgeu x{}, x{}, {} + {}",
-//                     rs2,
-//                     rs1,
-//                     core.get_pc(),
-//                     imm << 1,
-//                 ));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize);
-//             let rs1_value = core.get_int_register(rs1 as usize);
-//             if i32_to_u32(rs1_value) >= i32_to_u32(rs2_value) {
-//                 let new_pc = core.get_pc() as i64 + (imm << 1) as i64;
-//                 core.set_pc(new_pc as Address);
-//             } else {
-//                 core.increment_pc();
-//             }
-//         },
-//         name: "bgeu",
-//     };
-//     map.insert((99, 0b111), bgeu);
-//     map
-// }
-
-// fn create_j_instruction_map() -> JInstructionMap {
-//     let mut map = JInstructionMap::new();
-//     let jal = JInstructionExecutor {
-//         exec: |core: &mut Core, imm: i32, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i32(imm, 20);
-//             if verbose {
-//                 println_inst(&format!("jal x{}, {} + {}", rd, core.get_pc(), imm << 1));
-//             }
-//             let new_pc = core.get_pc() as i32 + (imm << 1);
-//             core.set_int_register(rd as usize, u32_to_i32(core.get_pc() as u32 + 4));
-//             core.set_pc(new_pc as Address);
-//         },
-//         name: "jal",
-//     };
-//     map.insert(111, jal);
-//     map
-// }
-
-// fn create_u_instruction_map() -> UInstructionMap {
-//     let mut map = UInstructionMap::new();
-//     let auipc = UInstructionExecutor {
-//         exec: |core: &mut Core, imm: i32, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i32(imm, 20);
-//             if verbose {
-//                 println_inst(&format!("auipc x{}, {}", rd, imm << 12));
-//             }
-//             core.set_int_register(
-//                 rd as usize,
-//                 (core.get_pc() as i64 + (imm << 12) as i64) as Int,
-//             );
-//         },
-//         name: "auipc",
-//     };
-//     map.insert(23, auipc);
-//     let lui = UInstructionExecutor {
-//         exec: |core: &mut Core, imm: i32, rd: u8, verbose: bool| {
-//             let imm = sign_extention_i32(imm, 20);
-//             if verbose {
-//                 println_inst(&format!("lui x{}, {}", rd, imm));
-//             }
-//             core.set_int_register(rd as usize, (imm as Int) << 12);
-//         },
-//         name: "lui",
-//     };
-//     map.insert(55, lui);
 //     map
 // }
 

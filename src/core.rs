@@ -489,37 +489,43 @@ impl Core {
     }
 
     fn show_pipeline(&self) {
-        if self.fetched_instruction.is_some() {
-            println!("IF: {:?}", self.fetched_instruction.clone().unwrap());
+        // println!(
+        //     "IF                  ID                  EX                  MEM                 WB"
+        // );
+        let if_string = if self.fetched_instruction.is_some() {
+            format!("{:>08x}", self.fetched_instruction.clone().unwrap())
         } else {
-            println!("IF: None");
-        }
-        if self.decoded_instruction.is_some() {
-            println!("ID: {:?}", self.decoded_instruction.clone().unwrap());
+            format!("None")
+        };
+        print_n_space_filled(&if_string, 20);
+        let id_string = if self.decoded_instruction.is_some() {
+            format!("{:?}", self.decoded_instruction.clone().unwrap())
         } else {
-            println!("ID: None");
-        }
-        if self.instruction_in_exec_stage.is_some() {
-            println!("EX: {:?}", self.instruction_in_exec_stage.clone().unwrap());
+            format!("None")
+        };
+        print_n_space_filled(&id_string, 20);
+        let ex_string = if self.instruction_in_exec_stage.is_some() {
+            format!("{:?}", self.instruction_in_exec_stage.clone().unwrap())
         } else {
-            println!("EX: None");
-        }
-        if self.instruction_in_memory_stage.is_some() {
-            println!(
-                "MEM: {:?}",
-                self.instruction_in_memory_stage.clone().unwrap()
-            );
+            format!("None")
+        };
+        print_n_space_filled(&ex_string, 20);
+        let mem_string = if self.instruction_in_memory_stage.is_some() {
+            format!("{:?}", self.instruction_in_memory_stage.clone().unwrap())
         } else {
-            println!("MEM: None");
-        }
-        if self.instruction_in_write_back_stage.is_some() {
-            println!(
-                "WB: {:?}",
+            format!("None")
+        };
+        print_n_space_filled(&mem_string, 20);
+        let wb_string = if self.instruction_in_write_back_stage.is_some() {
+            format!(
+                "{:?}",
                 self.instruction_in_write_back_stage.clone().unwrap()
-            );
+            )
         } else {
-            println!("WB: None");
-        }
+            format!("None")
+        };
+        print_n_space_filled(&wb_string, 0);
+        println!("");
     }
 
     // pub fn show_memory(&self) {
@@ -630,7 +636,8 @@ impl Core {
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
-                println!("pc: {} ({})", self.get_pc(), self.instruction_count);
+                let pc_string = format!("pc: {}", self.get_pc());
+                print_n_space_filled(&pc_string, 15);
             }
             if interval != 0 {
                 let interval_start_time = Instant::now();
@@ -654,9 +661,9 @@ impl Core {
 
             if self.check_load_hazard() {
                 will_stall = true;
-                if verbose {
-                    println!("stalling");
-                }
+                // if verbose {
+                //     println!("stalling");
+                // }
             }
 
             write_back(self);
