@@ -150,6 +150,10 @@ impl Core {
         self.instruction_memory_access_count += 1;
     }
 
+    fn increment_instruction_count(&mut self) {
+        self.instruction_count += 1;
+    }
+
     // fn increment_instruction_cache_hit_count(&mut self) {
     //     self.instruction_cache_hit_count += 1;
     // }
@@ -395,8 +399,14 @@ impl Core {
         self.instruction_in_exec_stage = self.decoded_instruction.clone();
         if self.fetched_instruction.is_some() {
             let decoded = decode_instruction(self.fetched_instruction.unwrap());
-            let decoded_inst_struct = create_instruction_struct(decoded);
-            self.decoded_instruction = Some(decoded_inst_struct);
+            if let Instruction::OtherInstruction = decoded {
+                self.decoded_instruction = None;
+                self.fetched_instruction = None;
+                return;
+            } else {
+                let decoded_inst_struct = create_instruction_struct(decoded);
+                self.decoded_instruction = Some(decoded_inst_struct);
+            }
         } else {
             self.decoded_instruction = None;
         }
@@ -541,7 +551,10 @@ impl Core {
         self.int_registers_history.push(int_registers);
     }
 
-    fn save_pc(&mut self) {
+    fn save_pc(&mut self, stalling: bool) {
+        if stalling {
+            return;
+        }
         self.pc_history.push(self.get_pc());
     }
 
@@ -616,10 +629,18 @@ impl Core {
             if pc_stats_with_index[i].1 == 0 {
                 break;
             }
-            println!(
-                "pc: {:>08x} count: {}",
-                pc_stats_with_index[i].0, pc_stats_with_index[i].1
+            let inst = decode_instruction(
+                self.instruction_memory
+                    .load(pc_stats_with_index[i].0 as Address),
             );
+            if let Instruction::OtherInstruction = inst {
+                continue;
+            }
+            let inst = create_instruction_struct(inst);
+            let pc_inst_string =
+                format!("pc: {:>08x}({})", pc_stats_with_index[i].0, inst.get_name());
+            print_n_space_filled(&pc_inst_string, 25);
+            println!("{}", pc_stats_with_index[i].1);
         }
     }
 
@@ -627,7 +648,7 @@ impl Core {
         let start_time = Instant::now();
         let mut will_stall = false;
         let mut stalling;
-        self.save_pc();
+        self.save_pc(false);
         self.save_int_registers();
         if verbose {
             println!("");
@@ -671,6 +692,7 @@ impl Core {
 
             if !stalling {
                 exec_instruction(self);
+                self.increment_instruction_count();
                 if !will_stall {
                     register_fetch(self);
                 }
@@ -687,9 +709,9 @@ impl Core {
                 self.show_pipeline();
                 self.show_registers();
             }
-            self.save_pc();
+
+            self.save_pc(stalling);
             self.save_int_registers();
-            self.instruction_count += 1;
         }
 
         println!(

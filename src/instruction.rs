@@ -73,9 +73,7 @@ pub trait InstructionTrait: Clone + Debug {
     }
     fn get_instruction_count(&self) -> Option<InstructionCount>;
     fn get_name(&self) -> String {
-        let debug = format!("{:?}", self);
-        let mut split = debug.split_whitespace();
-        split.next().unwrap().to_string()
+        "".to_string()
     }
 }
 
@@ -235,6 +233,10 @@ impl InstructionTrait for Lb {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "lb".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -314,6 +316,10 @@ impl InstructionTrait for Lh {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "lh".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -371,13 +377,6 @@ impl InstructionTrait for Lw {
         let value = core.load_word(addr) as Int;
         self.data.rd_value = Some(value);
         core.set_forwarding_source(self.data.rd, self.data.inst_count.unwrap(), value);
-        // println!(
-        //     "{:x} {}  load word: {} from {:x}",
-        //     self.data.rs1_value.unwrap(),
-        //     self.data.extended_imm.unwrap(),
-        //     value,
-        //     addr
-        // );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -399,6 +398,10 @@ impl InstructionTrait for Lw {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "lw".to_string()
     }
 }
 
@@ -478,6 +481,10 @@ impl InstructionTrait for Lbu {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "lbu".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -556,6 +563,10 @@ impl InstructionTrait for Lhu {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "lhu".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -629,6 +640,10 @@ impl InstructionTrait for Addi {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "addi".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -672,9 +687,14 @@ impl InstructionTrait for Slli {
         }
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         let uimm = self.uimm.unwrap();
         self.data.rd_value = Some(self.data.rs1_value.unwrap() << uimm);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -692,6 +712,10 @@ impl InstructionTrait for Slli {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "slli".to_string()
     }
 }
 
@@ -770,6 +794,10 @@ impl InstructionTrait for Slti {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "slti".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -847,6 +875,10 @@ impl InstructionTrait for Sltiu {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "sltiu".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -920,6 +952,10 @@ impl InstructionTrait for Xori {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "xori".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -963,11 +999,16 @@ impl InstructionTrait for Srli {
         }
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         let uimm = self.uimm.unwrap();
         self.data.rd_value = Some(u32_to_i32(
             i32_to_u32(self.data.rs1_value.unwrap()) >> uimm as u32,
         ));
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -985,6 +1026,10 @@ impl InstructionTrait for Srli {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "srli".to_string()
     }
 }
 
@@ -1029,9 +1074,14 @@ impl InstructionTrait for Srai {
         }
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         let uimm = self.uimm.unwrap();
         self.data.rd_value = Some(self.data.rs1_value.unwrap() >> uimm);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -1049,6 +1099,10 @@ impl InstructionTrait for Srai {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "srai".to_string()
     }
 }
 
@@ -1123,6 +1177,10 @@ impl InstructionTrait for Ori {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "ori".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -1196,6 +1254,10 @@ impl InstructionTrait for Andi {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "andi".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -1230,10 +1292,15 @@ impl InstructionTrait for Auipc {
         self.data.origin_pc = Some(core.get_pc() - 4);
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         let upimm = self.data.upimm.unwrap();
         let origin_pc = self.data.origin_pc.unwrap();
         self.data.rd_value = Some((upimm + origin_pc as i32) as Int);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -1247,6 +1314,10 @@ impl InstructionTrait for Auipc {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "auipc".to_string()
     }
 }
 
@@ -1311,7 +1382,6 @@ impl InstructionTrait for Sb {
     fn memory(&mut self, core: &mut Core) {
         let addr = self.addr.unwrap();
         core.store_byte(addr, (self.data.rs2_value.unwrap() & 0xff) as Byte);
-        // println!("store word: {} to {:x}", self.data.rs2_value.unwrap(), addr);
     }
 
     fn get_source_registers(&self) -> Vec<Rs> {
@@ -1320,6 +1390,10 @@ impl InstructionTrait for Sb {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "sb".to_string()
     }
 }
 
@@ -1384,7 +1458,6 @@ impl InstructionTrait for Sh {
     fn memory(&mut self, core: &mut Core) {
         let addr = self.addr.unwrap();
         core.store_half(addr, (self.data.rs2_value.unwrap() & 0xffff) as Half);
-        // println!("store word: {} to {:x}", self.data.rs2_value.unwrap(), addr);
     }
 
     fn get_source_registers(&self) -> Vec<Rs> {
@@ -1393,6 +1466,10 @@ impl InstructionTrait for Sh {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "sh".to_string()
     }
 }
 
@@ -1457,7 +1534,6 @@ impl InstructionTrait for Sw {
     fn memory(&mut self, core: &mut Core) {
         let addr = self.addr.unwrap();
         core.store_word(addr, self.data.rs2_value.unwrap());
-        // println!("store word: {} to {:x}", self.data.rs2_value.unwrap(), addr);
     }
 
     fn get_source_registers(&self) -> Vec<Rs> {
@@ -1466,6 +1542,10 @@ impl InstructionTrait for Sw {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "sw".to_string()
     }
 }
 
@@ -1545,6 +1625,10 @@ impl InstructionTrait for Add {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "add".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -1623,6 +1707,10 @@ impl InstructionTrait for Sub {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "sub".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -1674,11 +1762,16 @@ impl InstructionTrait for Sll {
         }
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         let rs1_value = self.data.rs1_value.unwrap();
         let rs2_value = self.data.rs2_value.unwrap();
         let shift_value = rs2_value & 0x1f;
         self.data.rd_value = Some(u32_to_i32(i32_to_u32(rs1_value) << (shift_value as u32)));
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -1696,6 +1789,10 @@ impl InstructionTrait for Sll {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "sll".to_string()
     }
 }
 
@@ -1779,6 +1876,10 @@ impl InstructionTrait for Slt {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "slt".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -1861,6 +1962,10 @@ impl InstructionTrait for Sltu {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "sltu".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -1939,6 +2044,10 @@ impl InstructionTrait for Xor {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "xor".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -1990,11 +2099,16 @@ impl InstructionTrait for Srl {
         }
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         let rs1_value = self.data.rs1_value.unwrap();
         let rs2_value = self.data.rs2_value.unwrap();
         let shift_value = rs2_value & 0x1f;
         self.data.rd_value = Some(u32_to_i32(i32_to_u32(rs1_value) >> (shift_value as u32)));
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -2012,6 +2126,10 @@ impl InstructionTrait for Srl {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "srl".to_string()
     }
 }
 
@@ -2064,11 +2182,16 @@ impl InstructionTrait for Sra {
         }
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         let rs1_value = self.data.rs1_value.unwrap();
         let rs2_value = self.data.rs2_value.unwrap();
         let shift_value = rs2_value & 0x1f;
         self.data.rd_value = Some(rs1_value >> shift_value);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -2086,6 +2209,10 @@ impl InstructionTrait for Sra {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "sra".to_string()
     }
 }
 
@@ -2165,6 +2292,10 @@ impl InstructionTrait for Or {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "or".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -2243,6 +2374,10 @@ impl InstructionTrait for And {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "and".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -2277,8 +2412,13 @@ impl InstructionTrait for Lui {
         self.data.origin_pc = Some(core.get_pc() - 4);
     }
 
-    fn exec(&mut self, _: &mut Core) {
+    fn exec(&mut self, core: &mut Core) {
         self.data.rd_value = Some(self.data.upimm.unwrap());
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -2292,6 +2432,10 @@ impl InstructionTrait for Lui {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "lui".to_string()
     }
 }
 
@@ -2378,6 +2522,10 @@ impl InstructionTrait for Beq {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "beq".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -2462,6 +2610,10 @@ impl InstructionTrait for Bne {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "bne".to_string()
     }
 }
 
@@ -2548,6 +2700,10 @@ impl InstructionTrait for Blt {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "blt".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -2632,6 +2788,10 @@ impl InstructionTrait for Bge {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "bge".to_string()
     }
 }
 
@@ -2718,6 +2878,10 @@ impl InstructionTrait for Bltu {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "bltu".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -2802,6 +2966,10 @@ impl InstructionTrait for Bgeu {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "bgeu".to_string()
     }
 }
 
@@ -2892,6 +3060,10 @@ impl InstructionTrait for Jalr {
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
     }
+
+    fn get_name(&self) -> String {
+        "jalr".to_string()
+    }
 }
 
 #[derive(Clone)]
@@ -2959,6 +3131,10 @@ impl InstructionTrait for Jal {
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
         self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "jal".to_string()
     }
 }
 
@@ -3432,6 +3608,48 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jalr(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jal(instruction) => instruction.get_instruction_count(),
+        }
+    }
+
+    fn get_name(&self) -> String {
+        match self {
+            InstructionEnum::Lb(instruction) => instruction.get_name(),
+            InstructionEnum::Lh(instruction) => instruction.get_name(),
+            InstructionEnum::Lw(instruction) => instruction.get_name(),
+            InstructionEnum::Lbu(instruction) => instruction.get_name(),
+            InstructionEnum::Lhu(instruction) => instruction.get_name(),
+            InstructionEnum::Addi(instruction) => instruction.get_name(),
+            InstructionEnum::Slli(instruction) => instruction.get_name(),
+            InstructionEnum::Slti(instruction) => instruction.get_name(),
+            InstructionEnum::Sltiu(instruction) => instruction.get_name(),
+            InstructionEnum::Xori(instruction) => instruction.get_name(),
+            InstructionEnum::Srli(instruction) => instruction.get_name(),
+            InstructionEnum::Srai(instruction) => instruction.get_name(),
+            InstructionEnum::Ori(instruction) => instruction.get_name(),
+            InstructionEnum::Andi(instruction) => instruction.get_name(),
+            InstructionEnum::Auipc(instruction) => instruction.get_name(),
+            InstructionEnum::Sb(instruction) => instruction.get_name(),
+            InstructionEnum::Sh(instruction) => instruction.get_name(),
+            InstructionEnum::Sw(instruction) => instruction.get_name(),
+            InstructionEnum::Add(instruction) => instruction.get_name(),
+            InstructionEnum::Sub(instruction) => instruction.get_name(),
+            InstructionEnum::Sll(instruction) => instruction.get_name(),
+            InstructionEnum::Slt(instruction) => instruction.get_name(),
+            InstructionEnum::Sltu(instruction) => instruction.get_name(),
+            InstructionEnum::Xor(instruction) => instruction.get_name(),
+            InstructionEnum::Srl(instruction) => instruction.get_name(),
+            InstructionEnum::Sra(instruction) => instruction.get_name(),
+            InstructionEnum::Or(instruction) => instruction.get_name(),
+            InstructionEnum::And(instruction) => instruction.get_name(),
+            InstructionEnum::Lui(instruction) => instruction.get_name(),
+            InstructionEnum::Beq(instruction) => instruction.get_name(),
+            InstructionEnum::Bne(instruction) => instruction.get_name(),
+            InstructionEnum::Blt(instruction) => instruction.get_name(),
+            InstructionEnum::Bge(instruction) => instruction.get_name(),
+            InstructionEnum::Bltu(instruction) => instruction.get_name(),
+            InstructionEnum::Bgeu(instruction) => instruction.get_name(),
+            InstructionEnum::Jalr(instruction) => instruction.get_name(),
+            InstructionEnum::Jal(instruction) => instruction.get_name(),
         }
     }
 }
