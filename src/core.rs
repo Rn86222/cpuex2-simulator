@@ -1,9 +1,10 @@
+use std::collections::HashMap;
 use std::time::Duration;
 use std::time::Instant;
 
 use crate::cache::*;
+use crate::decoder::*;
 use crate::instruction::*;
-use crate::instruction_cache::*;
 use crate::instruction_memory::*;
 use crate::memory::*;
 use crate::register::*;
@@ -19,15 +20,22 @@ pub struct Core {
     memory_access_count: usize,
     cache_hit_count: usize,
     instruction_memory: InstructionMemory,
-    instruction_cache: InstructionCache,
+    // instruction_cache: InstructionCache,
     instruction_memory_access_count: usize,
-    instruction_cache_hit_count: usize,
-    instruction_maps: InstructionMaps,
+    instruction_count: InstructionCount,
+    // instruction_cache_hit_count: usize,
+    // instruction_maps: InstructionMaps,
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
     pc_history: Vec<Address>,
+    fetched_instruction: Option<InstructionValue>,
+    decoded_instruction: Option<InstructionEnum>,
+    instruction_in_exec_stage: Option<InstructionEnum>,
+    instruction_in_memory_stage: Option<InstructionEnum>,
+    instruction_in_write_back_stage: Option<InstructionEnum>,
+    forwarding_source_map: HashMap<Rs, (InstructionCount, Int)>,
 }
 
 impl Core {
@@ -37,35 +45,78 @@ impl Core {
         let memory_access_count = 0;
         let cache_hit_count = 0;
         let instruction_memory = InstructionMemory::new();
-        let instruction_cache = InstructionCache::new();
+        // let instruction_cache = InstructionCache::new();
         let instruction_memory_access_count = 0;
-        let instruction_cache_hit_count = 0;
-        let instruction_maps = InstructionMaps::new();
+        let instruction_count = 0;
+        // let instruction_cache_hit_count = 0;
+        // let instruction_maps = InstructionMaps::new();
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
         let int_registers_history = Vec::new();
         let pc_history = Vec::new();
+        let fetched_instruction = None;
+        let decoded_instruction = None;
+        let instruction_in_exec_stage = None;
+        let instruction_in_memory_stage = None;
+        let instruction_in_write_back_stage = None;
+        let forwarding_source_map = HashMap::new();
         Core {
             memory,
             cache,
             memory_access_count,
             cache_hit_count,
             instruction_memory,
-            instruction_cache,
+            // instruction_cache,
             instruction_memory_access_count,
-            instruction_cache_hit_count,
-            instruction_maps,
+            instruction_count,
+            // instruction_cache_hit_count,
+            // instruction_maps,
             int_registers,
             float_registers,
             pc,
             int_registers_history,
             pc_history,
+            fetched_instruction,
+            decoded_instruction,
+            instruction_in_exec_stage,
+            instruction_in_memory_stage,
+            instruction_in_write_back_stage,
+            forwarding_source_map,
         }
     }
 
-    pub fn get_instruction_maps(&self) -> &InstructionMaps {
-        &self.instruction_maps
+    pub fn get_decoded_instruction(&self) -> &Option<InstructionEnum> {
+        &self.decoded_instruction
+    }
+
+    pub fn set_decoded_instruction(&mut self, inst: Option<InstructionEnum>) {
+        self.decoded_instruction = inst;
+    }
+
+    pub fn get_instruction_in_exec_stage(&self) -> &Option<InstructionEnum> {
+        &self.instruction_in_exec_stage
+    }
+
+    pub fn set_instruction_in_exec_stage(&mut self, inst: Option<InstructionEnum>) {
+        self.instruction_in_exec_stage = inst;
+    }
+
+    pub fn get_instruction_in_memory_stage(&self) -> &Option<InstructionEnum> {
+        &self.instruction_in_memory_stage
+    }
+
+    pub fn set_instruction_in_memory_stage(&mut self, inst: Option<InstructionEnum>) {
+        self.instruction_in_memory_stage = inst;
+    }
+
+    pub fn get_instruction_in_write_back_stage(&self) -> &Option<InstructionEnum> {
+        &self.instruction_in_write_back_stage
+    }
+
+    fn fetch_instruction(&mut self) {
+        let current_pc = self.get_pc();
+        self.fetched_instruction = Some(self.load_instruction(current_pc));
     }
 
     pub fn get_pc(&self) -> Address {
@@ -80,41 +131,58 @@ impl Core {
         self.pc = new_pc;
     }
 
+    fn set_next_pc(&mut self, stalling: bool) {
+        if self.instruction_in_exec_stage.is_some() {
+            let jump_address = get_jump_address(&self.instruction_in_exec_stage.clone().unwrap());
+            if jump_address.is_some() {
+                self.set_pc(jump_address.unwrap());
+                self.fetched_instruction = None;
+                self.decoded_instruction = None;
+            } else {
+                self.increment_pc();
+            }
+        } else if !stalling {
+            self.increment_pc();
+        }
+    }
+
     fn increment_instruction_memory_access_count(&mut self) {
         self.instruction_memory_access_count += 1;
     }
 
-    fn increment_instruction_cache_hit_count(&mut self) {
-        self.instruction_cache_hit_count += 1;
-    }
+    // fn increment_instruction_cache_hit_count(&mut self) {
+    //     self.instruction_cache_hit_count += 1;
+    // }
 
-    fn process_instruction_cache_miss(&mut self, addr: Address) {
-        let line_addr = addr & !((1 << self.instruction_cache.get_offset_bit_num()) - 1);
-        let line = self.instruction_memory.get_cache_line(line_addr);
-        let set_line_result = self.instruction_cache.set_line(line_addr, line);
-        if set_line_result.is_some() {
-            let evicted_line = set_line_result.unwrap();
-            self.instruction_memory.set_cache_line(evicted_line);
-        }
-    }
+    // fn process_instruction_cache_miss(&mut self, addr: Address) {
+    //     let line_addr = addr & !((1 << self.instruction_cache.get_offset_bit_num()) - 1);
+    //     let line = self.instruction_memory.get_cache_line(line_addr);
+    //     let set_line_result = self.instruction_cache.set_line(line_addr, line);
+    //     if set_line_result.is_some() {
+    //         let evicted_line = set_line_result.unwrap();
+    //         self.instruction_memory.set_cache_line(evicted_line);
+    //     }
+    // }
 
     pub fn load_instruction(&mut self, addr: Address) -> InstructionValue {
         self.increment_instruction_memory_access_count();
-        let cache_access = self.instruction_cache.get(addr);
-        match cache_access {
-            InstructionCacheAccess::HitGet(value) => {
-                self.increment_instruction_cache_hit_count();
-                return value;
-            }
-            InstructionCacheAccess::Miss => {
-                let value = self.instruction_memory.load(addr);
-                self.process_instruction_cache_miss(addr);
-                return value;
-            }
-            _ => {
-                panic!("invalid cache access");
-            }
-        }
+        self.instruction_memory.load(addr)
+
+        // let cache_access = self.instruction_cache.get(addr);
+        // match cache_access {
+        //     InstructionCacheAccess::HitGet(value) => {
+        //         self.increment_instruction_cache_hit_count();
+        //         return value;
+        //     }
+        //     InstructionCacheAccess::Miss => {
+        //         let value = self.instruction_memory.load(addr);
+        //         self.process_instruction_cache_miss(addr);
+        //         return value;
+        //     }
+        //     _ => {
+        //         panic!("invalid cache access");
+        //     }
+        // }
     }
 
     pub fn store_instruction(&mut self, addr: Address, inst: InstructionValue) {
@@ -321,6 +389,86 @@ impl Core {
         }
     }
 
+    pub fn move_instructions_to_next_stage(&mut self) {
+        self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
+        self.instruction_in_memory_stage = self.instruction_in_exec_stage.clone();
+        self.instruction_in_exec_stage = self.decoded_instruction.clone();
+        if self.fetched_instruction.is_some() {
+            let decoded = decode_instruction(self.fetched_instruction.unwrap());
+            let decoded_inst_struct = create_instruction_struct(decoded);
+            self.decoded_instruction = Some(decoded_inst_struct);
+        } else {
+            self.decoded_instruction = None;
+        }
+        self.fetched_instruction = None;
+    }
+
+    pub fn move_instructions_to_next_stage_stalling(&mut self) {
+        self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
+        self.instruction_in_memory_stage = self.instruction_in_exec_stage.clone();
+        self.instruction_in_exec_stage = None;
+    }
+
+    pub fn get_forwarding_source(&self, rs: Rs) -> Option<&(InstructionCount, Int)> {
+        self.forwarding_source_map.get(&rs)
+    }
+
+    pub fn set_forwarding_source(&mut self, rs: Rs, inst_cnt: InstructionCount, value: Int) {
+        self.forwarding_source_map.insert(rs, (inst_cnt, value));
+    }
+
+    fn remove_forwarding_source_if_possible_sub(&mut self, inst: &InstructionEnum) {
+        let current_inst_cnt = get_instruction_count(inst).unwrap();
+        let rd = get_destination_register(inst);
+        if rd.is_some() {
+            let rd = rd.unwrap();
+            let source = self.forwarding_source_map.get(&rd);
+            match source {
+                Some((inst_cnt, _)) => {
+                    if *inst_cnt == current_inst_cnt {
+                        self.forwarding_source_map.remove(&rd);
+                    }
+                }
+                None => {
+                    panic!();
+                }
+            }
+        }
+    }
+
+    fn remove_forwarding_source_if_possible(&mut self) {
+        if self.get_instruction_in_write_back_stage().is_some() {
+            let inst = self.get_instruction_in_write_back_stage().clone().unwrap();
+            self.remove_forwarding_source_if_possible_sub(&inst);
+        }
+    }
+
+    pub fn check_load_hazard(&self) -> bool {
+        if self.decoded_instruction.is_none() || self.instruction_in_exec_stage.is_none() {
+            return false;
+        }
+        let decoded_instruction = self.decoded_instruction.clone().unwrap();
+        let instruction_in_exec_stage = self.instruction_in_exec_stage.clone().unwrap();
+        if !instruction_in_exec_stage.is_load_instruction() {
+            return false;
+        }
+        let rd = get_destination_register(&instruction_in_exec_stage);
+        let rss = get_source_registers(&decoded_instruction);
+        if rd.is_some() {
+            let rd = rd.unwrap();
+            for i in 0..rss.len() {
+                if rss[i] == rd {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    pub fn get_instruction_count(&self) -> InstructionCount {
+        self.instruction_count
+    }
+
     // pub fn get_memory_byte(&self, addr: Address) -> String {
     //     self.memory.get_byte(addr)
     // }
@@ -332,11 +480,45 @@ impl Core {
                 println!("");
             }
         }
-        for i in 0..FLOAT_REGISTER_SIZE {
-            print!("f{: <2} {:>10.5} ", i, self.get_float_register(i));
-            if i % 8 == 7 {
-                println!("");
-            }
+        // for i in 0..FLOAT_REGISTER_SIZE {
+        //     print!("f{: <2} {:>10.5} ", i, self.get_float_register(i));
+        //     if i % 8 == 7 {
+        //         println!("");
+        //     }
+        // }
+    }
+
+    fn show_pipeline(&self) {
+        if self.fetched_instruction.is_some() {
+            println!("IF: {:?}", self.fetched_instruction.clone().unwrap());
+        } else {
+            println!("IF: None");
+        }
+        if self.decoded_instruction.is_some() {
+            println!("ID: {:?}", self.decoded_instruction.clone().unwrap());
+        } else {
+            println!("ID: None");
+        }
+        if self.instruction_in_exec_stage.is_some() {
+            println!("EX: {:?}", self.instruction_in_exec_stage.clone().unwrap());
+        } else {
+            println!("EX: None");
+        }
+        if self.instruction_in_memory_stage.is_some() {
+            println!(
+                "MEM: {:?}",
+                self.instruction_in_memory_stage.clone().unwrap()
+            );
+        } else {
+            println!("MEM: None");
+        }
+        if self.instruction_in_write_back_stage.is_some() {
+            println!(
+                "WB: {:?}",
+                self.instruction_in_write_back_stage.clone().unwrap()
+            );
+        } else {
+            println!("WB: None");
         }
     }
 
@@ -403,15 +585,15 @@ impl Core {
             "instruction memory access count: {}",
             self.instruction_memory_access_count
         );
-        println!(
-            "instruction cache hit count: {}",
-            self.instruction_cache_hit_count
-        );
-        println!(
-            "instruction cache hit rate: {:.5}%",
-            self.instruction_cache_hit_count as f64 / self.instruction_memory_access_count as f64
-                * 100.0
-        );
+        // println!(
+        //     "instruction cache hit count: {}",
+        //     self.instruction_cache_hit_count
+        // );
+        // println!(
+        //     "instruction cache hit rate: {:.5}%",
+        //     self.instruction_cache_hit_count as f64 / self.instruction_memory_access_count as f64
+        //         * 100.0
+        // );
     }
 
     fn show_pc_stats(&self) {
@@ -437,10 +619,8 @@ impl Core {
 
     pub fn run(&mut self, verbose: bool, interval: u64) {
         let start_time = Instant::now();
-        let mut inst_count = 0;
-        let mut before_pc = std::u32::MAX;
-        let mut same_pc_cnt = 0;
-        let same_pc_limit = 5;
+        let mut will_stall = false;
+        let mut stalling;
         self.save_pc();
         self.save_int_registers();
         if verbose {
@@ -450,37 +630,66 @@ impl Core {
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
-                println!("pc: {} ({})", self.get_pc(), inst_count);
+                println!("pc: {} ({})", self.get_pc(), self.instruction_count);
             }
             if interval != 0 {
                 let interval_start_time = Instant::now();
                 while interval_start_time.elapsed() < Duration::from_millis(interval) {}
             }
-            let current_pc = self.get_pc();
-            if current_pc == before_pc {
-                same_pc_cnt += 1;
-            } else {
-                same_pc_cnt = 0;
-                before_pc = current_pc;
-            }
-            let instruction = self.load_instruction(current_pc);
-            exec_instruction(self, instruction, verbose);
-            inst_count += 1;
-            if verbose {
-                self.show_registers();
-            }
-            if same_pc_cnt >= same_pc_limit {
-                println!("infinite loop detected.");
+            if self.get_pc() >= INSTRUCTION_MEMORY_SIZE as Address {
+                self.pc_history.pop();
+                println!("End of program.");
                 break;
+            }
+
+            stalling = false;
+
+            if !will_stall {
+                self.move_instructions_to_next_stage();
+            } else {
+                self.move_instructions_to_next_stage_stalling();
+                stalling = true;
+                will_stall = false;
+            }
+
+            if self.check_load_hazard() {
+                will_stall = true;
+                if verbose {
+                    println!("stalling");
+                }
+            }
+
+            write_back(self);
+            memory_access(self);
+
+            if !stalling {
+                exec_instruction(self);
+                if !will_stall {
+                    register_fetch(self);
+                }
+                self.fetch_instruction();
+            } else {
+                register_fetch(self);
+            }
+
+            self.set_next_pc(stalling);
+
+            self.remove_forwarding_source_if_possible();
+
+            if verbose {
+                self.show_pipeline();
+                self.show_registers();
             }
             self.save_pc();
             self.save_int_registers();
+            self.instruction_count += 1;
         }
+
         println!(
             "inst_count: {}\nelapsed time: {:?}\n{:.2} MIPS",
-            inst_count,
+            self.instruction_count,
             start_time.elapsed(),
-            inst_count as f64 / start_time.elapsed().as_micros() as f64
+            self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
         );
         if verbose {
             print!("    ");

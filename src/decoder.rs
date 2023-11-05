@@ -55,14 +55,15 @@ use crate::types::*;
 //     op: u8,     // 7
 // }
 
+#[derive(Clone, Copy, Debug)]
 pub enum Instruction {
-    IInstruction(i16, u8, u8, u8, u8),
-    RInstruction(u8, u8, u8, u8, u8, u8),
-    SInstruction(i16, u8, u8, u8, u8),
-    JInstruction(i32, u8, u8),
-    BInstruction(i16, u8, u8, u8, u8),
-    UInstruction(i32, u8, u8),
-    R4Instruction(u8, u8, u8, u8, u8, u8, u8),
+    IInstruction(Imm12, Rs1, Funct3, Rd, Op),
+    RInstruction(Funct7, Rs2, Rs1, Funct3, Rd, Op),
+    SInstruction(Imm12, Rs2, Rs1, Funct3, Op),
+    JInstruction(Imm20, Rd, Op),
+    BInstruction(Imm12, Rs2, Rs1, Funct3, Op),
+    UInstruction(Imm20, Rd, Op),
+    R4Instruction(Fs3, Funct2, Fs2, Fs1, Funct7, Fd, Op),
     OtherInstruction,
 }
 

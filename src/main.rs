@@ -2,23 +2,25 @@ mod cache;
 mod core;
 mod decoder;
 mod instruction;
-mod instruction_cache;
+// mod instruction_cache;
 mod instruction_memory;
 mod memory;
 mod register;
 mod types;
 mod utils;
 use crate::core::*;
+use crate::instruction_memory::*;
 // use instruction::*;
 use std::{
     fs::File,
     io::{self, stdout, BufRead, BufReader, Write},
 };
-// use types::*;
+use types::*;
 // use utils::*;
 
 fn main() {
     let mut core = Core::new();
+    core.set_int_register(1, INSTRUCTION_MEMORY_SIZE as Int);
     core.set_int_register(2, 10000000);
     print!("binary file name: ");
     stdout().flush().unwrap();
@@ -51,7 +53,7 @@ fn main() {
             if inst_count % 4 != 0 {
                 eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
             }
-            core.run(false, 0);
+            core.run(true, 0);
         }
     }
     // loop {
