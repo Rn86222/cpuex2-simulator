@@ -29,10 +29,10 @@ pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
     }
 }
 
-fn println_inst(text: &str) {
-    println!("{}", text);
-    // colorized_println(text, RED);
-}
+// fn println_inst(text: &str) {
+//     println!("{}", text);
+//     colorized_println(text, RED);
+// }
 
 // #[derive(Debug, Clone, Copy)]
 // pub enum ExecResult {
@@ -144,6 +144,7 @@ struct UInstructionData {
     origin_pc: Option<Address>,
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 struct R4InstructionData {
     fs3: Fs3,
@@ -3139,6 +3140,663 @@ impl InstructionTrait for Jal {
 }
 
 #[derive(Clone)]
+pub struct Mul {
+    data: RInstructionData,
+}
+
+impl Mul {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Mul { data }
+    }
+}
+
+impl Debug for Mul {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "mul x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Mul {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value = Some(((rs1_value as i64 * rs2_value as i64) & 0xffffffff) as i32);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "mul".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Mulh {
+    data: RInstructionData,
+}
+
+impl Mulh {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Mulh { data }
+    }
+}
+
+impl Debug for Mulh {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "mulh x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Mulh {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value =
+            Some((((rs1_value as i64 * rs2_value as i64) >> 32) & 0xffffffff) as i32);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "mulh".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Mulhsu {
+    data: RInstructionData,
+}
+
+impl Mulhsu {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Mulhsu { data }
+    }
+}
+
+impl Debug for Mulhsu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "mulhsu x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Mulhsu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = i32_to_u32(self.data.rs2_value.unwrap());
+        self.data.rd_value = Some(((rs1_value as i64 * rs2_value as i64) & 0xffffffff) as i32);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "mulhsu".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Mulhu {
+    data: RInstructionData,
+}
+
+impl Mulhu {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Mulhu { data }
+    }
+}
+
+impl Debug for Mulhu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "mulhu x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Mulhu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = i32_to_u32(self.data.rs1_value.unwrap());
+        let rs2_value = i32_to_u32(self.data.rs2_value.unwrap());
+        self.data.rd_value = Some(((rs1_value as i64 * rs2_value as i64) & 0xffffffff) as i32);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "mulhu".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Div {
+    data: RInstructionData,
+}
+
+impl Div {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Div { data }
+    }
+}
+
+impl Debug for Div {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "div x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Div {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value = Some(rs1_value / rs2_value);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "div".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Divu {
+    data: RInstructionData,
+}
+
+impl Divu {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Divu { data }
+    }
+}
+
+impl Debug for Divu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "divu x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Divu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = i32_to_u32(self.data.rs1_value.unwrap());
+        let rs2_value = i32_to_u32(self.data.rs2_value.unwrap());
+        self.data.rd_value = Some((rs1_value / rs2_value) as i32);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "divu".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Rem {
+    data: RInstructionData,
+}
+
+impl Rem {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Rem { data }
+    }
+}
+
+impl Debug for Rem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "rem x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Rem {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value = Some(rs1_value % rs2_value);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "div".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Remu {
+    data: RInstructionData,
+}
+
+impl Remu {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = RInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Remu { data }
+    }
+}
+
+impl Debug for Remu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "remu x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Remu {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        if forwarding_source_1.is_some() {
+            let (_, rs1_value) = forwarding_source_1.unwrap();
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        if forwarding_source_2.is_some() {
+            let (_, rs2_value) = forwarding_source_2.unwrap();
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = i32_to_u32(self.data.rs1_value.unwrap());
+        let rs2_value = i32_to_u32(self.data.rs2_value.unwrap());
+        self.data.rd_value = Some((rs1_value % rs2_value) as i32);
+        core.set_forwarding_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "divu".to_string()
+    }
+}
+
+#[derive(Clone)]
 pub enum InstructionEnum {
     Lb(Lb),
     Lh(Lh),
@@ -3177,6 +3835,14 @@ pub enum InstructionEnum {
     Bgeu(Bgeu),
     Jalr(Jalr),
     Jal(Jal),
+    Mul(Mul),
+    Mulh(Mulh),
+    Mulhsu(Mulhsu),
+    Mulhu(Mulhu),
+    Div(Div),
+    Divu(Divu),
+    Rem(Rem),
+    Remu(Remu),
 }
 
 impl Debug for InstructionEnum {
@@ -3219,6 +3885,14 @@ impl Debug for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Jalr(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Jal(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Mul(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Mulh(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Mulhsu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Mulhu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Div(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Divu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Rem(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Remu(instruction) => write!(f, "{:?}", instruction),
         }
     }
 }
@@ -3263,6 +3937,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.register_fetch(core),
             InstructionEnum::Jalr(instruction) => instruction.register_fetch(core),
             InstructionEnum::Jal(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Mul(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Mulh(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Mulhsu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Mulhu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Div(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Divu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Rem(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Remu(instruction) => instruction.register_fetch(core),
         }
     }
 
@@ -3305,6 +3987,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.exec(core),
             InstructionEnum::Jalr(instruction) => instruction.exec(core),
             InstructionEnum::Jal(instruction) => instruction.exec(core),
+            InstructionEnum::Mul(instruction) => instruction.exec(core),
+            InstructionEnum::Mulh(instruction) => instruction.exec(core),
+            InstructionEnum::Mulhsu(instruction) => instruction.exec(core),
+            InstructionEnum::Mulhu(instruction) => instruction.exec(core),
+            InstructionEnum::Div(instruction) => instruction.exec(core),
+            InstructionEnum::Divu(instruction) => instruction.exec(core),
+            InstructionEnum::Rem(instruction) => instruction.exec(core),
+            InstructionEnum::Remu(instruction) => instruction.exec(core),
         }
     }
 
@@ -3347,6 +4037,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.memory(core),
             InstructionEnum::Jalr(instruction) => instruction.memory(core),
             InstructionEnum::Jal(instruction) => instruction.memory(core),
+            InstructionEnum::Mul(instruction) => instruction.memory(core),
+            InstructionEnum::Mulh(instruction) => instruction.memory(core),
+            InstructionEnum::Mulhsu(instruction) => instruction.memory(core),
+            InstructionEnum::Mulhu(instruction) => instruction.memory(core),
+            InstructionEnum::Div(instruction) => instruction.memory(core),
+            InstructionEnum::Divu(instruction) => instruction.memory(core),
+            InstructionEnum::Rem(instruction) => instruction.memory(core),
+            InstructionEnum::Remu(instruction) => instruction.memory(core),
         }
     }
 
@@ -3389,6 +4087,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.write_back(core),
             InstructionEnum::Jalr(instruction) => instruction.write_back(core),
             InstructionEnum::Jal(instruction) => instruction.write_back(core),
+            InstructionEnum::Mul(instruction) => instruction.write_back(core),
+            InstructionEnum::Mulh(instruction) => instruction.write_back(core),
+            InstructionEnum::Mulhsu(instruction) => instruction.write_back(core),
+            InstructionEnum::Mulhu(instruction) => instruction.write_back(core),
+            InstructionEnum::Div(instruction) => instruction.write_back(core),
+            InstructionEnum::Divu(instruction) => instruction.write_back(core),
+            InstructionEnum::Rem(instruction) => instruction.write_back(core),
+            InstructionEnum::Remu(instruction) => instruction.write_back(core),
         }
     }
 
@@ -3431,6 +4137,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.get_source_registers(),
             InstructionEnum::Jalr(instruction) => instruction.get_source_registers(),
             InstructionEnum::Jal(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Mul(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Mulh(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Mulhsu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Mulhu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Div(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Divu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Rem(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Remu(instruction) => instruction.get_source_registers(),
         }
     }
 
@@ -3473,6 +4187,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.get_destination_register(),
             InstructionEnum::Jalr(instruction) => instruction.get_destination_register(),
             InstructionEnum::Jal(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Mul(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Mulh(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Mulhsu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Mulhu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Div(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Divu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Rem(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Remu(instruction) => instruction.get_destination_register(),
         }
     }
 
@@ -3524,6 +4246,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Jalr(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Jal(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Mul(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Mulh(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Mulhsu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Mulhu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Div(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Divu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Rem(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Remu(instruction) => instruction.is_branch_instruction(),
         }
     }
 
@@ -3566,6 +4296,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.get_jump_address(),
             InstructionEnum::Jalr(instruction) => instruction.get_jump_address(),
             InstructionEnum::Jal(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Mul(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Mulh(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Mulhsu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Mulhu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Div(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Divu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Rem(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Remu(instruction) => instruction.get_jump_address(),
         }
     }
 
@@ -3608,6 +4346,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jalr(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jal(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Mul(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Mulh(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Mulhsu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Mulhu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Div(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Divu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Rem(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Remu(instruction) => instruction.get_instruction_count(),
         }
     }
 
@@ -3650,6 +4396,14 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bgeu(instruction) => instruction.get_name(),
             InstructionEnum::Jalr(instruction) => instruction.get_name(),
             InstructionEnum::Jal(instruction) => instruction.get_name(),
+            InstructionEnum::Mul(instruction) => instruction.get_name(),
+            InstructionEnum::Mulh(instruction) => instruction.get_name(),
+            InstructionEnum::Mulhsu(instruction) => instruction.get_name(),
+            InstructionEnum::Mulhu(instruction) => instruction.get_name(),
+            InstructionEnum::Div(instruction) => instruction.get_name(),
+            InstructionEnum::Divu(instruction) => instruction.get_name(),
+            InstructionEnum::Rem(instruction) => instruction.get_name(),
+            InstructionEnum::Remu(instruction) => instruction.get_name(),
         }
     }
 }
@@ -3735,9 +4489,7 @@ fn create_r_instruction_struct(
             0b000 => match funct7 {
                 0b0000000 => InstructionEnum::Add(Add::new(rs2, rs1, rd)),
                 0b0100000 => InstructionEnum::Sub(Sub::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // mul
-                // }
+                0b0000001 => InstructionEnum::Mul(Mul::new(rs2, rs1, rd)),
                 // 0b0110000 => {
                 //     // absdiff
                 // }
@@ -3748,9 +4500,7 @@ fn create_r_instruction_struct(
             },
             0b001 => match funct7 {
                 0b0000000 => InstructionEnum::Sll(Sll::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // mulh
-                // }
+                0b0000001 => InstructionEnum::Mulh(Mulh::new(rs2, rs1, rd)),
                 _ => {
                     println!("unexpected funct7: {}", funct7);
                     panic!();
@@ -3758,9 +4508,7 @@ fn create_r_instruction_struct(
             },
             0b010 => match funct7 {
                 0b0000000 => InstructionEnum::Slt(Slt::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // mulhsu
-                // }
+                0b0000001 => InstructionEnum::Mulhsu(Mulhsu::new(rs2, rs1, rd)),
                 _ => {
                     println!("unexpected funct7: {}", funct7);
                     panic!();
@@ -3768,9 +4516,7 @@ fn create_r_instruction_struct(
             },
             0b011 => match funct7 {
                 0b0000000 => InstructionEnum::Sltu(Sltu::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // mulhu
-                // }
+                0b0000001 => InstructionEnum::Mulhu(Mulhu::new(rs2, rs1, rd)),
                 _ => {
                     println!("unexpected funct7: {}", funct7);
                     panic!();
@@ -3778,9 +4524,7 @@ fn create_r_instruction_struct(
             },
             0b100 => match funct7 {
                 0b0000000 => InstructionEnum::Xor(Xor::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // div
-                // }
+                0b0000001 => InstructionEnum::Div(Div::new(rs2, rs1, rd)),
                 _ => {
                     println!("unexpected funct7: {}", funct7);
                     panic!();
@@ -3789,9 +4533,7 @@ fn create_r_instruction_struct(
             0b101 => match funct7 {
                 0b0000000 => InstructionEnum::Srl(Srl::new(rs2, rs1, rd)),
                 0b0100000 => InstructionEnum::Sra(Sra::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // divu
-                // }
+                0b0000001 => InstructionEnum::Divu(Divu::new(rs2, rs1, rd)),
                 _ => {
                     println!("unexpected funct7: {}", funct7);
                     panic!();
@@ -3799,9 +4541,7 @@ fn create_r_instruction_struct(
             },
             0b110 => match funct7 {
                 0b0000000 => InstructionEnum::Or(Or::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // rem
-                // }
+                0b0000001 => InstructionEnum::Rem(Rem::new(rs2, rs1, rd)),
                 _ => {
                     println!("unexpected funct7: {}", funct7);
                     panic!();
@@ -3809,9 +4549,7 @@ fn create_r_instruction_struct(
             },
             0b111 => match funct7 {
                 0b0000000 => InstructionEnum::And(And::new(rs2, rs1, rd)),
-                // 0b0000001 => {
-                //     // remu
-                // }
+                0b0000001 => InstructionEnum::Remu(Remu::new(rs2, rs1, rd)),
                 _ => {
                     println!("unexpected funct7: {}", funct7);
                     panic!();
@@ -4253,19 +4991,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 
 // fn create_r_instruction_map() -> RInstructionMap {
 //     let mut map = RInstructionMap::new();
-//     map.insert((51, 0b000, 0b0100000), sub);
-//     let mul = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("mul x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize) as i64;
-//             let rs1_value = core.get_int_register(rs1 as usize) as i64;
-//             core.set_int_register(rd as usize, ((rs1_value * rs2_value) & 0xffffffff) as i32);
-//         },
-//         name: "mul",
-//     };
-//     map.insert((51, 0b000, 0b0000001), mul);
 //     let absdiff = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
@@ -4282,122 +5007,6 @@ pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount>
 //         name: "absdiff",
 //     };
 //     map.insert((51, 0b000, 0b0110000), absdiff);
-//     map.insert((51, 0b001, 0b0000000), sll);
-//     let mulh = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("mulh x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize) as i64;
-//             let rs1_value = core.get_int_register(rs1 as usize) as i64;
-//             core.set_int_register(
-//                 rd as usize,
-//                 (((rs1_value * rs2_value) >> 32) & 0xffffffff) as i32,
-//             );
-//         },
-//         name: "mulh",
-//     };
-//     map.insert((51, 0b001, 0b0000001), mulh);
-//     let mulhsu = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("mulhsu x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize)) as i64;
-//             let rs1_value = core.get_int_register(rs1 as usize) as i64;
-//             core.set_int_register(
-//                 rd as usize,
-//                 (((rs1_value * rs2_value) >> 32) & 0xffffffff) as i32,
-//             );
-//         },
-//         name: "mulhsu",
-//     };
-//     map.insert((51, 0b010, 0b0000001), mulhsu);
-//     let mulhu = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("mulhu x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize)) as u64;
-//             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize)) as u64;
-//             core.set_int_register(
-//                 rd as usize,
-//                 u32_to_i32((((rs1_value * rs2_value) >> 32) & 0xffffffff) as u32),
-//             );
-//         },
-//         name: "mulhu",
-//     };
-//     map.insert((51, 0b011, 0b0000001), mulhu);
-//     let div = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("div x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize) as i64;
-//             let rs1_value = core.get_int_register(rs1 as usize) as i64;
-//             if rs2_value == 0 {
-//                 core.set_int_register(rd as usize, -1);
-//             } else {
-//                 core.set_int_register(rd as usize, ((rs1_value / rs2_value) & 0xffffffff) as i32);
-//             }
-//         },
-//         name: "div",
-//     };
-//     map.insert((51, 0b100, 0b0000001), div);
-//     let divu = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("divu x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
-//             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
-//             if rs2_value == 0 {
-//                 core.set_int_register(rd as usize, -1);
-//             } else {
-//                 core.set_int_register(
-//                     rd as usize,
-//                     u32_to_i32((rs1_value / rs2_value) & 0xffffffff),
-//                 );
-//             }
-//         },
-//         name: "divu",
-//     };
-//     map.insert((51, 0b101, 0b0000001), divu);
-//     let rem = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("rem x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = core.get_int_register(rs2 as usize) as i64;
-//             let rs1_value = core.get_int_register(rs1 as usize) as i64;
-//             if rs2_value == 0 {
-//                 core.set_int_register(rd as usize, rs1_value as i32);
-//             } else {
-//                 core.set_int_register(rd as usize, ((rs1_value % rs2_value) & 0xffffffff) as i32);
-//             }
-//         },
-//         name: "rem",
-//     };
-//     map.insert((51, 0b110, 0b0000001), rem);
-//     let remu = RInstructionExecutor {
-//         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
-//             if verbose {
-//                 println_inst(&format!("remu x{}, x{}, x{}", rd, rs1, rs2));
-//             }
-//             let rs2_value = i32_to_u32(core.get_int_register(rs2 as usize));
-//             let rs1_value = i32_to_u32(core.get_int_register(rs1 as usize));
-//             if rs2_value == 0 {
-//                 core.set_int_register(rd as usize, u32_to_i32(rs1_value));
-//             } else {
-//                 core.set_int_register(
-//                     rd as usize,
-//                     u32_to_i32((rs1_value % rs2_value) & 0xffffffff),
-//                 );
-//             }
-//         },
-//         name: "remu",
-//     };
-//     map.insert((51, 0b111, 0b0000001), remu);
 //     let fadd = RInstructionExecutor {
 //         exec: |core: &mut Core, rs2: u8, rs1: u8, rd: u8, verbose: bool| {
 //             if verbose {
