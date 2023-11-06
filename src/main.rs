@@ -3,6 +3,7 @@ mod core;
 mod decoder;
 mod instruction;
 // mod instruction_cache;
+mod fpu;
 mod instruction_memory;
 mod memory;
 mod register;
