@@ -59,7 +59,7 @@ pub fn colorized_println(text: &str, color: &str) {
     println!("{}", colorize(text, color));
 }
 
-pub fn print_n_space_filled(s: &String, n: usize) {
+pub fn print_filled_with_space(s: &String, n: usize) {
     print!("{}", s);
     if s.len() < n {
         for _ in 0..n - s.len() {

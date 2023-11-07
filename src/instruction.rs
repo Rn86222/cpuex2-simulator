@@ -51,7 +51,7 @@ pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
 //     None,
 // }
 
-pub trait InstructionTrait: Clone + Debug {
+trait InstructionTrait: Clone + Debug {
     fn register_fetch(&mut self, _: &Core) {}
     fn exec(&mut self, _: &mut Core) {}
     fn memory(&mut self, _: &mut Core) {}
@@ -4423,8 +4423,7 @@ fn create_i_instruction_struct(
             0b100 => InstructionEnum::Lbu(Lbu::new(imm, rs1, rd)),
             0b101 => InstructionEnum::Lhu(Lhu::new(imm, rs1, rd)),
             _ => {
-                println!("unexpected funct3: {}", funct3);
-                panic!();
+                panic!("unexpected funct3: {}", funct3);
             }
         },
         19 => match funct3 {
@@ -4439,23 +4438,20 @@ fn create_i_instruction_struct(
                     0b0000000 => InstructionEnum::Srli(Srli::new(imm, rs1, rd)),
                     0b0100000 => InstructionEnum::Srai(Srai::new(imm, rs1, rd)),
                     _ => {
-                        println!("unexpected funct7: {}", funct7);
-                        panic!();
+                        panic!("unexpected funct7: {}", funct7);
                     }
                 }
             }
             0b110 => InstructionEnum::Ori(Ori::new(imm, rs1, rd)),
             0b111 => InstructionEnum::Andi(Andi::new(imm, rs1, rd)),
             _ => {
-                println!("unexpected funct3: {}", funct3);
-                panic!();
+                panic!("unexpected funct3: {}", funct3);
             }
         },
         103 => match funct3 {
             0b000 => InstructionEnum::Jalr(Jalr::new(imm, rs1, rd)),
             _ => {
-                println!("unexpected funct3: {}", funct3);
-                panic!();
+                panic!("unexpected funct3: {}", funct3);
             }
         },
         // 7 => {
@@ -4464,13 +4460,12 @@ fn create_i_instruction_struct(
         //             // flw
         //         }
         //         _ => {
-        //             println!("unexpected funct3: {}", funct3)
+        //             panic!("unexpected funct3: {}", funct3)
         //         }
         //     }
         // }
         _ => {
-            println!("unexpected op: {}", op);
-            panic!();
+            panic!("unexpected op: {}", op);
         }
     }
 }
@@ -4494,40 +4489,35 @@ fn create_r_instruction_struct(
                 //     // absdiff
                 // }
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             0b001 => match funct7 {
                 0b0000000 => InstructionEnum::Sll(Sll::new(rs2, rs1, rd)),
                 0b0000001 => InstructionEnum::Mulh(Mulh::new(rs2, rs1, rd)),
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             0b010 => match funct7 {
                 0b0000000 => InstructionEnum::Slt(Slt::new(rs2, rs1, rd)),
                 0b0000001 => InstructionEnum::Mulhsu(Mulhsu::new(rs2, rs1, rd)),
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             0b011 => match funct7 {
                 0b0000000 => InstructionEnum::Sltu(Sltu::new(rs2, rs1, rd)),
                 0b0000001 => InstructionEnum::Mulhu(Mulhu::new(rs2, rs1, rd)),
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             0b100 => match funct7 {
                 0b0000000 => InstructionEnum::Xor(Xor::new(rs2, rs1, rd)),
                 0b0000001 => InstructionEnum::Div(Div::new(rs2, rs1, rd)),
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             0b101 => match funct7 {
@@ -4535,29 +4525,25 @@ fn create_r_instruction_struct(
                 0b0100000 => InstructionEnum::Sra(Sra::new(rs2, rs1, rd)),
                 0b0000001 => InstructionEnum::Divu(Divu::new(rs2, rs1, rd)),
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             0b110 => match funct7 {
                 0b0000000 => InstructionEnum::Or(Or::new(rs2, rs1, rd)),
                 0b0000001 => InstructionEnum::Rem(Rem::new(rs2, rs1, rd)),
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             0b111 => match funct7 {
                 0b0000000 => InstructionEnum::And(And::new(rs2, rs1, rd)),
                 0b0000001 => InstructionEnum::Remu(Remu::new(rs2, rs1, rd)),
                 _ => {
-                    println!("unexpected funct7: {}", funct7);
-                    panic!();
+                    panic!("unexpected funct7: {}", funct7);
                 }
             },
             _ => {
-                println!("unexpected funct3: {}", funct3);
-                panic!();
+                panic!("unexpected funct3: {}", funct3);
             }
         },
         // 83 => match funct7 >> 2 {
@@ -4588,7 +4574,7 @@ fn create_r_instruction_struct(
         //             // fsgnjx
         //         }
         //         _ => {
-        //             println!("unexpected funct3: {}", funct3)
+        //             panic!("unexpected funct3: {}", funct3)
         //         }
         //     }
         // }
@@ -4601,7 +4587,7 @@ fn create_r_instruction_struct(
         //             // fmax
         //         }
         //         _ => {
-        //             println!("unexpected funct3: {}", funct3)
+        //             panic!("unexpected funct3: {}", funct3)
         //         }
         //     }
         // }
@@ -4616,7 +4602,7 @@ fn create_r_instruction_struct(
         //         // fle
         //     }
         //     _ => {
-        //         println!("unexpected funct3: {}", funct3)
+        //         panic!("unexpected funct3: {}", funct3)
         //     }
         // },
         // 0b11100 => match funct3 {
@@ -4624,7 +4610,7 @@ fn create_r_instruction_struct(
         //         // fclass
         //     }
         //     _ => {
-        //         println!("unexpected funct3: {}", funct3)
+        //         panic!("unexpected funct3: {}", funct3)
         //     }
         // },
         // 0b1100000 => {
@@ -4636,7 +4622,7 @@ fn create_r_instruction_struct(
         //             // fcvt.wu.s
         //         }
         //         _ => {
-        //             println!("unexpected rs2: {}", rs2)
+        //             panic!("unexpected rs2: {}", rs2)
         //         }
         //     }
         // }
@@ -4649,7 +4635,7 @@ fn create_r_instruction_struct(
         //             // fcvt.s.wu
         //         }
         //         _ => {
-        //             println!("unexpected rs2: {}", rs2)
+        //             panic!("unexpected rs2: {}", rs2)
         //         }
         //     }
         // }
@@ -4659,7 +4645,7 @@ fn create_r_instruction_struct(
         //             // fmvs.x.w
         //         }
         //         _ => {
-        //             println!("unexpected rs2: {}", rs2)
+        //             panic!("unexpected rs2: {}", rs2)
         //         }
         //     }
         // }
@@ -4669,12 +4655,12 @@ fn create_r_instruction_struct(
         //             // fmv.w.x
         //         }
         //         _ => {
-        //             println!("unexpected rs2: {}", rs2)
+        //             panic!("unexpected rs2: {}", rs2)
         //         }
         //     }
         // }
         // _ => {
-        //     println!("unexpected funct7: {}", funct7)
+        //     panic!("unexpected funct7: {}", funct7)
         // }
         // },
         // 52 => {
@@ -4685,7 +4671,7 @@ fn create_r_instruction_struct(
         //             // swapw
         //         }
         //         _ => {
-        //             println!("unexpected funct7: {}", funct7)
+        //             panic!("unexpected funct7: {}", funct7)
         //         }
         //     }
         // }
@@ -4695,7 +4681,7 @@ fn create_r_instruction_struct(
         //             // swaph
         //         }
         //         _ => {
-        //             println!("unexpected funct7: {}", funct7)
+        //             panic!("unexpected funct7: {}", funct7)
         //         }
         //     }
         // }
@@ -4705,18 +4691,17 @@ fn create_r_instruction_struct(
         //             // swapb
         //         }
         //         _ => {
-        //             println!("unexpected funct7: {}", funct7)
+        //             panic!("unexpected funct7: {}", funct7)
         //         }
         //     }
         // }
         // _ => {
-        //     println!("unexpected funct3: {}", funct3)
+        //     panic!("unexpected funct3: {}", funct3)
         // }
         // }
         // }
         _ => {
-            println!("unexpected op: {}", op);
-            panic!();
+            panic!("unexpected op: {}", op);
         }
     }
 }
@@ -4734,8 +4719,7 @@ fn create_s_instruction_struct(
             0b001 => InstructionEnum::Sh(Sh::new(imm, rs2, rs1)),
             0b010 => InstructionEnum::Sw(Sw::new(imm, rs2, rs1)),
             _ => {
-                println!("unexpected funct3: {}", funct3);
-                panic!();
+                panic!("unexpected funct3: {}", funct3);
             }
         },
         // 39 => {
@@ -4744,13 +4728,12 @@ fn create_s_instruction_struct(
         //             // fsw
         //         }
         //         _ => {
-        //             println!("unexpected funct3: {}", funct3)
+        //             panic!("unexpected funct3: {}", funct3)
         //         }
         //     }
         // }
         _ => {
-            println!("unexpected op: {}", op);
-            panic!();
+            panic!("unexpected op: {}", op);
         }
     }
 }
@@ -4771,13 +4754,11 @@ fn create_b_instruction_struct(
             0b110 => InstructionEnum::Bltu(Bltu::new(imm, rs2, rs1)),
             0b111 => InstructionEnum::Bgeu(Bgeu::new(imm, rs2, rs1)),
             _ => {
-                println!("unexpected funct3: {}", funct3);
-                panic!();
+                panic!("unexpected funct3: {}", funct3);
             }
         },
         _ => {
-            println!("unexpected op: {}", op);
-            panic!();
+            panic!("unexpected op: {}", op);
         }
     }
 }
@@ -4786,8 +4767,7 @@ fn create_j_instruction_struct(imm: Imm20, rd: Rd, op: Op) -> InstructionEnum {
     match op {
         111 => InstructionEnum::Jal(Jal::new(imm, rd)),
         _ => {
-            println!("unexpected op: {}", op);
-            panic!();
+            panic!("unexpected op: {}", op);
         }
     }
 }
@@ -4797,8 +4777,7 @@ fn create_u_instruction_struct(imm: Imm20, rd: Rd, op: Op) -> InstructionEnum {
         23 => InstructionEnum::Auipc(Auipc::new(imm, rd)),
         55 => InstructionEnum::Lui(Lui::new(imm, rd)),
         _ => {
-            println!("unexpected op: {}", op);
-            panic!();
+            panic!("unexpected op: {}", op);
         }
     }
 }
@@ -4826,8 +4805,7 @@ fn create_r4_instruction_struct(
         //     // fnmadd
         // }
         _ => {
-            println!("unexpected op: {}", op);
-            panic!();
+            panic!("unexpected op: {}", op);
         }
     }
 }
@@ -4852,8 +4830,7 @@ pub fn create_instruction_struct(inst: Instruction) -> InstructionEnum {
             create_r4_instruction_struct(fs3, funct2, fs2, fs1, funct3, rd, op)
         }
         _ => {
-            println!("unexpected instruction: {:?}", inst);
-            panic!();
+            panic!("unexpected instruction: {:?}", inst);
         }
     }
 }
@@ -4915,6 +4892,10 @@ pub fn get_jump_address(inst: &InstructionEnum) -> Option<Address> {
 
 pub fn get_instruction_count(inst: &InstructionEnum) -> Option<InstructionCount> {
     inst.get_instruction_count()
+}
+
+pub fn get_name(inst: &InstructionEnum) -> String {
+    inst.get_name()
 }
 
 // fn create_i_instruction_map() -> IInstructionMap {

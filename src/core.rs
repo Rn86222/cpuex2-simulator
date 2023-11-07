@@ -459,7 +459,7 @@ impl Core {
         }
         let decoded_instruction = self.decoded_instruction.clone().unwrap();
         let instruction_in_exec_stage = self.instruction_in_exec_stage.clone().unwrap();
-        if !instruction_in_exec_stage.is_load_instruction() {
+        if !is_load_instruction(&instruction_in_exec_stage) {
             return false;
         }
         let rd = get_destination_register(&instruction_in_exec_stage);
@@ -507,25 +507,25 @@ impl Core {
         } else {
             format!("None")
         };
-        print_n_space_filled(&if_string, 20);
+        print_filled_with_space(&if_string, 20);
         let id_string = if self.decoded_instruction.is_some() {
             format!("{:?}", self.decoded_instruction.clone().unwrap())
         } else {
             format!("None")
         };
-        print_n_space_filled(&id_string, 20);
+        print_filled_with_space(&id_string, 20);
         let ex_string = if self.instruction_in_exec_stage.is_some() {
             format!("{:?}", self.instruction_in_exec_stage.clone().unwrap())
         } else {
             format!("None")
         };
-        print_n_space_filled(&ex_string, 20);
+        print_filled_with_space(&ex_string, 20);
         let mem_string = if self.instruction_in_memory_stage.is_some() {
             format!("{:?}", self.instruction_in_memory_stage.clone().unwrap())
         } else {
             format!("None")
         };
-        print_n_space_filled(&mem_string, 20);
+        print_filled_with_space(&mem_string, 20);
         let wb_string = if self.instruction_in_write_back_stage.is_some() {
             format!(
                 "{:?}",
@@ -534,7 +534,7 @@ impl Core {
         } else {
             format!("None")
         };
-        print_n_space_filled(&wb_string, 0);
+        print_filled_with_space(&wb_string, 0);
         println!("");
     }
 
@@ -638,8 +638,8 @@ impl Core {
             }
             let inst = create_instruction_struct(inst);
             let pc_inst_string =
-                format!("pc: {:>08x}({})", pc_stats_with_index[i].0, inst.get_name());
-            print_n_space_filled(&pc_inst_string, 25);
+                format!("pc: {:>08x}({})", pc_stats_with_index[i].0, get_name(&inst));
+            print_filled_with_space(&pc_inst_string, 25);
             println!("{}", pc_stats_with_index[i].1);
         }
     }
@@ -658,7 +658,7 @@ impl Core {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
                 let pc_string = format!("pc: {}", self.get_pc());
-                print_n_space_filled(&pc_string, 15);
+                print_filled_with_space(&pc_string, 15);
             }
             if interval != 0 {
                 let interval_start_time = Instant::now();
@@ -707,7 +707,7 @@ impl Core {
 
             if verbose {
                 self.show_pipeline();
-                self.show_registers();
+                // self.show_registers();
             }
 
             self.save_pc(stalling);
