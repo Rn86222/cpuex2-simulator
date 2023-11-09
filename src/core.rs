@@ -424,6 +424,9 @@ impl Core {
     }
 
     pub fn set_forwarding_source(&mut self, rs: Rs, inst_cnt: InstructionCount, value: Int) {
+        if rs == 0 {
+            return;
+        }
         self.forwarding_source_map.insert(rs, (inst_cnt, value));
     }
 
@@ -432,6 +435,9 @@ impl Core {
         let rd = get_destination_register(inst);
         if rd.is_some() {
             let rd = rd.unwrap();
+            if rd == 0 {
+                return;
+            }
             let source = self.forwarding_source_map.get(&rd);
             match source {
                 Some((inst_cnt, _)) => {
@@ -616,7 +622,7 @@ impl Core {
     }
 
     fn show_pc_stats(&self) {
-        let mut pc_stats = vec![0; 1 << 20];
+        let mut pc_stats = vec![0; 1 << 25];
         for i in 0..self.pc_history.len() {
             pc_stats[self.pc_history[i] as usize] += 1;
         }
@@ -707,7 +713,7 @@ impl Core {
 
             if verbose {
                 self.show_pipeline();
-                // self.show_registers();
+                self.show_registers();
             }
 
             self.save_pc(stalling);
