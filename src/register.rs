@@ -1,4 +1,4 @@
-use crate::types::*;
+use crate::{fpu::FloatingPoint, types::*};
 
 #[derive(Copy, Clone)]
 pub struct IntRegister {
@@ -19,17 +19,19 @@ impl IntRegister {
 
 #[derive(Copy, Clone)]
 pub struct FloatRegister {
-    value: Float,
+    value: FloatingPoint,
 }
 
 impl FloatRegister {
     pub fn new() -> Self {
-        FloatRegister { value: 0. }
+        FloatRegister {
+            value: FloatingPoint::new(0),
+        }
     }
-    pub fn set(&mut self, value: Float) {
+    pub fn set(&mut self, value: FloatingPoint) {
         self.value = value;
     }
-    pub fn get(&self) -> Float {
+    pub fn get(&self) -> FloatingPoint {
         self.value
     }
 }

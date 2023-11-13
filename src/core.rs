@@ -4,6 +4,7 @@ use std::time::Instant;
 
 use crate::cache::*;
 use crate::decoder::*;
+use crate::fpu::*;
 use crate::instruction::*;
 use crate::instruction_memory::*;
 use crate::memory::*;
@@ -221,11 +222,11 @@ impl Core {
         self.int_registers[index].set(value);
     }
 
-    pub fn get_float_register(&self, index: usize) -> Float {
+    pub fn get_float_register(&self, index: usize) -> FloatingPoint {
         self.float_registers[index].get()
     }
 
-    pub fn set_float_register(&mut self, index: usize, value: Float) {
+    pub fn set_float_register(&mut self, index: usize, value: FloatingPoint) {
         self.float_registers[index].set(value);
     }
 
