@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 indexmap = "1.6.2"
+rand = "0.8.4"
+float_next_after = "0.1.1"
+
