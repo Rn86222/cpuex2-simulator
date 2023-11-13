@@ -539,6 +539,36 @@ impl Ord for FloatingPoint {
     }
 }
 
+fn fp_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
+    let (_, e1, m1) = this.gets();
+    let (s2, _, _) = other.gets();
+    let sy = s2;
+    let ey = e1;
+    let my = m1;
+    let y = (sy << 31) + (ey << 23) + my;
+    FloatingPoint { value: y }
+}
+
+fn fp_negative_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
+    let (_, e1, m1) = this.gets();
+    let (s2, _, _) = other.gets();
+    let sy = s2 ^ 1;
+    let ey = e1;
+    let my = m1;
+    let y = (sy << 31) + (ey << 23) + my;
+    FloatingPoint { value: y }
+}
+
+fn fp_xor_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
+    let (s1, e1, m1) = this.gets();
+    let (s2, _, _) = other.gets();
+    let sy = s1 ^ s2;
+    let ey = e1;
+    let my = m1;
+    let y = (sy << 31) + (ey << 23) + my;
+    FloatingPoint { value: y }
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::{stdout, Write};
