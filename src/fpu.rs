@@ -215,52 +215,6 @@ impl Sub for FloatingPoint {
 
 impl Mul for FloatingPoint {
     type Output = Self;
-    // fn mul(self, other: Self) -> Self {
-    //     let (s1, e1, m1) = self.gets();
-    //     let (s2, e2, m2) = other.gets();
-    //     let (m1a, e1a) = if e1 == 0 {
-    //         (to_n_bits_u32(m1, 25), 1)
-    //     } else {
-    //         (to_n_bits_u32(m1 | 0x800000, 25), e1)
-    //     };
-    //     let (m2a, e2a) = if e2 == 0 {
-    //         (to_n_bits_u32(m2, 25), 1)
-    //     } else {
-    //         (to_n_bits_u32(m2 | 0x800000, 25), e2)
-    //     };
-    //     let myi = (m1a as u64) * (m2a as u64);
-    //     let mei = e1a + e2a - 127;
-    //     let stub = myi & ((1 << 20) - 1);
-    //     let myri = myi >> 20;
-    //     let myr = if stub != 0 { myri | 1 } else { myri };
-    //     let se = 64 - myr.leading_zeros();
-    //     let (myra, mera) = if myr >= (1 << 27) {
-    //         if to_n_bits_u64(myri, (se - 27) as u32) != 0 {
-    //             ((myri >> (se - 27)) | 1, mei + (se - 27))
-    //         } else {
-    //             (myri >> (se - 27), mei + (se - 27))
-    //         }
-    //     } else {
-    //         (myri, mei)
-    //     };
-    //     let grs = to_n_bits_u64(myra, 3);
-    //     let mys = if grs >= 0b100 { myra + (1 << 3) } else { myra };
-    //     let ses = 64 - mys.leading_zeros();
-    //     let (mysa, ey) = if mys >= (1 << 27) {
-    //         if to_n_bits_u64(mys, (ses - 27) as u32) != 0 {
-    //             ((mys >> (ses - 27)) | 1, mera + (ses - 27))
-    //         } else {
-    //             (mys >> (ses - 27), mera + (ses - 27))
-    //         }
-    //     } else {
-    //         (mys, mera)
-    //     };
-    //     let my = to_n_bits_u64(mysa >> 3, 23);
-    //     let sy = s1 ^ s2;
-    //     let y = (sy << 31) + (ey << 23) + (my as u32);
-    //     FloatingPoint { value: y }
-    // }
-
     fn mul(self, other: Self) -> Self::Output {
         let (s1, e1, m1) = self.gets();
         let (s2, e2, m2) = other.gets();
@@ -348,24 +302,27 @@ pub fn div_fp(this: FloatingPoint, other: FloatingPoint, inv_map: &InvMap) -> Fl
 pub type SqrtMap = Vec<(FloatingPoint, FloatingPoint)>;
 
 fn create_sqrt_map() -> SqrtMap {
-    let eps = 2_f64.powf(-10.) * 3.;
     let mut sqrt_map = Vec::new();
-    for i in 0..1024 {
-        let left = 1. + (i as f64) * eps;
-        let right = 1. + ((i + 1) as f64) * eps;
-        let middle_x = (left + right) / 2.;
-        let left_sqrt = left.sqrt();
-        let right_sqrt = right.sqrt();
-        let a = (right_sqrt - left_sqrt) / eps;
-        let middle_y_up = middle_x.sqrt();
-        let middle_y_down = (left_sqrt + right_sqrt) / 2.;
-        let middle_y = (middle_y_up + middle_y_down) / 2.;
-        let b = middle_y - a * middle_x;
-        let a_fp = FloatingPoint::new_f32(a as f32);
-        let b_fp = FloatingPoint::new_f32(b as f32);
-        for _ in 0..3 {
+    let mut eps = 2_f64.powf(-9.);
+    let mut start = 1.;
+    for _ in 0..2 {
+        for i in 0..512 {
+            let left = start + (i as f64) * eps;
+            let right = start + ((i + 1) as f64) * eps;
+            let middle_x = (left + right) / 2.;
+            let left_sqrt = left.sqrt();
+            let right_sqrt = right.sqrt();
+            let a = (right_sqrt - left_sqrt) / eps;
+            let middle_y_up = middle_x.sqrt();
+            let middle_y_down = (left_sqrt + right_sqrt) / 2.;
+            let middle_y = (middle_y_up + middle_y_down) / 2.;
+            let b = middle_y - a * middle_x;
+            let a_fp = FloatingPoint::new_f32(a as f32);
+            let b_fp = FloatingPoint::new_f32(b as f32);
             sqrt_map.push((a_fp, b_fp));
         }
+        eps *= 2.;
+        start += 1.;
     }
     sqrt_map
 }
@@ -395,11 +352,7 @@ pub fn sqrt_fp(this: FloatingPoint, sqrt_map: &SqrtMap) -> FloatingPoint {
     };
     let ei = if sh == 0 { e + offset_e } else { e - offset_e };
     let normalized_x = FloatingPoint::new((ei << 23) + m);
-    let index = if !ei & 1 == 0 {
-        (m >> 13) as usize
-    } else {
-        1024 + (m >> 12) as usize
-    };
+    let index = (((!ei & 1) << 9) + (m >> 14)) as usize;
     let (a, b) = sqrt_map[index];
     let yi = b + a * normalized_x;
     let (_, eyi, my) = yi.gets();
@@ -740,9 +693,9 @@ mod tests {
             assert!(
                 abs_diff < relative_eps * correct_result.abs() || abs_diff < absolute_eps,
                 "op: {}, correct_result: {}, result: {}",
-                op,
+                f32::from_bits(op),
                 correct_result,
-                result.get_value()
+                result.get_value(),
             );
         }
         for e in min_e..=max_e {
@@ -760,9 +713,9 @@ mod tests {
                 assert!(
                     abs_diff < relative_eps * correct_result.abs() || abs_diff < absolute_eps,
                     "op: {}, correct_result: {}, result: {}",
-                    op,
+                    f32::from_bits(op),
                     correct_result,
-                    result.get_value()
+                    result.get_value(),
                 );
             }
         }
