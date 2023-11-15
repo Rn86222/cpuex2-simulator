@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use crate::core::*;
 use crate::decoder::*;
+use crate::fpu::FloatingPoint;
 use crate::types::*;
 use crate::utils::*;
 
@@ -107,6 +108,17 @@ struct RInstructionData {
     rs2_value: Option<Int>,
     rs1_value: Option<Int>,
     rd_value: Option<Int>,
+    inst_count: Option<InstructionCount>,
+}
+
+#[derive(Clone)]
+struct FRInstructionData {
+    rs2: Fs2,
+    rs1: Fs1,
+    rd: Fd,
+    rs2_value: Option<FloatingPoint>,
+    rs1_value: Option<FloatingPoint>,
+    rd_value: Option<FloatingPoint>,
     inst_count: Option<InstructionCount>,
 }
 
@@ -3797,6 +3809,88 @@ impl InstructionTrait for Remu {
 }
 
 #[derive(Clone)]
+pub struct Fadd {
+    data: FRInstructionData,
+}
+
+impl Fadd {
+    fn new(fs2: Rs2, fs1: Rs1, fd: Rd) -> Self {
+        let data = FRInstructionData {
+            rs2: fs2,
+            rs1: fs1,
+            rd: fd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Fadd { data }
+    }
+}
+
+impl Debug for Fadd {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "fadd f{}, f{}, f{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
+
+impl InstructionTrait for Fadd {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        // let forwarding_source_1 = core.get_forwarding_source(self.data.rs1);
+        // if forwarding_source_1.is_some() {
+        //     let (_, rs1_value) = forwarding_source_1.unwrap();
+        //     self.data.rs1_value = Some(*rs1_value);
+        // } else {
+        self.data.rs1_value = Some(core.get_float_register(self.data.rs1 as usize));
+        // }
+        // let forwarding_source_2 = core.get_forwarding_source(self.data.rs2);
+        // if forwarding_source_2.is_some() {
+        //     let (_, rs2_value) = forwarding_source_2.unwrap();
+        //     self.data.rs2_value = Some(*rs2_value);
+        // } else {
+        self.data.rs2_value = Some(core.get_float_register(self.data.rs2 as usize));
+        // }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value = Some(rs1_value + rs2_value);
+        // core.set_forwarding_source(
+        //     self.data.rd,
+        //     self.data.inst_count.unwrap(),
+        //     self.data.rd_value.unwrap(),
+        // );
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_float_register(self.data.rd as usize, result);
+    }
+
+    fn get_source_registers(&self) -> Vec<Rs> {
+        vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn get_destination_register(&self) -> Option<Rd> {
+        Some(self.data.rd)
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "fadd".to_string()
+    }
+}
+
+#[derive(Clone)]
 pub enum InstructionEnum {
     Lb(Lb),
     Lh(Lh),
@@ -3843,6 +3937,7 @@ pub enum InstructionEnum {
     Divu(Divu),
     Rem(Rem),
     Remu(Remu),
+    Fadd(Fadd),
 }
 
 impl Debug for InstructionEnum {
@@ -3893,6 +3988,7 @@ impl Debug for InstructionEnum {
             InstructionEnum::Divu(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Rem(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Remu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Fadd(instruction) => write!(f, "{:?}", instruction),
         }
     }
 }
@@ -3945,6 +4041,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.register_fetch(core),
             InstructionEnum::Rem(instruction) => instruction.register_fetch(core),
             InstructionEnum::Remu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Fadd(instruction) => instruction.register_fetch(core),
         }
     }
 
@@ -3995,6 +4092,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.exec(core),
             InstructionEnum::Rem(instruction) => instruction.exec(core),
             InstructionEnum::Remu(instruction) => instruction.exec(core),
+            InstructionEnum::Fadd(instruction) => instruction.exec(core),
         }
     }
 
@@ -4045,6 +4143,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.memory(core),
             InstructionEnum::Rem(instruction) => instruction.memory(core),
             InstructionEnum::Remu(instruction) => instruction.memory(core),
+            InstructionEnum::Fadd(instruction) => instruction.memory(core),
         }
     }
 
@@ -4095,6 +4194,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.write_back(core),
             InstructionEnum::Rem(instruction) => instruction.write_back(core),
             InstructionEnum::Remu(instruction) => instruction.write_back(core),
+            InstructionEnum::Fadd(instruction) => instruction.write_back(core),
         }
     }
 
@@ -4145,6 +4245,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.get_source_registers(),
             InstructionEnum::Rem(instruction) => instruction.get_source_registers(),
             InstructionEnum::Remu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Fadd(instruction) => instruction.get_source_registers(),
         }
     }
 
@@ -4195,6 +4296,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.get_destination_register(),
             InstructionEnum::Rem(instruction) => instruction.get_destination_register(),
             InstructionEnum::Remu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Fadd(instruction) => instruction.get_destination_register(),
         }
     }
 
@@ -4254,6 +4356,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Rem(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Remu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Fadd(instruction) => instruction.is_branch_instruction(),
         }
     }
 
@@ -4304,6 +4407,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.get_jump_address(),
             InstructionEnum::Rem(instruction) => instruction.get_jump_address(),
             InstructionEnum::Remu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Fadd(instruction) => instruction.get_jump_address(),
         }
     }
 
@@ -4354,6 +4458,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Rem(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Remu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Fadd(instruction) => instruction.get_instruction_count(),
         }
     }
 
@@ -4404,6 +4509,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Divu(instruction) => instruction.get_name(),
             InstructionEnum::Rem(instruction) => instruction.get_name(),
             InstructionEnum::Remu(instruction) => instruction.get_name(),
+            InstructionEnum::Fadd(instruction) => instruction.get_name(),
         }
     }
 }
@@ -4546,123 +4652,121 @@ fn create_r_instruction_struct(
                 panic!("unexpected funct3: {}", funct3);
             }
         },
-        // 83 => match funct7 >> 2 {
-        // 0b00000 => {
-        //     // fadd
-        // }
-        // 0b00001 => {
-        //     // fsub
-        // }
-        // 0b00010 => {
-        //     // fmul
-        // }
-        // 0b00011 => {
-        //     // fdiv
-        // }
-        // 0b01011 => {
-        //     // fsqrt
-        // }
-        // 0b00100 => {
-        //     match funct3 {
-        //         0b000 => {
-        //             // fsgnj
-        //         }
-        //         0b001 => {
-        //             // fsgnjn
-        //         }
-        //         0b010 => {
-        //             // fsgnjx
-        //         }
-        //         _ => {
-        //             panic!("unexpected funct3: {}", funct3)
-        //         }
-        //     }
-        // }
-        // 0b00101 => {
-        //     match funct3 {
-        //         0b000 => {
-        //             // fmin
-        //         }
-        //         0b001 => {
-        //             // fmax
-        //         }
-        //         _ => {
-        //             panic!("unexpected funct3: {}", funct3)
-        //         }
-        //     }
-        // }
-        // 0b10100 => match funct3 {
-        //     0b010 => {
-        //         // feq
-        //     }
-        //     0b001 => {
-        //         // flt
-        //     }
-        //     0b000 => {
-        //         // fle
-        //     }
-        //     _ => {
-        //         panic!("unexpected funct3: {}", funct3)
-        //     }
-        // },
-        // 0b11100 => match funct3 {
-        //     0b001 => {
-        //         // fclass
-        //     }
-        //     _ => {
-        //         panic!("unexpected funct3: {}", funct3)
-        //     }
-        // },
-        // 0b1100000 => {
-        //     match rs2 {
-        //         0b00000 => {
-        //             // fcvt.w.s
-        //         }
-        //         0b00001 => {
-        //             // fcvt.wu.s
-        //         }
-        //         _ => {
-        //             panic!("unexpected rs2: {}", rs2)
-        //         }
-        //     }
-        // }
-        // 0b1101000 => {
-        //     match rs2 {
-        //         0b00000 => {
-        //             // fcvt.s.w
-        //         }
-        //         0b00001 => {
-        //             // fcvt.s.wu
-        //         }
-        //         _ => {
-        //             panic!("unexpected rs2: {}", rs2)
-        //         }
-        //     }
-        // }
-        // 0b1110000 => {
-        //     match rs2 {
-        //         0b00000 => {
-        //             // fmvs.x.w
-        //         }
-        //         _ => {
-        //             panic!("unexpected rs2: {}", rs2)
-        //         }
-        //     }
-        // }
-        // 0b1111000 => {
-        //     match rs2 {
-        //         0b00000 => {
-        //             // fmv.w.x
-        //         }
-        //         _ => {
-        //             panic!("unexpected rs2: {}", rs2)
-        //         }
-        //     }
-        // }
-        // _ => {
-        //     panic!("unexpected funct7: {}", funct7)
-        // }
-        // },
+        83 => match funct7 >> 2 {
+            0b00000 => InstructionEnum::Fadd(Fadd::new(rs2, rs1, rd)),
+            // 0b00001 => {
+            //     // fsub
+            // }
+            // 0b00010 => {
+            //     // fmul
+            // }
+            // 0b00011 => {
+            //     // fdiv
+            // }
+            // 0b01011 => {
+            //     // fsqrt
+            // }
+            // 0b00100 => {
+            //     match funct3 {
+            //         0b000 => {
+            //             // fsgnj
+            //         }
+            //         0b001 => {
+            //             // fsgnjn
+            //         }
+            //         0b010 => {
+            //             // fsgnjx
+            //         }
+            //         _ => {
+            //             panic!("unexpected funct3: {}", funct3)
+            //         }
+            //     }
+            // }
+            // 0b00101 => {
+            //     match funct3 {
+            //         0b000 => {
+            //             // fmin
+            //         }
+            //         0b001 => {
+            //             // fmax
+            //         }
+            //         _ => {
+            //             panic!("unexpected funct3: {}", funct3)
+            //         }
+            //     }
+            // }
+            // 0b10100 => match funct3 {
+            //     0b010 => {
+            //         // feq
+            //     }
+            //     0b001 => {
+            //         // flt
+            //     }
+            //     0b000 => {
+            //         // fle
+            //     }
+            //     _ => {
+            //         panic!("unexpected funct3: {}", funct3)
+            //     }
+            // },
+            // 0b11100 => match funct3 {
+            //     0b001 => {
+            //         // fclass
+            //     }
+            //     _ => {
+            //         panic!("unexpected funct3: {}", funct3)
+            //     }
+            // },
+            // 0b1100000 => {
+            //     match rs2 {
+            //         0b00000 => {
+            //             // fcvt.w.s
+            //         }
+            //         0b00001 => {
+            //             // fcvt.wu.s
+            //         }
+            //         _ => {
+            //             panic!("unexpected rs2: {}", rs2)
+            //         }
+            //     }
+            // }
+            // 0b1101000 => {
+            //     match rs2 {
+            //         0b00000 => {
+            //             // fcvt.s.w
+            //         }
+            //         0b00001 => {
+            //             // fcvt.s.wu
+            //         }
+            //         _ => {
+            //             panic!("unexpected rs2: {}", rs2)
+            //         }
+            //     }
+            // }
+            // 0b1110000 => {
+            //     match rs2 {
+            //         0b00000 => {
+            //             // fmvs.x.w
+            //         }
+            //         _ => {
+            //             panic!("unexpected rs2: {}", rs2)
+            //         }
+            //     }
+            // }
+            // 0b1111000 => {
+            //     match rs2 {
+            //         0b00000 => {
+            //             // fmv.w.x
+            //         }
+            //         _ => {
+            //             panic!("unexpected rs2: {}", rs2)
+            //         }
+            //     }
+            // }
+            _ => {
+                panic!("unexpected funct7: {}", funct7)
+            }
+        },
         // 52 => {
         // match funct3 {
         // 0b000 => {
@@ -4697,7 +4801,6 @@ fn create_r_instruction_struct(
         // }
         // _ => {
         //     panic!("unexpected funct3: {}", funct3)
-        // }
         // }
         // }
         _ => {
