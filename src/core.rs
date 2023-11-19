@@ -36,7 +36,10 @@ pub struct Core {
     instruction_in_exec_stage: Option<InstructionEnum>,
     instruction_in_memory_stage: Option<InstructionEnum>,
     instruction_in_write_back_stage: Option<InstructionEnum>,
-    forwarding_source_map: HashMap<Rs, (InstructionCount, Int)>,
+    forwarding_int_source_map: HashMap<Rs, (InstructionCount, Int)>,
+    forwarding_float_source_map: HashMap<Rs, (InstructionCount, FloatingPoint)>,
+    inv_map: InvMap,
+    sqrt_map: SqrtMap,
 }
 
 impl Core {
@@ -61,7 +64,10 @@ impl Core {
         let instruction_in_exec_stage = None;
         let instruction_in_memory_stage = None;
         let instruction_in_write_back_stage = None;
-        let forwarding_source_map = HashMap::new();
+        let forwarding_int_source_map = HashMap::new();
+        let forwarding_float_source_map = HashMap::new();
+        let inv_map = create_inv_map();
+        let sqrt_map = create_sqrt_map();
         Core {
             memory,
             cache,
@@ -83,7 +89,10 @@ impl Core {
             instruction_in_exec_stage,
             instruction_in_memory_stage,
             instruction_in_write_back_stage,
-            forwarding_source_map,
+            forwarding_int_source_map,
+            forwarding_float_source_map,
+            inv_map,
+            sqrt_map,
         }
     }
 
@@ -118,6 +127,14 @@ impl Core {
     fn fetch_instruction(&mut self) {
         let current_pc = self.get_pc();
         self.fetched_instruction = Some(self.load_instruction(current_pc));
+    }
+
+    pub fn get_inv_map(&self) -> &InvMap {
+        &self.inv_map
+    }
+
+    pub fn get_sqrt_map(&self) -> &SqrtMap {
+        &self.sqrt_map
     }
 
     pub fn get_pc(&self) -> Address {
@@ -420,15 +437,35 @@ impl Core {
         self.instruction_in_exec_stage = None;
     }
 
-    pub fn get_forwarding_source(&self, rs: Rs) -> Option<&(InstructionCount, Int)> {
-        self.forwarding_source_map.get(&rs)
+    pub fn get_forwarding_int_source(&self, rs: Rs) -> Option<&(InstructionCount, Int)> {
+        self.forwarding_int_source_map.get(&rs)
     }
 
-    pub fn set_forwarding_source(&mut self, rs: Rs, inst_cnt: InstructionCount, value: Int) {
+    pub fn set_forwarding_int_source(&mut self, rs: Rs, inst_cnt: InstructionCount, value: Int) {
         if rs == 0 {
             return;
         }
-        self.forwarding_source_map.insert(rs, (inst_cnt, value));
+        self.forwarding_int_source_map.insert(rs, (inst_cnt, value));
+    }
+
+    pub fn get_forwarding_float_source(
+        &self,
+        rs: Rs,
+    ) -> Option<&(InstructionCount, FloatingPoint)> {
+        self.forwarding_float_source_map.get(&rs)
+    }
+
+    pub fn set_forwarding_float_source(
+        &mut self,
+        rs: Rs,
+        inst_cnt: InstructionCount,
+        value: FloatingPoint,
+    ) {
+        if rs == 0 {
+            return;
+        }
+        self.forwarding_float_source_map
+            .insert(rs, (inst_cnt, value));
     }
 
     fn remove_forwarding_source_if_possible_sub(&mut self, inst: &InstructionEnum) {
@@ -439,11 +476,11 @@ impl Core {
             if rd == 0 {
                 return;
             }
-            let source = self.forwarding_source_map.get(&rd);
+            let source = self.forwarding_int_source_map.get(&rd);
             match source {
                 Some((inst_cnt, _)) => {
                     if *inst_cnt == current_inst_cnt {
-                        self.forwarding_source_map.remove(&rd);
+                        self.forwarding_int_source_map.remove(&rd);
                     }
                 }
                 None => {

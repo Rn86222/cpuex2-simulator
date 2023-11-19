@@ -55,6 +55,10 @@ impl FloatingPoint {
     fn get_value(&self) -> f32 {
         f32::from_bits(self.value)
     }
+
+    pub fn get_bits(&self) -> u32 {
+        self.value
+    }
 }
 
 fn to_n_bits_u32(num: u32, n: u32) -> u32 {
@@ -301,7 +305,7 @@ pub fn div_fp(this: FloatingPoint, other: FloatingPoint, inv_map: &InvMap) -> Fl
 
 pub type SqrtMap = Vec<(FloatingPoint, FloatingPoint)>;
 
-fn create_sqrt_map() -> SqrtMap {
+pub fn create_sqrt_map() -> SqrtMap {
     let mut sqrt_map = Vec::new();
     let mut eps = 2_f64.powf(-9.);
     let mut start = 1.;
@@ -492,7 +496,7 @@ impl Ord for FloatingPoint {
     }
 }
 
-fn fp_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
+pub fn fp_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
     let (_, e1, m1) = this.gets();
     let (s2, _, _) = other.gets();
     let sy = s2;
@@ -502,7 +506,7 @@ fn fp_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint
     FloatingPoint { value: y }
 }
 
-fn fp_negative_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
+pub fn fp_negative_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
     let (_, e1, m1) = this.gets();
     let (s2, _, _) = other.gets();
     let sy = s2 ^ 1;
@@ -512,7 +516,7 @@ fn fp_negative_sign_injection(this: FloatingPoint, other: FloatingPoint) -> Floa
     FloatingPoint { value: y }
 }
 
-fn fp_xor_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
+pub fn fp_xor_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
     let (s1, e1, m1) = this.gets();
     let (s2, _, _) = other.gets();
     let sy = s1 ^ s2;
