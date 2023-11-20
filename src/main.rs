@@ -16,15 +16,23 @@ use std::io::Read;
 use std::fs::File;
 use types::*;
 // use utils::*;
+use clap::Parser;
+
+/// Simulator for CPUEX-Group2 computer
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Name of the input file
+    #[arg(short, long, default_value = "main.bin")]
+    file: Option<String>,
+}
 
 fn main() {
     let mut core = Core::new();
     core.set_int_register(1, INSTRUCTION_MEMORY_SIZE as Int);
     core.set_int_register(2, 10000000);
-    let args = std::env::args();
-    let args: Vec<String> = args.collect();
-    assert!(args.len() == 2);
-    let input = &args[1];
+    let args = Args::parse();
+    let input = args.file.unwrap();
     match File::open(input) {
         Err(e) => {
             println!("Failed in opening file ({}).", e);
