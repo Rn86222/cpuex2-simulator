@@ -1,5 +1,5 @@
 run:
-	ulimit -s unlimited && echo "main.bin" | cargo run --release > result2.txt
+	ulimit -s unlimited && cargo run --release -- main.bin > result.txt
 
 clean:
 	cargo clean

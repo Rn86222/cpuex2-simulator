@@ -157,10 +157,10 @@ struct FloatIntRInstructionData {
 
 #[derive(Clone)]
 struct IntFloatRInstructionData {
-    rs2: Rs2,
+    _rs2: Rs2,
     rs1: Rs1,
     fd: Fd,
-    rs2_value: Option<FloatingPoint>,
+    _rs2_value: Option<FloatingPoint>,
     rs1_value: Option<Int>,
     fd_value: Option<FloatingPoint>,
     inst_count: Option<InstructionCount>,
@@ -5222,10 +5222,10 @@ pub struct FcvtSW {
 impl FcvtSW {
     fn new(rs2: Rs2, rs1: Rs1, fd: Fd) -> Self {
         let data = IntFloatRInstructionData {
-            rs2,
+            _rs2: rs2,
             rs1,
             fd,
-            rs2_value: None,
+            _rs2_value: None,
             rs1_value: None,
             fd_value: None,
             inst_count: None,
@@ -5292,10 +5292,10 @@ pub struct FcvtSWu {
 impl FcvtSWu {
     fn new(rs2: Rs2, rs1: Rs1, fd: Fd) -> Self {
         let data = IntFloatRInstructionData {
-            rs2,
+            _rs2: rs2,
             rs1,
             fd,
-            rs2_value: None,
+            _rs2_value: None,
             rs1_value: None,
             fd_value: None,
             inst_count: None,
@@ -5437,10 +5437,10 @@ pub struct FmvWX {
 impl FmvWX {
     fn new(rs2: Rs2, rs1: Rs1, fd: Fd) -> Self {
         let data = IntFloatRInstructionData {
-            rs2,
+            _rs2: rs2,
             rs1,
             fd,
-            rs2_value: None,
+            _rs2_value: None,
             rs1_value: None,
             fd_value: None,
             inst_count: None,
@@ -6659,12 +6659,12 @@ fn create_u_instruction_struct(imm: Imm20, rd: Rd, op: Op) -> InstructionEnum {
 }
 
 fn create_r4_instruction_struct(
-    fs3: Fs3,
-    funct2: Funct2,
-    fs2: Fs2,
-    fs1: Fs1,
-    funct3: Funct3,
-    rd: Rd,
+    _fs3: Fs3,
+    _funct2: Funct2,
+    _fs2: Fs2,
+    _fs1: Fs1,
+    _funct3: Funct3,
+    _rd: Rd,
     op: Op,
 ) -> InstructionEnum {
     match op {
@@ -6758,6 +6758,7 @@ pub fn is_load_instruction(inst: &InstructionEnum) -> bool {
     inst.is_load_instruction()
 }
 
+#[allow(dead_code)]
 pub fn is_branch_instruction(inst: &InstructionEnum) -> bool {
     inst.is_branch_instruction()
 }

@@ -11,11 +11,9 @@ mod types;
 mod utils;
 use crate::core::*;
 use crate::instruction_memory::*;
+use std::io::Read;
 // use instruction::*;
-use std::{
-    fs::File,
-    io::{self, stdout, BufRead, BufReader, Write},
-};
+use std::fs::File;
 use types::*;
 // use utils::*;
 
@@ -23,38 +21,31 @@ fn main() {
     let mut core = Core::new();
     core.set_int_register(1, INSTRUCTION_MEMORY_SIZE as Int);
     core.set_int_register(2, 10000000);
-    print!("binary file name: ");
-    stdout().flush().unwrap();
-    let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read line");
-    input.pop().unwrap();
+    let args = std::env::args();
+    let args: Vec<String> = args.collect();
+    assert!(args.len() == 2);
+    let input = &args[1];
     match File::open(input) {
         Err(e) => {
             println!("Failed in opening file ({}).", e);
         }
-        Ok(file) => {
-            let reader = BufReader::new(file);
+        Ok(mut file) => {
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf).unwrap();
             let mut inst_count = 0;
-            for line in reader.lines() {
-                let input = line.unwrap();
-                let input: Vec<char> = input.chars().collect();
-                let mut inst = 0;
-                for c in input {
-                    inst += ((c as u32) << (inst_count % 4) * 8) as u32;
-                    // core.store_byte(inst_count, u8_to_i8(inst));
-                    inst_count += 1;
-                    if inst_count % 4 == 0 {
-                        core.store_instruction(inst_count - 4, inst);
-                        inst = 0;
-                    }
+            let mut inst = 0;
+            for byte in buf {
+                inst += ((byte as u32) << (inst_count % 4) * 8) as u32;
+                inst_count += 1;
+                if inst_count % 4 == 0 {
+                    core.store_instruction(inst_count - 4, inst);
+                    inst = 0;
                 }
             }
             if inst_count % 4 != 0 {
                 eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
             }
-            core.run(true, 0);
+            core.run(false, 0);
         }
     }
     // loop {
