@@ -37,8 +37,7 @@ impl FloatingPoint {
     }
 
     fn get_fraction(&self) -> u32 {
-        let mut fraction = self.value & 0x7fffff;
-        fraction |= 0x800000;
+        let fraction = self.value & 0x7fffff;
         fraction
     }
 
@@ -95,7 +94,7 @@ fn to_n_bits_u64(num: u64, n: u32) -> u64 {
 impl Debug for FloatingPoint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (sign, exp, fraction) = self.get_all();
-        write!(f, "{} x 1.{:>032b} x 2^{}", sign, fraction, exp)
+        write!(f, "{} x 1.{:>023b} x 2^{}", sign, fraction, exp)
     }
 }
 
