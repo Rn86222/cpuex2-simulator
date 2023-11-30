@@ -1,5 +1,7 @@
 use std::cmp::*;
 use std::fmt::Debug;
+use std::io::BufRead;
+use std::io::BufReader;
 use std::ops::*;
 
 use crate::types::Int;
@@ -526,6 +528,40 @@ pub fn fp_xor_sign_injection(this: FloatingPoint, other: FloatingPoint) -> Float
     FloatingPoint { value: y }
 }
 
+pub fn test_binary_operator() {
+    let file = std::fs::File::open("fadd_result.txt");
+    match file {
+        Err(e) => {
+            eprintln!("Failed in opening file ({}).", e);
+        }
+        Ok(file) => {
+            eprintln!("Success in opening file.");
+            let reader = BufReader::new(file);
+            let mut cnt = 0;
+            for line in reader.lines() {
+                let line = line.unwrap();
+                let line: Vec<&str> = line.split_whitespace().collect();
+                if line.len() != 3 {
+                    continue;
+                }
+                let x1 = u32::from_str_radix(line[0], 2);
+                if x1.is_err() {
+                    continue;
+                }
+                let x1 = x1.unwrap();
+                let x1 = FloatingPoint::new(x1);
+                let x2 = u32::from_str_radix(line[1], 2).unwrap();
+                let x2 = FloatingPoint::new(x2);
+                let y = u32::from_str_radix(line[2], 2).unwrap();
+                let y = FloatingPoint::new(y);
+                let correct_result = x1 + x2;
+                assert_eq!(correct_result, y);
+                cnt += 1;
+            }
+            eprintln!("{} tests passed.", cnt);
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use std::io::{stdout, Write};
