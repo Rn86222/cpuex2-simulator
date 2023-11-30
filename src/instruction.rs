@@ -6939,26 +6939,6 @@ pub fn get_name(inst: &InstructionEnum) -> String {
 //     map
 // }
 
-// fn create_s_instruction_map() -> SInstructionMap {
-//     let mut map = SInstructionMap::new();
-//     let fsw = SInstructionExecutor {
-//         exec: |core: &mut Core, imm: i16, rs2: u8, rs1: u8, verbose: bool| {
-//             let imm = sign_extention_i16(imm, 12);
-//             if verbose {
-//                 println_inst(&format!("fsw f{}, {}(x{})", rs2, imm, rs1));
-//             }
-//             let value = core.get_float_register(rs2 as usize);
-//             core.store_word(
-//                 (imm as i64 + core.get_int_register(rs1 as usize) as i64) as Address,
-//                 value.to_bits() as Word,
-//             )
-//         },
-//         name: "fsw",
-//     };
-//     map.insert((39, 0b010), fsw);
-//     map
-// }
-
 // fn create_r4_instruction_map() -> R4InstructionMap {
 //     let mut map = R4InstructionMap::new();
 //     let fmadd = R4InstructionExecutor {
