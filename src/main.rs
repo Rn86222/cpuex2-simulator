@@ -36,33 +36,33 @@ fn main() {
     if fpu.is_some() {
         let operation: &str = &fpu.unwrap();
         test_fpu(operation);
-        return;
-    }
-    let mut core = Core::new();
-    core.set_int_register(1, INSTRUCTION_MEMORY_SIZE as Int);
-    core.set_int_register(2, 10000000);
-    let input = args.file.unwrap();
-    match File::open(input) {
-        Err(e) => {
-            println!("Failed in opening file ({}).", e);
-        }
-        Ok(mut file) => {
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf).unwrap();
-            let mut inst_count = 0;
-            let mut inst = 0;
-            for byte in buf {
-                inst += ((byte as u32) << (inst_count % 4) * 8) as u32;
-                inst_count += 1;
-                if inst_count % 4 == 0 {
-                    core.store_instruction(inst_count - 4, inst);
-                    inst = 0;
+    } else {
+        let mut core = Core::new();
+        core.set_int_register(1, INSTRUCTION_MEMORY_SIZE as Int);
+        core.set_int_register(2, 10000000);
+        let input = args.file.unwrap();
+        match File::open(input) {
+            Err(e) => {
+                println!("Failed in opening file ({}).", e);
+            }
+            Ok(mut file) => {
+                let mut buf = Vec::new();
+                file.read_to_end(&mut buf).unwrap();
+                let mut inst_count = 0;
+                let mut inst = 0;
+                for byte in buf {
+                    inst += ((byte as u32) << (inst_count % 4) * 8) as u32;
+                    inst_count += 1;
+                    if inst_count % 4 == 0 {
+                        core.store_instruction(inst_count - 4, inst);
+                        inst = 0;
+                    }
                 }
+                if inst_count % 4 != 0 {
+                    eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
+                }
+                core.run(false, 0);
             }
-            if inst_count % 4 != 0 {
-                eprintln!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
-            }
-            core.run(false, 0);
         }
     }
 }
