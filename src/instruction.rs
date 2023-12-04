@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::core::*;
 use crate::decoder::*;
-use crate::fpu::*;
+use crate::fpu_emulator::*;
 use crate::types::*;
 use crate::utils::*;
 
@@ -5057,7 +5057,7 @@ impl InstructionTrait for Fsw {
 
     fn memory(&mut self, core: &mut Core) {
         let addr = self.addr.unwrap();
-        core.store_word(addr, u32_to_i32(self.data.fs2_value.unwrap().get_bits()));
+        core.store_word(addr, u32_to_i32(self.data.fs2_value.unwrap().get_32_bits()));
     }
 
     fn get_source_registers(&self) -> Vec<Rs> {
@@ -5399,7 +5399,7 @@ impl InstructionTrait for FmvXW {
 
     fn exec(&mut self, core: &mut Core) {
         let rs1_value = self.data.fs1_value.unwrap();
-        self.data.rd_value = Some(u32_to_i32(rs1_value.get_bits()));
+        self.data.rd_value = Some(u32_to_i32(rs1_value.get_32_bits()));
         core.set_forwarding_int_source(
             self.data.rd,
             self.data.inst_count.unwrap(),

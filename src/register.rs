@@ -1,4 +1,4 @@
-use crate::{fpu::FloatingPoint, types::*};
+use crate::{fpu_emulator::FloatingPoint, types::*};
 
 #[derive(Copy, Clone)]
 pub struct IntRegister {

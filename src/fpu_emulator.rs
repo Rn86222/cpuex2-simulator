@@ -1,7 +1,5 @@
 use std::cmp::*;
 use std::fmt::Debug;
-use std::io::BufRead;
-use std::io::BufReader;
 use std::ops::*;
 
 use crate::types::Int;
@@ -22,7 +20,7 @@ impl FloatingPoint {
         }
     }
 
-    fn get_sign(&self) -> i32 {
+    pub fn get_sign(&self) -> i32 {
         if self.value & 0x80000000 != 0 {
             -1
         } else {
@@ -30,22 +28,22 @@ impl FloatingPoint {
         }
     }
 
-    fn get_exp(&self) -> i32 {
+    pub fn get_exp(&self) -> i32 {
         let mut exp = self.value & 0x7f800000;
         exp >>= 23;
         exp as i32 - 127
     }
 
-    fn get_fraction(&self) -> u32 {
+    pub fn get_fraction(&self) -> u32 {
         let fraction = self.value & 0x7fffff;
         fraction
     }
 
-    fn get_all(&self) -> (i32, i32, u32) {
+    pub fn get_all(&self) -> (i32, i32, u32) {
         (self.get_sign(), self.get_exp(), self.get_fraction())
     }
 
-    fn gets(&self) -> (u32, u32, u32) {
+    pub fn get_1_8_23_bits(&self) -> (u32, u32, u32) {
         (
             to_n_bits_u32((self.value & 0x80000000) >> 31, 1),
             to_n_bits_u32((self.value & 0x7f800000) >> 23, 8),
@@ -53,11 +51,11 @@ impl FloatingPoint {
         )
     }
 
-    fn get_value(&self) -> f32 {
+    pub fn get_f32_value(&self) -> f32 {
         f32::from_bits(self.value)
     }
 
-    pub fn get_bits(&self) -> u32 {
+    pub fn get_32_bits(&self) -> u32 {
         self.value
     }
 }
@@ -101,8 +99,8 @@ impl Debug for FloatingPoint {
 impl Add for FloatingPoint {
     type Output = Self;
     fn add(self, other: Self) -> Self {
-        let (s1, e1, m1) = self.gets();
-        let (s2, e2, m2) = other.gets();
+        let (s1, e1, m1) = self.get_1_8_23_bits();
+        let (s2, e2, m2) = other.get_1_8_23_bits();
         let (m1a, e1a) = if e1 == 0 {
             (to_n_bits_u32(m1, 25), 1)
         } else {
@@ -221,8 +219,8 @@ impl Sub for FloatingPoint {
 impl Mul for FloatingPoint {
     type Output = Self;
     fn mul(self, other: Self) -> Self::Output {
-        let (s1, e1, m1) = self.gets();
-        let (s2, e2, m2) = other.gets();
+        let (s1, e1, m1) = self.get_1_8_23_bits();
+        let (s2, e2, m2) = other.get_1_8_23_bits();
         if e1 == 0 || e2 == 0 {
             return FloatingPoint { value: 0 };
         }
@@ -279,10 +277,31 @@ pub fn create_inv_map() -> InvMap {
     inv_map
 }
 
+pub fn create_inv_map_f32() -> InvMap {
+    let eps = 2_f32.powf(-10.);
+    let mut inv_map = Vec::new();
+    for i in 0..1024 {
+        let left = 1. + (i as f32) * eps;
+        let right = 1. + ((i + 1) as f32) * eps;
+        let middle_x = (left + right) / 2.;
+        let left_inv = 1. / left;
+        let right_inv = 1. / right;
+        let a = (right_inv - left_inv) / eps;
+        let middle_y_up = (left_inv + right_inv) / 2.;
+        let middle_y_down = 1. / middle_x;
+        let middle_y = (middle_y_up + middle_y_down) / 2.;
+        let b = middle_y - a * middle_x;
+        let a_fp = FloatingPoint::new_f32(a.abs());
+        let b_fp = FloatingPoint::new_f32(b);
+        inv_map.push((a_fp, b_fp));
+    }
+    inv_map
+}
+
 fn inv(x: FloatingPoint, inv_map: &InvMap) -> FloatingPoint {
-    let value = x.get_value();
+    let value = x.get_f32_value();
     assert!(1. <= value && value < 2.);
-    let (_, _, m) = x.gets();
+    let (_, _, m) = x.get_1_8_23_bits();
     let index = (m >> 13) as usize;
     let (a, b) = inv_map[index];
     let y = b - a * x;
@@ -290,13 +309,16 @@ fn inv(x: FloatingPoint, inv_map: &InvMap) -> FloatingPoint {
 }
 
 pub fn div_fp(this: FloatingPoint, other: FloatingPoint, inv_map: &InvMap) -> FloatingPoint {
-    let (s1, e1, m1) = this.gets();
-    let (s2, e2, m2) = other.gets();
+    let (s1, e1, m1) = this.get_1_8_23_bits();
+    let (s2, e2, m2) = other.get_1_8_23_bits();
+    if e1 == 0 {
+        return FloatingPoint { value: 0 };
+    }
     let normailized_this = FloatingPoint::new((127 << 23) + m1);
     let normilized_other = FloatingPoint::new((127 << 23) + m2);
     let normalized_other_inv = inv(normilized_other, inv_map);
     let yi = normailized_this * normalized_other_inv;
-    let (_, ei, my) = yi.gets();
+    let (_, ei, my) = yi.get_1_8_23_bits();
     let eyi = (e1 as i32 - 127) - (e2 as i32 - 127) + (ei as i32 - 127) + 127;
     let ey = if eyi < 0 { 0 } else { eyi as u32 };
     let sy = s1 ^ s2;
@@ -332,8 +354,34 @@ pub fn create_sqrt_map() -> SqrtMap {
     sqrt_map
 }
 
+pub fn create_sqrt_map_f32() -> SqrtMap {
+    let mut sqrt_map = Vec::new();
+    let mut eps = 2_f32.powf(-9.);
+    let mut start = 1.;
+    for _ in 0..2 {
+        for i in 0..512 {
+            let left = start + (i as f32) * eps;
+            let right = start + ((i + 1) as f32) * eps;
+            let middle_x = (left + right) / 2.;
+            let left_sqrt = left.sqrt();
+            let right_sqrt = right.sqrt();
+            let a = (right_sqrt - left_sqrt) / eps;
+            let middle_y_up = middle_x.sqrt();
+            let middle_y_down = (left_sqrt + right_sqrt) / 2.;
+            let middle_y = (middle_y_up + middle_y_down) / 2.;
+            let b = middle_y - a * middle_x;
+            let a_fp = FloatingPoint::new_f32(a);
+            let b_fp = FloatingPoint::new_f32(b);
+            sqrt_map.push((a_fp, b_fp));
+        }
+        eps *= 2.;
+        start += 1.;
+    }
+    sqrt_map
+}
+
 pub fn sqrt_fp(this: FloatingPoint, sqrt_map: &SqrtMap) -> FloatingPoint {
-    let (s, e, m) = this.gets();
+    let (s, e, m) = this.get_1_8_23_bits();
     if s == 1 {
         panic!("sqrt of negative number");
     }
@@ -360,7 +408,7 @@ pub fn sqrt_fp(this: FloatingPoint, sqrt_map: &SqrtMap) -> FloatingPoint {
     let index = (((!ei & 1) << 9) + (m >> 14)) as usize;
     let (a, b) = sqrt_map[index];
     let yi = b + a * normalized_x;
-    let (_, eyi, my) = yi.gets();
+    let (_, eyi, my) = yi.get_1_8_23_bits();
     let ey = if sh == 0 {
         eyi - offset_e / 2
     } else {
@@ -371,7 +419,7 @@ pub fn sqrt_fp(this: FloatingPoint, sqrt_map: &SqrtMap) -> FloatingPoint {
 }
 
 pub fn fp_to_int(this: FloatingPoint) -> Int {
-    let (s, e, m) = this.gets();
+    let (s, e, m) = this.get_1_8_23_bits();
     if e == 0 {
         return 0;
     }
@@ -445,8 +493,8 @@ impl PartialEq for FloatingPoint {
 
 impl PartialOrd for FloatingPoint {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let (s1, e1, m1) = self.gets();
-        let (s2, e2, m2) = other.gets();
+        let (s1, e1, m1) = self.get_1_8_23_bits();
+        let (s2, e2, m2) = other.get_1_8_23_bits();
         if s1 != s2 {
             if s1 == 1 {
                 return Some(Ordering::Less);
@@ -498,8 +546,8 @@ impl Ord for FloatingPoint {
 }
 
 pub fn fp_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
-    let (_, e1, m1) = this.gets();
-    let (s2, _, _) = other.gets();
+    let (_, e1, m1) = this.get_1_8_23_bits();
+    let (s2, _, _) = other.get_1_8_23_bits();
     let sy = s2;
     let ey = e1;
     let my = m1;
@@ -508,8 +556,8 @@ pub fn fp_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingP
 }
 
 pub fn fp_negative_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
-    let (_, e1, m1) = this.gets();
-    let (s2, _, _) = other.gets();
+    let (_, e1, m1) = this.get_1_8_23_bits();
+    let (s2, _, _) = other.get_1_8_23_bits();
     let sy = s2 ^ 1;
     let ey = e1;
     let my = m1;
@@ -518,8 +566,8 @@ pub fn fp_negative_sign_injection(this: FloatingPoint, other: FloatingPoint) -> 
 }
 
 pub fn fp_xor_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingPoint {
-    let (s1, e1, m1) = this.gets();
-    let (s2, _, _) = other.gets();
+    let (s1, e1, m1) = this.get_1_8_23_bits();
+    let (s2, _, _) = other.get_1_8_23_bits();
     let sy = s1 ^ s2;
     let ey = e1;
     let my = m1;
@@ -527,48 +575,6 @@ pub fn fp_xor_sign_injection(this: FloatingPoint, other: FloatingPoint) -> Float
     FloatingPoint { value: y }
 }
 
-pub fn test_binary_operator() {
-    let file = std::fs::File::open("../fmul_result.txt");
-    match file {
-        Err(e) => {
-            eprintln!("Failed in opening file ({}).", e);
-        }
-        Ok(file) => {
-            eprintln!("Success in opening file.");
-            let reader = BufReader::new(file);
-            let mut cnt = 0;
-            for line in reader.lines() {
-                let line = line.unwrap();
-                let line: Vec<&str> = line.split_whitespace().collect();
-                if line.len() != 3 {
-                    continue;
-                }
-                let x1 = u32::from_str_radix(line[0], 2);
-                if x1.is_err() {
-                    continue;
-                }
-                let x1 = x1.unwrap();
-                let x1 = FloatingPoint::new(x1);
-                let x2 = u32::from_str_radix(line[1], 2).unwrap();
-                let x2 = FloatingPoint::new(x2);
-                let y = u32::from_str_radix(line[2], 2).unwrap();
-                let y = FloatingPoint::new(y);
-                let correct_result = x1 * x2;
-                let exp_of_correct_result = correct_result.get_exp();
-                let ey = y.get_exp();
-                if exp_of_correct_result == -127 || ey == -127 {
-                    if exp_of_correct_result != ey {
-                        panic!("x1 = {:?}\nx2 = {:?}\nl  = {:?}\nr  = {:?}", x1, x2, correct_result, y);
-                    }
-                } else {
-                    assert_eq!(correct_result, y);
-                }
-                cnt += 1;
-            }
-            eprintln!("{} tests passed.", cnt);
-        }
-    }
-}
 #[cfg(test)]
 mod tests {
     use std::io::{stdout, Write};
@@ -606,7 +612,7 @@ mod tests {
             let correct_result = op1 as f64 + op2 as f64;
             let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
             let result = fp1 + fp2;
-            let abs_diff = (correct_result - result.get_value() as f64).abs();
+            let abs_diff = (correct_result - result.get_f32_value() as f64).abs();
             assert!(
                 abs_diff < relative_eps * correct_result.abs()
                     || abs_diff < relative_eps * (op1 as f64).abs()
@@ -616,7 +622,7 @@ mod tests {
                 op1,
                 op2,
                 correct_result,
-                result.get_value()
+                result.get_f32_value()
             );
         }
     }
@@ -631,7 +637,7 @@ mod tests {
             let correct_result = op1 as f64 - op2 as f64;
             let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
             let result = fp1 - fp2;
-            let abs_diff = (correct_result - result.get_value() as f64).abs();
+            let abs_diff = (correct_result - result.get_f32_value() as f64).abs();
             assert!(
                 abs_diff < relative_eps * correct_result.abs()
                     || abs_diff < relative_eps * (op1 as f64).abs()
@@ -641,7 +647,7 @@ mod tests {
                 op1,
                 op2,
                 correct_result,
-                result.get_value()
+                result.get_f32_value()
             );
         }
     }
@@ -656,14 +662,14 @@ mod tests {
             let correct_result = op1 as f64 * op2 as f64;
             let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
             let result = fp1 * fp2;
-            let abs_diff = (correct_result - result.get_value() as f64).abs();
+            let abs_diff = (correct_result - result.get_f32_value() as f64).abs();
             assert!(
                 abs_diff < relative_eps * correct_result.abs() || abs_diff < absolute_eps,
                 "op1: {}, op2: {}, correct_result: {}, result: {}",
                 op1,
                 op2,
                 correct_result,
-                result.get_value()
+                result.get_f32_value()
             );
         }
 
@@ -708,14 +714,14 @@ mod tests {
             let correct_result = op1 as f64 / op2 as f64;
             let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
             let result = div_fp(fp1, fp2, &inv_map);
-            let abs_diff = (correct_result - result.get_value() as f64).abs();
+            let abs_diff = (correct_result - result.get_f32_value() as f64).abs();
             assert!(
                 abs_diff < relative_eps * correct_result.abs() || abs_diff < absolute_eps,
                 "op1: {}, op2: {}, correct_result: {}, result: {}",
                 op1,
                 op2,
                 correct_result,
-                result.get_value()
+                result.get_f32_value()
             );
         }
     }
@@ -736,13 +742,13 @@ mod tests {
             let fp = FloatingPoint::new(op);
             let correct_result: f64 = 0.;
             let result = sqrt_fp(fp, &sqrt_map);
-            let abs_diff = (correct_result - result.get_value() as f64).abs();
+            let abs_diff = (correct_result - result.get_f32_value() as f64).abs();
             assert!(
                 abs_diff < relative_eps * correct_result.abs() || abs_diff < absolute_eps,
                 "op: {}, correct_result: {}, result: {}",
                 f32::from_bits(op),
                 correct_result,
-                result.get_value(),
+                result.get_f32_value(),
             );
         }
         for e in min_e..=max_e {
@@ -756,13 +762,13 @@ mod tests {
                 let fp = FloatingPoint::new(op);
                 let correct_result: f64 = (f32::from_bits(op) as f64).sqrt();
                 let result = sqrt_fp(fp, &sqrt_map);
-                let abs_diff = (correct_result - result.get_value() as f64).abs();
+                let abs_diff = (correct_result - result.get_f32_value() as f64).abs();
                 assert!(
                     abs_diff < relative_eps * correct_result.abs() || abs_diff < absolute_eps,
                     "op: {}, correct_result: {}, result: {}",
                     f32::from_bits(op),
                     correct_result,
-                    result.get_value(),
+                    result.get_f32_value(),
                 );
             }
         }
@@ -826,7 +832,7 @@ mod tests {
             }
             let correct_result = x as f64;
             let result = int_to_fp(x);
-            let float = result.get_value();
+            let float = result.get_f32_value();
             let next_smaller = float.next_after(float - 1.0);
             let next_larger = float.next_after(float + 1.0);
             let abs_diff_smaller = (next_smaller as f64 - correct_result).abs();

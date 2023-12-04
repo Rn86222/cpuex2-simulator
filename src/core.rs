@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use crate::cache::*;
 use crate::decoder::*;
-use crate::fpu::*;
+use crate::fpu_emulator::*;
 use crate::instruction::*;
 use crate::instruction_memory::*;
 use crate::memory::*;
