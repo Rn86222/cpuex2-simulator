@@ -89,7 +89,7 @@ fn test_four_arithmetic_operation(path: &str, operation: FourArithmeticOperation
                 }
                 cnt += 1;
             }
-            eprintln!("{} tests passed.", cnt);
+            println!("{} tests passed.", cnt);
         }
     }
 }
@@ -129,7 +129,7 @@ fn test_flt() {
                 }
                 cnt += 1;
             }
-            eprintln!("{} tests passed.", cnt);
+            println!("{} tests passed.", cnt);
         }
     }
 }
@@ -173,7 +173,7 @@ fn test_fsqrt() {
                 }
                 cnt += 1;
             }
-            eprintln!("{} tests passed.", cnt);
+            println!("{} tests passed.", cnt);
         }
     }
 }
@@ -215,7 +215,7 @@ fn test_fcvtsw() {
                 }
                 cnt += 1;
             }
-            eprintln!("{} tests passed.", cnt);
+            println!("{} tests passed.", cnt);
         }
     }
 }
@@ -249,7 +249,7 @@ fn test_fcvtws() {
                 }
                 cnt += 1;
             }
-            eprintln!("{} tests passed.", cnt);
+            println!("{} tests passed.", cnt);
         }
     }
 }
