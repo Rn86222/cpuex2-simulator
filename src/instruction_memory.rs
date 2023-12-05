@@ -9,8 +9,7 @@ impl InstructionMemory {
     pub fn new() -> Self {
         let init_val = 0;
         let values = [init_val; INSTRUCTION_MEMORY_SIZE];
-        let memory = InstructionMemory { values };
-        memory
+        InstructionMemory { values }
     }
 
     pub fn load(&self, addr: Address) -> InstructionValue {
