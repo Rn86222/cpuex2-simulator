@@ -1,3 +1,7 @@
+pub const ZERO: usize = 0;
+pub const RA: usize = 1;
+pub const SP: usize = 2;
+
 pub fn u8_to_i8(value: u8) -> i8 {
     if value <= i8::MAX as u8 {
         value as i8
@@ -22,6 +26,7 @@ pub fn u16_to_i16(value: u16) -> i16 {
     }
 }
 
+#[allow(dead_code)]
 pub fn i16_to_u16(value: i16) -> u16 {
     if value >= 0 {
         value as u16
@@ -58,7 +63,7 @@ pub fn colorize(text: &str, color: &str) -> String {
 pub fn colorized_println(text: &str, color: &str) {
     println!("{}", colorize(text, color));
 }
-
+#[allow(dead_code)]
 pub fn print_filled_with_space(s: &String, n: usize) {
     print!("{}", s);
     if s.len() < n {
