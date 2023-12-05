@@ -12,6 +12,8 @@ pub fn load_sld_file(file_path: &str) -> Vec<String> {
                 sld_vec.push(token.to_string());
             }
         }
+    } else {
+        eprintln!("Failed in opening sld file ({}).", file_path);
     }
 
     sld_vec
