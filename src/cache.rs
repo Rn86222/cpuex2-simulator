@@ -119,11 +119,9 @@ impl Cache {
                 }
                 let value = cache_line.value[offset];
                 self.update_on_get(cache_line, tag, index);
-                return CacheAccess::HitUByte(value);
+                CacheAccess::HitUByte(value)
             }
-            None => {
-                return CacheAccess::Miss;
-            }
+            None => CacheAccess::Miss,
         }
     }
 
@@ -141,11 +139,9 @@ impl Cache {
                     value += (cache_line.value[offset + i] as UHalf) << (8 * i);
                 }
                 self.update_on_get(cache_line, tag, index);
-                return CacheAccess::HitUHalf(value);
+                CacheAccess::HitUHalf(value)
             }
-            None => {
-                return CacheAccess::Miss;
-            }
+            None => CacheAccess::Miss,
         }
     }
 
@@ -163,11 +159,9 @@ impl Cache {
                     value += (cache_line.value[offset + i] as u32) << (8 * i);
                 }
                 self.update_on_get(cache_line, tag, index);
-                return CacheAccess::HitWord(u32_to_i32(value));
+                CacheAccess::HitWord(u32_to_i32(value))
             }
-            None => {
-                return CacheAccess::Miss;
-            }
+            None => CacheAccess::Miss,
         }
     }
 
@@ -193,8 +187,8 @@ impl Cache {
                     let addr = (cache_line.tag << (self.index_bit_num + self.offset_bit_num))
                         as Address
                         + (index << self.offset_bit_num) as Address;
-                    for i in 0..LINE_SIZE {
-                        evicted_values[i] = (addr + i as Address, cache_line.value[i]);
+                    for (i, value) in evicted_values.iter_mut().enumerate() {
+                        *value = (addr + i as Address, cache_line.value[i]);
                     }
                 }
                 self.values[index].swap_remove(&k);
@@ -207,15 +201,13 @@ impl Cache {
             tag,
             value: [0; LINE_SIZE],
         };
-        for i in 0..LINE_SIZE {
-            cache_line.value[i] = line[i];
-        }
+        cache_line.value[..LINE_SIZE].copy_from_slice(&line[..LINE_SIZE]);
         self.values[index].insert(tag, cache_line);
 
         if dirty_line_evicted {
-            return Some(evicted_values);
+            Some(evicted_values)
         } else {
-            return None;
+            None
         }
     }
 
@@ -231,11 +223,9 @@ impl Cache {
                 let mut cache_line = (*cache_line).clone();
                 cache_line.value[offset] = value;
                 self.update_on_set(cache_line, tag, index);
-                return CacheAccess::HitSet;
+                CacheAccess::HitSet
             }
-            None => {
-                return CacheAccess::Miss;
-            }
+            None => CacheAccess::Miss,
         }
     }
 
@@ -253,11 +243,9 @@ impl Cache {
                     cache_line.value[offset + i] = ((value >> (i * 8)) & 0xff) as UByte;
                 }
                 self.update_on_set(cache_line, tag, index);
-                return CacheAccess::HitSet;
+                CacheAccess::HitSet
             }
-            None => {
-                return CacheAccess::Miss;
-            }
+            None => CacheAccess::Miss,
         }
     }
 
@@ -273,14 +261,12 @@ impl Cache {
                     return CacheAccess::Miss;
                 }
                 for i in 0..4 {
-                    cache_line.value[offset + i] = (value >> (i * 8)) as UByte & 0xff;
+                    cache_line.value[offset + i] = ((value >> (i * 8)) & 0xff) as UByte;
                 }
                 self.update_on_set(cache_line, tag, index);
-                return CacheAccess::HitSet;
+                CacheAccess::HitSet
             }
-            None => {
-                return CacheAccess::Miss;
-            }
+            None => CacheAccess::Miss,
         }
     }
 }
