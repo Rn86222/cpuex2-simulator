@@ -1,7 +1,7 @@
 use crate::cache::LINE_SIZE;
 use crate::types::*;
 use crate::utils::*;
-const MEMORY_SIZE: usize = 128 * 1024 * 1024;
+pub const MEMORY_SIZE: usize = 128 * 1024 * 1024;
 
 pub struct Memory {
     values: [MemoryValue; MEMORY_SIZE],
@@ -11,8 +11,7 @@ impl Memory {
     pub fn new() -> Self {
         let init_val = 0;
         let values = [init_val; MEMORY_SIZE];
-        let memory = Memory { values };
-        memory
+        Memory { values }
     }
 
     pub fn load_byte(&self, addr: Address) -> Byte {
@@ -76,15 +75,15 @@ impl Memory {
 
     pub fn get_cache_line(&self, addr: Address) -> [MemoryValue; LINE_SIZE] {
         let mut line = [0; LINE_SIZE];
-        for i in 0..LINE_SIZE {
-            line[i] = self.load_ubyte(addr + i as Address);
+        for (i, value) in line.iter_mut().enumerate() {
+            *value = self.load_ubyte(addr + i as Address);
         }
         line
     }
 
     pub fn set_cache_line(&mut self, line: [(Address, MemoryValue); LINE_SIZE]) {
-        for i in 0..LINE_SIZE {
-            self.store_ubyte(line[i].0, line[i].1);
+        for (addr, value) in line.iter() {
+            self.store_ubyte(*addr, *value);
         }
     }
 
@@ -92,13 +91,13 @@ impl Memory {
     //     for i in 0..MEMORY_SIZE {
     //         print!("{} {}\n", i, self.values[i]);
     //     }
-    //     println!("");
+    //     println!();
     // }
 
     // pub fn show_word(&self, addr: Address) {
     //     for i in 0..4 {
     //         print!("{}", self.get_byte(addr + 3 - i));
     //     }
-    //     println!("");
+    //     println!();
     // }
 }
