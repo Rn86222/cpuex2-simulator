@@ -1,4 +1,8 @@
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::BufRead;
+use std::io::Write;
+use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -9,11 +13,13 @@ use crate::instruction::*;
 use crate::instruction_memory::*;
 use crate::memory::*;
 use crate::register::*;
+use crate::sld_loader::*;
 use crate::types::*;
 use crate::utils::*;
 
 const INT_REGISTER_SIZE: usize = 32;
 const FLOAT_REGISTER_SIZE: usize = 32;
+const IO_ADDRESS: Address = 2147483647;
 
 pub struct Core {
     memory: Memory,
@@ -40,6 +46,9 @@ pub struct Core {
     forwarding_float_source_map: HashMap<Rs, (InstructionCount, FloatingPoint)>,
     inv_map: InvMap,
     sqrt_map: SqrtMap,
+    sld_vec: Vec<String>,
+    sld_counter: usize,
+    output: Vec<u8>,
 }
 
 impl Core {
@@ -68,6 +77,9 @@ impl Core {
         let forwarding_float_source_map = HashMap::new();
         let inv_map = create_inv_map();
         let sqrt_map = create_sqrt_map();
+        let sld_vec = vec![];
+        let sld_counter = 0;
+        let output = vec![];
         Core {
             memory,
             cache,
@@ -93,6 +105,9 @@ impl Core {
             forwarding_float_source_map,
             inv_map,
             sqrt_map,
+            sld_vec,
+            sld_counter,
+            output,
         }
     }
 
@@ -156,7 +171,7 @@ impl Core {
                 self.set_pc(jump_address.unwrap());
                 self.fetched_instruction = None;
                 self.decoded_instruction = None;
-            } else {
+            } else if !stalling {
                 self.increment_pc();
             }
         } else if !stalling {
@@ -214,11 +229,9 @@ impl Core {
         // let cache_access = self.instruction_cache.set(addr, inst);
         // match cache_access {
         //     InstructionCacheAccess::HitSet => {
-        //         println!("store hit");
         //         self.increment_instruction_cache_hit_count();
         //     }
         //     InstructionCacheAccess::Miss => {
-        //         println!("store miss");
         //         self.instruction_memory.store(addr, inst);
         //         self.process_instruction_cache_miss(addr);
         //     }
@@ -233,7 +246,7 @@ impl Core {
     }
 
     pub fn set_int_register(&mut self, index: usize, value: Int) {
-        if index == 0 {
+        if index == ZERO {
             return; // zero register
         }
         self.int_registers[index].set(value);
@@ -359,6 +372,11 @@ impl Core {
     }
 
     pub fn load_word(&mut self, addr: Address) -> Word {
+        if addr == IO_ADDRESS {
+            let value = self.sld_vec[self.sld_counter].parse::<i32>().unwrap();
+            self.sld_counter += 1;
+            return value;
+        }
         self.increment_memory_access_count();
         let cache_access = self.cache.get_word(addr);
         match cache_access {
@@ -374,6 +392,17 @@ impl Core {
             _ => {
                 panic!("invalid cache access");
             }
+        }
+    }
+
+    pub fn load_word_fp(&mut self, addr: Address) -> Word {
+        if addr == IO_ADDRESS {
+            let value = self.sld_vec[self.sld_counter].parse::<f32>().unwrap();
+            let fp = FloatingPoint::new_f32(value);
+            self.sld_counter += 1;
+            u32_to_i32(fp.get_32_bits())
+        } else {
+            self.load_word(addr)
         }
     }
 
@@ -395,6 +424,10 @@ impl Core {
     }
 
     pub fn store_word(&mut self, addr: Address, value: Word) {
+        if addr == IO_ADDRESS {
+            self.output.push(value as u8);
+            return;
+        }
         self.increment_memory_access_count();
         let cache_access = self.cache.set_word(addr, value);
         match cache_access {
@@ -411,13 +444,28 @@ impl Core {
         }
     }
 
+    pub fn load_data_file(&mut self, path: &str) {
+        if let Ok(file) = File::open(path) {
+            let reader = std::io::BufReader::new(file);
+            for line in reader.lines().flatten() {
+                let mut iter = line.split_whitespace();
+                let addr = iter.next().unwrap().parse::<Address>().unwrap();
+                let value = u32_to_i32(iter.next().unwrap().parse::<u32>().unwrap());
+                self.memory.store_word(addr, value);
+            }
+        } else {
+            panic!("failed to open data file");
+        }
+    }
+
     pub fn move_instructions_to_next_stage(&mut self) {
         self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
         self.instruction_in_memory_stage = self.instruction_in_exec_stage.clone();
         self.instruction_in_exec_stage = self.decoded_instruction.clone();
         if self.fetched_instruction.is_some() {
             let decoded = decode_instruction(self.fetched_instruction.unwrap());
-            if let Instruction::OtherInstruction = decoded {
+            if let Instruction::Other = decoded {
+                // flush
                 self.decoded_instruction = None;
                 self.fetched_instruction = None;
                 return;
@@ -476,16 +524,18 @@ impl Core {
             if rd == 0 {
                 return;
             }
-            let source = self.forwarding_int_source_map.get(&rd);
-            match source {
-                Some((inst_cnt, _)) => {
-                    if *inst_cnt == current_inst_cnt {
-                        self.forwarding_int_source_map.remove(&rd);
-                    }
+            let int_source = self.forwarding_int_source_map.get(&rd);
+            let float_source = self.forwarding_float_source_map.get(&rd);
+            if let Some((inst_cnt, _)) = int_source {
+                if *inst_cnt == current_inst_cnt {
+                    self.forwarding_int_source_map.remove(&rd);
                 }
-                None => {
-                    panic!();
+            } else if let Some((inst_cnt, _)) = float_source {
+                if *inst_cnt == current_inst_cnt {
+                    self.forwarding_float_source_map.remove(&rd);
                 }
+            } else {
+                unreachable!("invalid destination register");
             }
         }
     }
@@ -510,13 +560,13 @@ impl Core {
         let rss = get_source_registers(&decoded_instruction);
         if rd.is_some() {
             let rd = rd.unwrap();
-            for i in 0..rss.len() {
-                if rss[i] == rd {
+            for rs in &rss {
+                if *rs == rd {
                     return true;
                 }
             }
         }
-        return false;
+        false
     }
 
     pub fn get_instruction_count(&self) -> InstructionCount {
@@ -531,13 +581,13 @@ impl Core {
         for i in 0..INT_REGISTER_SIZE {
             print!("x{: <2} 0x{:>08x} ", i, self.get_int_register(i));
             if i % 8 == 7 {
-                println!("");
+                println!();
             }
         }
         // for i in 0..FLOAT_REGISTER_SIZE {
         //     print!("f{: <2} {:>10.5} ", i, self.get_float_register(i));
         //     if i % 8 == 7 {
-        //         println!("");
+        //         println!();
         //     }
         // }
     }
@@ -547,27 +597,27 @@ impl Core {
         //     "IF                  ID                  EX                  MEM                 WB"
         // );
         let if_string = if self.fetched_instruction.is_some() {
-            format!("{:>08x}", self.fetched_instruction.clone().unwrap())
+            format!("{:>08x}", self.fetched_instruction.unwrap())
         } else {
-            format!("None")
+            "None".to_string()
         };
         print_filled_with_space(&if_string, 20);
         let id_string = if self.decoded_instruction.is_some() {
             format!("{:?}", self.decoded_instruction.clone().unwrap())
         } else {
-            format!("None")
+            "None".to_string()
         };
         print_filled_with_space(&id_string, 20);
         let ex_string = if self.instruction_in_exec_stage.is_some() {
             format!("{:?}", self.instruction_in_exec_stage.clone().unwrap())
         } else {
-            format!("None")
+            "None".to_string()
         };
         print_filled_with_space(&ex_string, 20);
         let mem_string = if self.instruction_in_memory_stage.is_some() {
             format!("{:?}", self.instruction_in_memory_stage.clone().unwrap())
         } else {
-            format!("None")
+            "None".to_string()
         };
         print_filled_with_space(&mem_string, 20);
         let wb_string = if self.instruction_in_write_back_stage.is_some() {
@@ -576,10 +626,10 @@ impl Core {
                 self.instruction_in_write_back_stage.clone().unwrap()
             )
         } else {
-            format!("None")
+            "None".to_string()
         };
         print_filled_with_space(&wb_string, 0);
-        println!("");
+        println!();
     }
 
     // pub fn show_memory(&self) {
@@ -589,8 +639,8 @@ impl Core {
 
     fn save_int_registers(&mut self) {
         let mut int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
-        for i in 0..INT_REGISTER_SIZE {
-            int_registers[i].set(self.get_int_register(i));
+        for (i, int_register) in int_registers.iter_mut().enumerate() {
+            int_register.set(self.get_int_register(i));
         }
         self.int_registers_history.push(int_registers);
     }
@@ -607,33 +657,32 @@ impl Core {
         for i in 0..self.pc_history.len() {
             print!("{:>8}  ", self.pc_history[i]);
         }
-        println!("");
+        println!();
     }
 
     fn show_int_registers_buffer(&self) {
         let mut strings = vec![vec![]; INT_REGISTER_SIZE];
         for i in 0..self.int_registers_history.len() {
-            for j in 0..INT_REGISTER_SIZE {
-                strings[j].push(format!("{:>08x}", self.int_registers_history[i][j].get()));
+            for (j, string) in strings.iter_mut().enumerate() {
+                string.push(format!("{:>08x}", self.int_registers_history[i][j].get()));
             }
         }
         let mut line = String::from("");
         for _ in 0..self.int_registers_history.len() {
             line += "-----"
         }
-        for i in 0..INT_REGISTER_SIZE {
-            // println!("{}", line);
+        for (i, string) in strings.iter().enumerate() {
             print!("x{: <2} ", i);
             let mut before_string = String::from("");
-            for j in 0..strings[i].len() {
-                if before_string != strings[i][j] {
-                    print!("{} |", strings[i][j]);
-                    before_string = strings[i][j].clone();
+            for value in string {
+                if before_string != *value {
+                    print!("{} |", value);
+                    before_string = value.clone();
                 } else {
                     print!("---------|");
                 }
             }
-            println!("");
+            println!();
         }
     }
 
@@ -665,48 +714,102 @@ impl Core {
             pc_stats[self.pc_history[i] as usize] += 1;
         }
         let mut pc_stats_with_index = vec![];
-        for i in 0..pc_stats.len() {
-            pc_stats_with_index.push((i, pc_stats[i]));
+        for (i, pc_stat) in pc_stats.iter().enumerate() {
+            pc_stats_with_index.push((i, *pc_stat));
         }
         pc_stats_with_index.sort_by(|a, b| b.1.cmp(&a.1));
-        for i in 0..pc_stats_with_index.len() {
-            if pc_stats_with_index[i].1 == 0 {
+        for pc_stat in &pc_stats_with_index {
+            if pc_stat.1 == 0 {
                 break;
             }
-            let inst = decode_instruction(
-                self.instruction_memory
-                    .load(pc_stats_with_index[i].0 as Address),
-            );
-            if let Instruction::OtherInstruction = inst {
+            let inst = decode_instruction(self.instruction_memory.load(pc_stat.0 as Address));
+            if let Instruction::Other = inst {
                 continue;
             }
             let inst = create_instruction_struct(inst);
-            let pc_inst_string =
-                format!("pc: {:>08x}({})", pc_stats_with_index[i].0, get_name(&inst));
+            let pc_inst_string = format!("pc: {:>08x}({})", pc_stat.0, get_name(&inst));
             print_filled_with_space(&pc_inst_string, 25);
-            println!("{}", pc_stats_with_index[i].1);
+            println!("{}", pc_stat.1);
         }
     }
 
-    pub fn run(&mut self, verbose: bool, interval: u64) {
+    fn output_pc(&self, path: &str) {
+        let mut file = File::create(path).unwrap();
+        let mut pc_count = 0;
+        loop {
+            let inst = self.instruction_memory.load(pc_count as Address);
+            let decoded = decode_instruction(inst);
+            match decoded {
+                Instruction::Other => {
+                    break;
+                }
+                _ => {
+                    let inst = create_instruction_struct(decoded);
+                    let inst_string = format!("{}: {}", pc_count, get_name(&inst));
+                    file.write_all(inst_string.as_bytes()).unwrap();
+                    file.write_all("\n".as_bytes()).unwrap();
+                    pc_count += 4;
+                }
+            }
+        }
+    }
+
+    fn show_current_state(&self, cycle_num: u128) {
+        eprint!(
+            "\r{} {:>08} pc: {:>06} sp: {:>010}",
+            cycle_num,
+            self.output.len(),
+            self.get_pc() - 4,
+            self.get_int_register(2),
+        );
+        if let Some(inst) = self.get_instruction_in_exec_stage() {
+            let inst_string = format!("{:?}", inst);
+            eprint!("  {:?}         ", inst_string);
+        }
+    }
+
+    fn load_sld_file(&mut self, path: &str) {
+        self.sld_vec = load_sld_file(path);
+    }
+
+    pub fn run(
+        &mut self,
+        verbose: bool,
+        interval: u64,
+        data_file_path: &str,
+        ppm_file_path: &str,
+        sld_file_path: &str,
+        pc_file_path: &str,
+    ) {
         let start_time = Instant::now();
         let mut will_stall = false;
         let mut stalling;
+        let mut cycle_num: u128 = 0;
+
+        let mut ppm_file = File::create(ppm_file_path).unwrap();
+        let mut before_output_len = 0;
+
+        self.output_pc(pc_file_path);
+
+        self.load_data_file(data_file_path);
+        self.load_sld_file(sld_file_path);
+
         self.save_pc(false);
         self.save_int_registers();
+
         if verbose {
-            println!("");
+            println!();
             self.show_registers();
         }
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
-                let pc_string = format!("pc: {}", self.get_pc());
-                print_filled_with_space(&pc_string, 15);
+                // let pc_string = format!("pc: {}", self.get_pc());
+                // print_filled_with_space(&pc_string, 15);
             }
+            cycle_num += 1;
             if interval != 0 {
-                let interval_start_time = Instant::now();
-                while interval_start_time.elapsed() < Duration::from_millis(interval) {}
+                thread::sleep(Duration::from_millis(interval));
             }
             if self.get_pc() >= INSTRUCTION_MEMORY_SIZE as Address {
                 self.pc_history.pop();
@@ -726,9 +829,6 @@ impl Core {
 
             if self.check_load_hazard() {
                 will_stall = true;
-                // if verbose {
-                //     println!("stalling");
-                // }
             }
 
             write_back(self);
@@ -745,17 +845,27 @@ impl Core {
                 register_fetch(self);
             }
 
-            self.set_next_pc(stalling);
+            self.set_next_pc(will_stall);
 
             self.remove_forwarding_source_if_possible();
 
             if verbose {
-                self.show_pipeline();
-                self.show_registers();
+                if cycle_num % 1000000 == 0 {
+                    self.show_current_state(cycle_num);
+                }
+                // self.show_pipeline();
+                // self.show_registers();
+            }
+            if before_output_len != self.output.len() {
+                for i in before_output_len..self.output.len() {
+                    let byte = [self.output[i]];
+                    ppm_file.write_all(&byte).unwrap();
+                }
+                before_output_len = self.output.len();
             }
 
-            self.save_pc(stalling);
-            self.save_int_registers();
+            // self.save_pc(will_stall);
+            // self.save_int_registers();
         }
 
         println!(
@@ -765,15 +875,15 @@ impl Core {
             self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
         );
         if verbose {
-            print!("    ");
-            for i in 0..self.pc_history.len() {
-                print!("{:>8}  ", i);
-            }
-            println!("");
-            self.show_pc_buffer();
-            self.show_int_registers_buffer();
+            // print!("    ");
+            // for i in 0..self.pc_history.len() {
+            //     print!("{:>8}  ", i);
+            // }
+            // println!();
+            // self.show_pc_buffer();
+            // self.show_int_registers_buffer();
         }
         self.show_memory_access_info();
-        self.show_pc_stats();
+        // self.show_pc_stats();
     }
 }
