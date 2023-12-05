@@ -35,23 +35,6 @@ pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
 //     colorized_println(text, RED);
 // }
 
-// #[derive(Debug, Clone, Copy)]
-// pub enum ExecResult {
-//     I32(i32),
-//     F32(f32),
-//     None,
-// }
-
-// #[derive(Debug, Clone, Copy)]
-// pub enum LoadValue {
-//     Byte(Byte),
-//     UByte(UByte),
-//     Half(Half),
-//     UHalf(UHalf),
-//     Word(Word),
-//     None,
-// }
-
 trait InstructionTrait: Clone + Debug {
     fn register_fetch(&mut self, _: &Core) {}
     fn exec(&mut self, _: &mut Core) {}
@@ -4884,6 +4867,13 @@ impl InstructionTrait for Fle {
     fn exec(&mut self, core: &mut Core) {
         let rs1_value = self.data.fs1_value.unwrap();
         let rs2_value = self.data.fs2_value.unwrap();
+        // eprintln!(
+        //     "rs1: {}({}), rs2: {}({})",
+        //     f32::from_bits(rs1_value.get_32_bits()),
+        //     rs1_value.get_32_bits(),
+        //     f32::from_bits(rs2_value.get_32_bits()),
+        //     rs2_value.get_32_bits()
+        // );
         self.data.rd_value = Some(if rs1_value <= rs2_value { 1 } else { 0 });
         core.set_forwarding_int_source(
             self.data.rd,
@@ -4940,7 +4930,7 @@ impl Debug for Flw {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
         write!(
             f,
-            "flw x{}, {}(x{})",
+            "flw f{}, {}(x{})",
             self.data.fd, extended_imm, self.data.rs1
         )
     }
@@ -4966,7 +4956,7 @@ impl InstructionTrait for Flw {
 
     fn memory(&mut self, core: &mut Core) {
         let addr = self.addr.unwrap();
-        let value = FloatingPoint::new(i32_to_u32(core.load_word(addr)));
+        let value = FloatingPoint::new(i32_to_u32(core.load_word_fp(addr)));
         self.data.fd_value = Some(value);
         core.set_forwarding_float_source(self.data.fd, self.data.inst_count.unwrap(), value);
     }
@@ -5023,7 +5013,7 @@ impl Debug for Fsw {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
         write!(
             f,
-            "fsw x{}, {}(x{})",
+            "fsw f{}, {}(x{})",
             self.data.fs2, extended_imm, self.data.rs1
         )
     }
@@ -6070,12 +6060,15 @@ impl InstructionTrait for InstructionEnum {
     }
 
     fn is_load_instruction(&self) -> bool {
-        match self {
-            InstructionEnum::Lb(_) => true,
-            InstructionEnum::Lh(_) => true,
-            InstructionEnum::Lw(_) => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            InstructionEnum::Lb(_)
+                | InstructionEnum::Lh(_)
+                | InstructionEnum::Lw(_)
+                | InstructionEnum::Lbu(_)
+                | InstructionEnum::Lhu(_)
+                | InstructionEnum::Flw(_)
+        )
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -6688,21 +6681,21 @@ fn create_r4_instruction_struct(
 
 pub fn create_instruction_struct(inst: Instruction) -> InstructionEnum {
     match inst {
-        Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
+        Instruction::I(imm, rs1, funct3, rd, op) => {
             create_i_instruction_struct(imm, rs1, funct3, rd, op)
         }
-        Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op) => {
+        Instruction::R(funct7, rs2, rs1, funct3, rd, op) => {
             create_r_instruction_struct(funct7, rs2, rs1, funct3, rd, op)
         }
-        Instruction::SInstruction(imm, rs2, rs1, funct3, op) => {
+        Instruction::S(imm, rs2, rs1, funct3, op) => {
             create_s_instruction_struct(imm, rs2, rs1, funct3, op)
         }
-        Instruction::BInstruction(imm, rs2, rs1, funct3, op) => {
+        Instruction::B(imm, rs2, rs1, funct3, op) => {
             create_b_instruction_struct(imm, rs2, rs1, funct3, op)
         }
-        Instruction::JInstruction(imm, rd, op) => create_j_instruction_struct(imm, rd, op),
-        Instruction::UInstruction(imm, rd, op) => create_u_instruction_struct(imm, rd, op),
-        Instruction::R4Instruction(fs3, funct2, fs2, fs1, funct3, rd, op) => {
+        Instruction::J(imm, rd, op) => create_j_instruction_struct(imm, rd, op),
+        Instruction::U(imm, rd, op) => create_u_instruction_struct(imm, rd, op),
+        Instruction::R4(fs3, funct2, fs2, fs1, funct3, rd, op) => {
             create_r4_instruction_struct(fs3, funct2, fs2, fs1, funct3, rd, op)
         }
         _ => {
@@ -6994,76 +6987,4 @@ pub fn get_name(inst: &InstructionEnum) -> String {
 //     };
 //     map.insert(79, fnmadd);
 //     map
-// }
-
-// pub fn exec_instruction(core: &mut Core, inst: InstructionValue, verbose: bool) {
-//     match decode_instruction(inst).0 {
-//         Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
-//             exec_i_instruction(core, imm, rs1, funct3, rd, op, verbose);
-//             if op != 103 {
-//                 core.increment_pc();
-//             }
-//         }
-//         Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op) => {
-//             exec_r_instruction(core, funct7, rs2, rs1, funct3, rd, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::SInstruction(imm, rs2, rs1, funct3, op) => {
-//             exec_s_instruction(core, imm, rs2, rs1, funct3, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::BInstruction(imm, rs2, rs1, funct3, op) => {
-//             exec_b_instruction(core, imm, rs2, rs1, funct3, op, verbose);
-//         }
-//         Instruction::JInstruction(imm, rd, op) => {
-//             exec_j_instruction(core, imm, rd, op, verbose);
-//         }
-//         Instruction::UInstruction(imm, rd, op) => {
-//             exec_u_instruction(core, imm, rd, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::R4Instruction(fs1, _, fs2, fs3, _, fd, op) => {
-//             exec_r4_instruction(core, fs3, fs2, fs1, fd, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::OtherInstruction => {
-//             println!("other instruction {:>032b}", inst);
-//         }
-//     }
-// }
-
-// pub fn exec_decoded_instruction(core: &mut Core, decoded_inst: Instruction, verbose: bool) {
-//     match decoded_inst {
-//         Instruction::IInstruction(imm, rs1, funct3, rd, op) => {
-//             exec_i_instruction(core, imm, rs1, funct3, rd, op, verbose);
-//             if op != 103 {
-//                 core.increment_pc();
-//             }
-//         }
-//         Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op) => {
-//             exec_r_instruction(core, funct7, rs2, rs1, funct3, rd, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::SInstruction(imm, rs2, rs1, funct3, op) => {
-//             exec_s_instruction(core, imm, rs2, rs1, funct3, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::BInstruction(imm, rs2, rs1, funct3, op) => {
-//             exec_b_instruction(core, imm, rs2, rs1, funct3, op, verbose);
-//         }
-//         Instruction::JInstruction(imm, rd, op) => {
-//             exec_j_instruction(core, imm, rd, op, verbose);
-//         }
-//         Instruction::UInstruction(imm, rd, op) => {
-//             exec_u_instruction(core, imm, rd, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::R4Instruction(fs1, _, fs2, fs3, _, fd, op) => {
-//             exec_r4_instruction(core, fs3, fs2, fs1, fd, op, verbose);
-//             core.increment_pc();
-//         }
-//         Instruction::OtherInstruction => {
-//             println!("other instruction");
-//         }
-//     }
 // }
