@@ -27,11 +27,8 @@ pub struct Core {
     memory_access_count: usize,
     cache_hit_count: usize,
     instruction_memory: InstructionMemory,
-    // instruction_cache: InstructionCache,
     instruction_memory_access_count: usize,
     instruction_count: InstructionCount,
-    // instruction_cache_hit_count: usize,
-    // instruction_maps: InstructionMaps,
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
@@ -58,11 +55,8 @@ impl Core {
         let memory_access_count = 0;
         let cache_hit_count = 0;
         let instruction_memory = InstructionMemory::new();
-        // let instruction_cache = InstructionCache::new();
         let instruction_memory_access_count = 0;
         let instruction_count = 0;
-        // let instruction_cache_hit_count = 0;
-        // let instruction_maps = InstructionMaps::new();
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
@@ -86,11 +80,8 @@ impl Core {
             memory_access_count,
             cache_hit_count,
             instruction_memory,
-            // instruction_cache,
             instruction_memory_access_count,
             instruction_count,
-            // instruction_cache_hit_count,
-            // instruction_maps,
             int_registers,
             float_registers,
             pc,
@@ -165,10 +156,11 @@ impl Core {
     }
 
     fn set_next_pc(&mut self, stalling: bool) {
-        if self.instruction_in_exec_stage.is_some() {
-            let jump_address = get_jump_address(&self.instruction_in_exec_stage.clone().unwrap());
-            if jump_address.is_some() {
-                self.set_pc(jump_address.unwrap());
+        if let Some(inst) = self.get_instruction_in_exec_stage() {
+            let jump_address = get_jump_address(inst);
+            if let Some(jump_address) = jump_address {
+                self.set_pc(jump_address);
+                // flush instruction in IF and ID stage
                 self.fetched_instruction = None;
                 self.decoded_instruction = None;
             } else if !stalling {
@@ -187,58 +179,13 @@ impl Core {
         self.instruction_count += 1;
     }
 
-    // fn increment_instruction_cache_hit_count(&mut self) {
-    //     self.instruction_cache_hit_count += 1;
-    // }
-
-    // fn process_instruction_cache_miss(&mut self, addr: Address) {
-    //     let line_addr = addr & !((1 << self.instruction_cache.get_offset_bit_num()) - 1);
-    //     let line = self.instruction_memory.get_cache_line(line_addr);
-    //     let set_line_result = self.instruction_cache.set_line(line_addr, line);
-    //     if set_line_result.is_some() {
-    //         let evicted_line = set_line_result.unwrap();
-    //         self.instruction_memory.set_cache_line(evicted_line);
-    //     }
-    // }
-
     pub fn load_instruction(&mut self, addr: Address) -> InstructionValue {
         self.increment_instruction_memory_access_count();
         self.instruction_memory.load(addr)
-
-        // let cache_access = self.instruction_cache.get(addr);
-        // match cache_access {
-        //     InstructionCacheAccess::HitGet(value) => {
-        //         self.increment_instruction_cache_hit_count();
-        //         return value;
-        //     }
-        //     InstructionCacheAccess::Miss => {
-        //         let value = self.instruction_memory.load(addr);
-        //         self.process_instruction_cache_miss(addr);
-        //         return value;
-        //     }
-        //     _ => {
-        //         panic!("invalid cache access");
-        //     }
-        // }
     }
 
     pub fn store_instruction(&mut self, addr: Address, inst: InstructionValue) {
-        // self.increment_instruction_memory_access_count();
         self.instruction_memory.store(addr, inst);
-
-        // let cache_access = self.instruction_cache.set(addr, inst);
-        // match cache_access {
-        //     InstructionCacheAccess::HitSet => {
-        //         self.increment_instruction_cache_hit_count();
-        //     }
-        //     InstructionCacheAccess::Miss => {
-        //         self.instruction_memory.store(addr, inst);
-        //         self.process_instruction_cache_miss(addr);
-        //     }
-        //     _ => {
-        //         panic!("invalid cache access");
-        //     }
-        // }
     }
 
     pub fn get_int_register(&self, index: usize) -> Int {
@@ -272,8 +219,7 @@ impl Core {
         let line_addr = addr & !((1 << self.cache.get_offset_bit_num()) - 1);
         let line = self.memory.get_cache_line(line_addr);
         let set_line_result = self.cache.set_line(line_addr, line);
-        if set_line_result.is_some() {
-            let evicted_line = set_line_result.unwrap();
+        if let Some(evicted_line) = set_line_result {
             self.memory.set_cache_line(evicted_line);
         }
     }
@@ -462,10 +408,9 @@ impl Core {
         self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
         self.instruction_in_memory_stage = self.instruction_in_exec_stage.clone();
         self.instruction_in_exec_stage = self.decoded_instruction.clone();
-        if self.fetched_instruction.is_some() {
-            let decoded = decode_instruction(self.fetched_instruction.unwrap());
+        if let Some(fetched_instruction) = self.fetched_instruction {
+            let decoded = decode_instruction(fetched_instruction);
             if let Instruction::Other = decoded {
-                // flush
                 self.decoded_instruction = None;
                 self.fetched_instruction = None;
                 return;
@@ -519,8 +464,7 @@ impl Core {
     fn remove_forwarding_source_if_possible_sub(&mut self, inst: &InstructionEnum) {
         let current_inst_cnt = get_instruction_count(inst).unwrap();
         let rd = get_destination_register(inst);
-        if rd.is_some() {
-            let rd = rd.unwrap();
+        if let Some(rd) = rd {
             if rd == 0 {
                 return;
             }
@@ -541,8 +485,7 @@ impl Core {
     }
 
     fn remove_forwarding_source_if_possible(&mut self) {
-        if self.get_instruction_in_write_back_stage().is_some() {
-            let inst = self.get_instruction_in_write_back_stage().clone().unwrap();
+        if let Some(inst) = self.get_instruction_in_exec_stage().clone() {
             self.remove_forwarding_source_if_possible_sub(&inst);
         }
     }
@@ -558,8 +501,7 @@ impl Core {
         }
         let rd = get_destination_register(&instruction_in_exec_stage);
         let rss = get_source_registers(&decoded_instruction);
-        if rd.is_some() {
-            let rd = rd.unwrap();
+        if let Some(rd) = rd {
             for rs in &rss {
                 if *rs == rd {
                     return true;
@@ -573,10 +515,6 @@ impl Core {
         self.instruction_count
     }
 
-    // pub fn get_memory_byte(&self, addr: Address) -> String {
-    //     self.memory.get_byte(addr)
-    // }
-
     pub fn show_registers(&self) {
         for i in 0..INT_REGISTER_SIZE {
             print!("x{: <2} 0x{:>08x} ", i, self.get_int_register(i));
@@ -584,47 +522,48 @@ impl Core {
                 println!();
             }
         }
-        // for i in 0..FLOAT_REGISTER_SIZE {
-        //     print!("f{: <2} {:>10.5} ", i, self.get_float_register(i));
-        //     if i % 8 == 7 {
-        //         println!();
-        //     }
-        // }
+        for i in 0..FLOAT_REGISTER_SIZE {
+            print!(
+                "f{: <2} {:>10.5} ",
+                i,
+                f32::from_bits(self.get_float_register(i).get_32_bits())
+            );
+            if i % 8 == 7 {
+                println!();
+            }
+        }
     }
 
     fn show_pipeline(&self) {
         // println!(
         //     "IF                  ID                  EX                  MEM                 WB"
         // );
-        let if_string = if self.fetched_instruction.is_some() {
-            format!("{:>08x}", self.fetched_instruction.unwrap())
+        let if_string = if let Some(inst) = self.fetched_instruction {
+            format!("{:>08x}", inst)
         } else {
             "None".to_string()
         };
         print_filled_with_space(&if_string, 20);
-        let id_string = if self.decoded_instruction.is_some() {
-            format!("{:?}", self.decoded_instruction.clone().unwrap())
+        let id_string = if let Some(inst) = self.decoded_instruction.clone() {
+            format!("{:?}", inst)
         } else {
             "None".to_string()
         };
         print_filled_with_space(&id_string, 20);
-        let ex_string = if self.instruction_in_exec_stage.is_some() {
-            format!("{:?}", self.instruction_in_exec_stage.clone().unwrap())
+        let ex_string = if let Some(inst) = self.instruction_in_exec_stage.clone() {
+            format!("{:?}", inst)
         } else {
             "None".to_string()
         };
         print_filled_with_space(&ex_string, 20);
-        let mem_string = if self.instruction_in_memory_stage.is_some() {
-            format!("{:?}", self.instruction_in_memory_stage.clone().unwrap())
+        let mem_string = if let Some(inst) = self.instruction_in_memory_stage.clone() {
+            format!("{:?}", inst)
         } else {
             "None".to_string()
         };
         print_filled_with_space(&mem_string, 20);
-        let wb_string = if self.instruction_in_write_back_stage.is_some() {
-            format!(
-                "{:?}",
-                self.instruction_in_write_back_stage.clone().unwrap()
-            )
+        let wb_string = if let Some(inst) = self.instruction_in_write_back_stage.clone() {
+            format!("{:?}", inst)
         } else {
             "None".to_string()
         };
@@ -697,15 +636,6 @@ impl Core {
             "instruction memory access count: {}",
             self.instruction_memory_access_count
         );
-        // println!(
-        //     "instruction cache hit count: {}",
-        //     self.instruction_cache_hit_count
-        // );
-        // println!(
-        //     "instruction cache hit rate: {:.5}%",
-        //     self.instruction_cache_hit_count as f64 / self.instruction_memory_access_count as f64
-        //         * 100.0
-        // );
     }
 
     fn show_pc_stats(&self) {
