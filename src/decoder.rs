@@ -57,14 +57,14 @@ use crate::types::*;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Instruction {
-    IInstruction(Imm12, Rs1, Funct3, Rd, Op),
-    RInstruction(Funct7, Rs2, Rs1, Funct3, Rd, Op),
-    SInstruction(Imm12, Rs2, Rs1, Funct3, Op),
-    JInstruction(Imm20, Rd, Op),
-    BInstruction(Imm12, Rs2, Rs1, Funct3, Op),
-    UInstruction(Imm20, Rd, Op),
-    R4Instruction(Fs3, Funct2, Fs2, Fs1, Funct7, Fd, Op),
-    OtherInstruction,
+    I(Imm12, Rs1, Funct3, Rd, Op),
+    R(Funct7, Rs2, Rs1, Funct3, Rd, Op),
+    S(Imm12, Rs2, Rs1, Funct3, Op),
+    J(Imm20, Rd, Op),
+    B(Imm12, Rs2, Rs1, Funct3, Op),
+    U(Imm20, Rd, Op),
+    R4(Fs3, Funct2, Fs2, Fs1, Funct7, Fd, Op),
+    Other,
 }
 
 enum InstructionType {
@@ -81,9 +81,9 @@ enum InstructionType {
 fn instruction_typeof(inst: InstructionValue) -> InstructionType {
     let op = inst & 127;
     match op {
-        3 | 19 | 27 | 103 | 115 => InstructionType::I,
+        3 | 7 | 19 | 27 | 103 | 115 => InstructionType::I,
         51 | 59 | 83 => InstructionType::R,
-        35 => InstructionType::S,
+        35 | 39 => InstructionType::S,
         111 => InstructionType::J,
         99 => InstructionType::B,
         23 | 55 => InstructionType::U,
@@ -98,7 +98,7 @@ fn decode_i_instruction(inst: InstructionValue) -> Instruction {
     let funct3 = ((inst >> 12) & 7) as u8;
     let rd = ((inst >> 7) & 31) as u8;
     let op = (inst & 127) as u8;
-    Instruction::IInstruction(imm, rs1, funct3, rd, op)
+    Instruction::I(imm, rs1, funct3, rd, op)
 }
 
 fn decode_r_instruction(inst: InstructionValue) -> Instruction {
@@ -108,7 +108,7 @@ fn decode_r_instruction(inst: InstructionValue) -> Instruction {
     let funct3 = ((inst >> 12) & 7) as u8;
     let rd = ((inst >> 7) & 31) as u8;
     let op = (inst & 127) as u8;
-    Instruction::RInstruction(funct7, rs2, rs1, funct3, rd, op)
+    Instruction::R(funct7, rs2, rs1, funct3, rd, op)
 }
 
 fn decode_s_instruction(inst: InstructionValue) -> Instruction {
@@ -117,7 +117,7 @@ fn decode_s_instruction(inst: InstructionValue) -> Instruction {
     let rs1 = ((inst >> 15) & 31) as u8;
     let funct3 = ((inst >> 12) & 7) as u8;
     let op = (inst & 127) as u8;
-    Instruction::SInstruction(imm, rs2, rs1, funct3, op)
+    Instruction::S(imm, rs2, rs1, funct3, op)
 }
 
 fn decode_j_instruction(inst: InstructionValue) -> Instruction {
@@ -127,7 +127,7 @@ fn decode_j_instruction(inst: InstructionValue) -> Instruction {
         + ((inst >> 21) & 1023) as i32;
     let rd = ((inst >> 7) & 31) as u8;
     let op = (inst & 127) as u8;
-    Instruction::JInstruction(imm, rd, op)
+    Instruction::J(imm, rd, op)
 }
 
 fn decode_b_instruction(inst: InstructionValue) -> Instruction {
@@ -139,14 +139,14 @@ fn decode_b_instruction(inst: InstructionValue) -> Instruction {
     let rs1 = ((inst >> 15) & 31) as u8;
     let funct3 = ((inst >> 12) & 7) as u8;
     let op = (inst & 127) as u8;
-    Instruction::BInstruction(imm, rs2, rs1, funct3, op)
+    Instruction::B(imm, rs2, rs1, funct3, op)
 }
 
 fn decode_u_instruction(inst: InstructionValue) -> Instruction {
     let imm: i32 = (inst >> 12) as i32;
     let rd = ((inst >> 7) & 31) as u8;
     let op = (inst & 127) as u8;
-    Instruction::UInstruction(imm, rd, op)
+    Instruction::U(imm, rd, op)
 }
 
 fn decode_r4_instruction(inst: InstructionValue) -> Instruction {
@@ -157,7 +157,7 @@ fn decode_r4_instruction(inst: InstructionValue) -> Instruction {
     let funct3 = ((inst >> 12) & 7) as u8;
     let fd = ((inst >> 7) & 31) as u8;
     let op = (inst & 127) as u8;
-    Instruction::R4Instruction(fs3, funct2, fs2, fs1, funct3, fd, op)
+    Instruction::R4(fs3, funct2, fs2, fs1, funct3, fd, op)
 }
 
 pub fn decode_instruction(inst: InstructionValue) -> Instruction {
@@ -170,6 +170,6 @@ pub fn decode_instruction(inst: InstructionValue) -> Instruction {
         InstructionType::B => decode_b_instruction(inst),
         InstructionType::U => decode_u_instruction(inst),
         InstructionType::R4 => decode_r4_instruction(inst),
-        InstructionType::Other => Instruction::OtherInstruction,
+        InstructionType::Other => Instruction::Other,
     }
 }
