@@ -35,8 +35,7 @@ impl FloatingPoint {
     }
 
     pub fn get_fraction(&self) -> u32 {
-        let fraction = self.value & 0x7fffff;
-        fraction
+        self.value & 0x7fffff
     }
 
     pub fn get_all(&self) -> (i32, i32, u32) {
@@ -112,9 +111,9 @@ impl Add for FloatingPoint {
             (to_n_bits_u32(m2 | 0x800000, 25), e2)
         };
         let (ce, tde) = if e1a > e2a {
-            (0 as u32, to_n_bits_u32(e1a - e2a, 8))
+            (0_u32, to_n_bits_u32(e1a - e2a, 8))
         } else {
-            (1 as u32, to_n_bits_u32(e2a - e1a, 8))
+            (1_u32, to_n_bits_u32(e2a - e1a, 8))
         };
         let de = if tde >> 5 != 0 {
             31
@@ -160,9 +159,9 @@ impl Add for FloatingPoint {
         } else {
             (to_n_bits_u64(myd << ((eyd & 31) - 1), 56), 0)
         };
-        let myr = if (myf & 0b10 != 0 && myf & 0b1 == 0 && stck == 0 && myf & 0b100 != 0)
-            || (myf & 0b10 != 0 && myf & 0b1 == 0 && s1 == s2 && stck == 1)
-            || (myf & 0b10 != 0 && myf & 0b1 != 0)
+        let myr = if myf & 0b10 != 0 && myf & 0b1 != 0
+            || myf & 0b10 != 0 && stck == 0 && myf & 0b100 != 0
+            || myf & 0b10 != 0 && s1 == s2 && stck == 1
         {
             to_n_bits_u64(to_n_bits_u64(myf >> 2, 25) + 1, 25)
         } else {
@@ -249,7 +248,7 @@ impl Mul for FloatingPoint {
         };
         let ey = if ei < 127 { 0 } else { ei - 127 };
         let sy = s1 ^ s2;
-        let y = (sy << 31) + ((ey as u32) << 23) + (my as u32);
+        let y = (sy << 31) + (ey << 23) + (my as u32);
         FloatingPoint { value: y }
     }
 }
@@ -300,7 +299,7 @@ pub fn create_inv_map_f32() -> InvMap {
 
 fn inv(x: FloatingPoint, inv_map: &InvMap) -> FloatingPoint {
     let value = x.get_f32_value();
-    assert!(1. <= value && value < 2.);
+    assert!((1. ..2.).contains(&value));
     let (_, _, m) = x.get_1_8_23_bits();
     let index = (m >> 13) as usize;
     let (a, b) = inv_map[index];
@@ -507,30 +506,30 @@ impl PartialOrd for FloatingPoint {
         }
         if s1 == 0 {
             if e1 > e2 {
-                return Some(Ordering::Greater);
+                Some(Ordering::Greater)
             } else if e1 < e2 {
-                return Some(Ordering::Less);
+                Some(Ordering::Less)
             } else {
                 if m1 > m2 {
-                    return Some(Ordering::Greater);
+                    Some(Ordering::Greater)
                 } else if m1 < m2 {
-                    return Some(Ordering::Less);
+                    Some(Ordering::Less)
                 } else {
-                    return Some(Ordering::Equal);
+                    Some(Ordering::Equal)
                 }
             }
         } else {
             if e1 > e2 {
-                return Some(Ordering::Less);
+                Some(Ordering::Less)
             } else if e1 < e2 {
-                return Some(Ordering::Greater);
+                Some(Ordering::Greater)
             } else {
                 if m1 > m2 {
-                    return Some(Ordering::Less);
+                    Some(Ordering::Less)
                 } else if m1 < m2 {
-                    return Some(Ordering::Greater);
+                    Some(Ordering::Greater)
                 } else {
-                    return Some(Ordering::Equal);
+                    Some(Ordering::Equal)
                 }
             }
         }
@@ -772,7 +771,7 @@ mod tests {
                 );
             }
         }
-        println!("");
+        println!();
     }
 
     #[test]
@@ -813,7 +812,7 @@ mod tests {
                     assert!(abs_diff <= 0.5, "op: {}, result: {}", op, result,);
                 }
             }
-            println!("");
+            println!();
         }
     }
 
@@ -848,6 +847,6 @@ mod tests {
                 correct_result
             );
         }
-        println!("");
+        println!();
     }
 }
