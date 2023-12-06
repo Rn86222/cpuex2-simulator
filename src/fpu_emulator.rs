@@ -428,8 +428,10 @@ pub fn fp_to_int(this: FloatingPoint) -> Int {
         (0, 0)
     } else if e == 126 {
         (1, 0)
-    } else if e <= 127 + 30 {
+    } else if e < 127 + 30 {
         ((mis >> (30 - (e - 127 + 1))) & 1, mis >> (30 - (e - 127)))
+    } else if e == 127 + 30 {
+        (0, mis)
     } else {
         if s == 1 {
             (0, 1 << 31)
