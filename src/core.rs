@@ -730,8 +730,8 @@ impl Core {
         self.save_int_registers();
 
         if verbose {
-            println!();
-            self.show_registers();
+            // println!();
+            // self.show_registers();
         }
         loop {
             if verbose {
