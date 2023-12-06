@@ -233,8 +233,7 @@ impl InstructionTrait for Lb {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -316,8 +315,7 @@ impl InstructionTrait for Lh {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -399,8 +397,7 @@ impl InstructionTrait for Lw {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -481,8 +478,7 @@ impl InstructionTrait for Lbu {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value as Int);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -563,8 +559,7 @@ impl InstructionTrait for Lhu {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value as Int);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -645,8 +640,7 @@ impl InstructionTrait for Addi {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -719,8 +713,7 @@ impl InstructionTrait for Slli {
         self.data.inst_count = Some(core.get_instruction_count());
         self.uimm = Some((self.data.imm & 0x1f) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value as Int);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -795,8 +788,7 @@ impl InstructionTrait for Slti {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -876,8 +868,7 @@ impl InstructionTrait for Sltiu {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -957,8 +948,7 @@ impl InstructionTrait for Xori {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -1031,8 +1021,7 @@ impl InstructionTrait for Srli {
         self.data.inst_count = Some(core.get_instruction_count());
         self.uimm = Some((self.data.imm & 0x1f) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value as Int);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -1106,8 +1095,7 @@ impl InstructionTrait for Srai {
         self.data.inst_count = Some(core.get_instruction_count());
         self.uimm = Some((self.data.imm & 0x1f) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value as Int);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -1182,8 +1170,7 @@ impl InstructionTrait for Ori {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -1259,8 +1246,7 @@ impl InstructionTrait for Andi {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -1398,15 +1384,13 @@ impl InstructionTrait for Sb {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -1474,15 +1458,13 @@ impl InstructionTrait for Sh {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -1550,15 +1532,13 @@ impl InstructionTrait for Sw {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -1623,15 +1603,13 @@ impl InstructionTrait for Add {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -1705,15 +1683,13 @@ impl InstructionTrait for Sub {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -1787,15 +1763,13 @@ impl InstructionTrait for Sll {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value as Int);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value as Int);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -1870,15 +1844,13 @@ impl InstructionTrait for Slt {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -1956,15 +1928,13 @@ impl InstructionTrait for Sltu {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2042,15 +2012,13 @@ impl InstructionTrait for Xor {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2124,15 +2092,13 @@ impl InstructionTrait for Srl {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2207,15 +2173,13 @@ impl InstructionTrait for Sra {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2290,15 +2254,13 @@ impl InstructionTrait for Or {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2372,15 +2334,13 @@ impl InstructionTrait for And {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2522,15 +2482,13 @@ impl InstructionTrait for Beq {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2611,15 +2569,13 @@ impl InstructionTrait for Bne {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2700,15 +2656,13 @@ impl InstructionTrait for Blt {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2789,15 +2743,13 @@ impl InstructionTrait for Bge {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2878,15 +2830,13 @@ impl InstructionTrait for Bltu {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -2967,15 +2917,13 @@ impl InstructionTrait for Bgeu {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3056,8 +3004,7 @@ impl InstructionTrait for Jalr {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -3212,15 +3159,13 @@ impl InstructionTrait for Mul {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3294,15 +3239,13 @@ impl InstructionTrait for Mulh {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3377,15 +3320,13 @@ impl InstructionTrait for Mulhsu {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3459,15 +3400,13 @@ impl InstructionTrait for Mulhu {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3541,15 +3480,13 @@ impl InstructionTrait for Div {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3623,15 +3560,13 @@ impl InstructionTrait for Divu {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3705,15 +3640,13 @@ impl InstructionTrait for Rem {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3787,15 +3720,13 @@ impl InstructionTrait for Remu {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
@@ -3869,15 +3800,13 @@ impl InstructionTrait for Fadd {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -3951,15 +3880,13 @@ impl InstructionTrait for Fsub {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4033,15 +3960,13 @@ impl InstructionTrait for Fmul {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4115,15 +4040,13 @@ impl InstructionTrait for Fdiv {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4193,8 +4116,7 @@ impl InstructionTrait for Fsqrt {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
@@ -4267,15 +4189,13 @@ impl InstructionTrait for Fsgnj {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4349,15 +4269,13 @@ impl InstructionTrait for Fsgnjn {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4431,15 +4349,13 @@ impl InstructionTrait for Fsgnjx {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4513,15 +4429,13 @@ impl InstructionTrait for Fmin {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4599,15 +4513,13 @@ impl InstructionTrait for Fmax {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.rs2_value = Some(*rs2_value);
         } else {
             self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4685,15 +4597,13 @@ impl InstructionTrait for Feq {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
         } else {
             self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.fs2_value = Some(*rs2_value);
         } else {
             self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4767,15 +4677,13 @@ impl InstructionTrait for Flt {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
         } else {
             self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.fs2_value = Some(*rs2_value);
         } else {
             self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4849,15 +4757,13 @@ impl InstructionTrait for Fle {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
         } else {
             self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.fs2_value = Some(*rs2_value);
         } else {
             self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -4941,8 +4847,7 @@ impl InstructionTrait for Flw {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source.is_some() {
-            let (_, rs1_value) = forwarding_source.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -5024,15 +4929,13 @@ impl InstructionTrait for Fsw {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
         }
         let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if forwarding_source_2.is_some() {
-            let (_, rs2_value) = forwarding_source_2.unwrap();
+        if let Some((_, rs2_value)) = forwarding_source_2 {
             self.data.fs2_value = Some(*rs2_value);
         } else {
             self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
@@ -5093,8 +4996,7 @@ impl InstructionTrait for FcvtWS {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
         } else {
             self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
@@ -5163,8 +5065,7 @@ impl InstructionTrait for FcvtWuS {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
         } else {
             self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
@@ -5234,8 +5135,7 @@ impl InstructionTrait for FcvtSW {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -5304,8 +5204,7 @@ impl InstructionTrait for FcvtSWu {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
@@ -5379,8 +5278,7 @@ impl InstructionTrait for FmvXW {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
         } else {
             self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
@@ -5449,8 +5347,7 @@ impl InstructionTrait for FmvWX {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if forwarding_source_1.is_some() {
-            let (_, rs1_value) = forwarding_source_1.unwrap();
+        if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
         } else {
             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
