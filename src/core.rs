@@ -684,10 +684,10 @@ impl Core {
         }
     }
 
-    fn show_current_state(&self, cycle_num: u128) {
+    fn show_current_state(&self) {
         eprint!(
             "\r{} {:>08} pc: {:>06} sp: {:>010}",
-            cycle_num,
+            self.instruction_count,
             self.output.len(),
             self.get_pc() - 4,
             self.get_int_register(2),
@@ -783,7 +783,7 @@ impl Core {
 
             if verbose {
                 if cycle_num % 1000000 == 0 {
-                    self.show_current_state(cycle_num);
+                    self.show_current_state();
                 }
                 // self.show_pipeline();
                 // self.show_registers();
