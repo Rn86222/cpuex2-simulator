@@ -485,7 +485,7 @@ impl Core {
     }
 
     fn remove_forwarding_source_if_possible(&mut self) {
-        if let Some(inst) = self.get_instruction_in_exec_stage().clone() {
+        if let Some(inst) = self.get_instruction_in_write_back_stage().clone() {
             self.remove_forwarding_source_if_possible_sub(&inst);
         }
     }
@@ -695,6 +695,8 @@ impl Core {
         if let Some(inst) = self.get_instruction_in_exec_stage() {
             let inst_string = format!("{:?}", inst);
             eprint!("  {:?}         ", inst_string);
+        } else {
+            eprint!("               ");
         }
     }
 
