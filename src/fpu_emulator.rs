@@ -239,12 +239,10 @@ impl Mul for FloatingPoint {
         } else {
             myi >> (se - 23)
         };
-        let ei = if se > 46 {
-            e1 + e2 + 1
-        } else if se == 46 {
-            e1 + e2
-        } else {
-            panic!();
+        let ei = match se {
+            47.. => e1 + e2 + 1,
+            46 => e1 + e2,
+            _ => panic!(),
         };
         let ey = if ei < 127 { 0 } else { ei - 127 };
         let sy = s1 ^ s2;
@@ -815,8 +813,8 @@ mod tests {
             if x % 1000000 == 0 {
                 print!(
                     "\r{:.0}%",
-                    (x as f32 - std::i32::MIN as f32) as f32
-                        / (std::i32::MAX as f32 - std::i32::MIN as f32 + 1.) as f32
+                    (x as f32 - std::i32::MIN as f32)
+                        / (std::i32::MAX as f32 - std::i32::MIN as f32 + 1.)
                         * 100.0
                 );
                 stdout().flush().unwrap();

@@ -6555,22 +6555,25 @@ fn create_r4_instruction_struct(
     _rd: Rd,
     op: Op,
 ) -> InstructionEnum {
-    match op {
-        // 67 => {
-        //     // fmadd
-        // }
-        // 71 => {
-        //     // fmsub
-        // }
-        // 75 => {
-        //     // fnmsub
-        // }
-        // 79 => {
-        //     // fnmadd
-        // }
-        _ => {
-            panic!("unexpected op: {}", op);
-        }
+    // match op {
+    //     // 67 => {
+    //     //     // fmadd
+    //     // }
+    //     // 71 => {
+    //     //     // fmsub
+    //     // }
+    //     // 75 => {
+    //     //     // fnmsub
+    //     // }
+    //     // 79 => {
+    //     //     // fnmadd
+    //     // }
+    //     _ => {
+    //         panic!("unexpected op: {}", op);
+    //     }
+    // }
+    {
+        panic!("unexpected op: {}", op);
     }
 }
 
