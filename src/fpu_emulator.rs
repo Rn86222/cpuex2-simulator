@@ -303,8 +303,7 @@ fn inv(x: FloatingPoint, inv_map: &InvMap) -> FloatingPoint {
     let (_, _, m) = x.get_1_8_23_bits();
     let index = (m >> 13) as usize;
     let (a, b) = inv_map[index];
-    let y = b - a * x;
-    y
+    b - a * x
 }
 
 pub fn div_fp(this: FloatingPoint, other: FloatingPoint, inv_map: &InvMap) -> FloatingPoint {
@@ -432,22 +431,19 @@ pub fn fp_to_int(this: FloatingPoint) -> Int {
         ((mis >> (30 - (e - 127 + 1))) & 1, mis >> (30 - (e - 127)))
     } else if e == 127 + 30 {
         (0, mis)
+    } else if s == 1 {
+        (0, 1 << 31)
     } else {
-        if s == 1 {
-            (0, 1 << 31)
-        } else {
-            (0, (1 << 31) - 1)
-        }
+        (0, (1 << 31) - 1)
     };
     let my = myi + msb;
-    let y = if s == 0 || e >= 127 + 31 {
+    if s == 0 || e >= 127 + 31 {
         my as Int
     } else if my == 0 {
         0
     } else {
         !(my as Int) + 1
-    };
-    y
+    }
 }
 
 pub fn int_to_fp(x: Int) -> FloatingPoint {
@@ -511,29 +507,23 @@ impl PartialOrd for FloatingPoint {
                 Some(Ordering::Greater)
             } else if e1 < e2 {
                 Some(Ordering::Less)
-            } else {
-                if m1 > m2 {
-                    Some(Ordering::Greater)
-                } else if m1 < m2 {
-                    Some(Ordering::Less)
-                } else {
-                    Some(Ordering::Equal)
-                }
-            }
-        } else {
-            if e1 > e2 {
-                Some(Ordering::Less)
-            } else if e1 < e2 {
+            } else if m1 > m2 {
                 Some(Ordering::Greater)
+            } else if m1 < m2 {
+                Some(Ordering::Less)
             } else {
-                if m1 > m2 {
-                    Some(Ordering::Less)
-                } else if m1 < m2 {
-                    Some(Ordering::Greater)
-                } else {
-                    Some(Ordering::Equal)
-                }
+                Some(Ordering::Equal)
             }
+        } else if e1 > e2 {
+            Some(Ordering::Less)
+        } else if e1 < e2 {
+            Some(Ordering::Greater)
+        } else if m1 > m2 {
+            Some(Ordering::Less)
+        } else if m1 < m2 {
+            Some(Ordering::Greater)
+        } else {
+            Some(Ordering::Equal)
         }
     }
 }

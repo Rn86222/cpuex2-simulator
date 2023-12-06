@@ -53,7 +53,7 @@ fn main() {
                 let mut inst_count = 0;
                 let mut inst = 0;
                 for byte in buf {
-                    inst += (byte as u32) << (inst_count % 4) * 8;
+                    inst += (byte as u32) << ((inst_count % 4) * 8);
                     inst_count += 1;
                     if inst_count % 4 == 0 {
                         core.store_instruction(inst_count - 4, inst);

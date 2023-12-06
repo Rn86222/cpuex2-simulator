@@ -1030,9 +1030,7 @@ impl InstructionTrait for Srli {
 
     fn exec(&mut self, core: &mut Core) {
         let uimm = self.uimm.unwrap();
-        self.data.rd_value = Some(u32_to_i32(
-            i32_to_u32(self.data.rs1_value.unwrap()) >> uimm as u32,
-        ));
+        self.data.rd_value = Some(u32_to_i32(i32_to_u32(self.data.rs1_value.unwrap()) >> uimm));
         core.set_forwarding_int_source(
             self.data.rd,
             self.data.inst_count.unwrap(),

@@ -230,12 +230,12 @@ impl Core {
         match cache_access {
             CacheAccess::HitUByte(value) => {
                 self.increment_cache_hit_count();
-                return u8_to_i8(value) as Byte;
+                u8_to_i8(value) as Byte
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_byte(addr);
                 self.process_cache_miss(addr);
-                return value;
+                value
             }
             _ => {
                 panic!("invalid cache access");
@@ -249,12 +249,12 @@ impl Core {
         match cache_access {
             CacheAccess::HitUByte(value) => {
                 self.increment_cache_hit_count();
-                return value;
+                value
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_ubyte(addr);
                 self.process_cache_miss(addr);
-                return value;
+                value
             }
             _ => {
                 panic!("invalid cache access");
@@ -285,12 +285,12 @@ impl Core {
         match cache_access {
             CacheAccess::HitUHalf(value) => {
                 self.increment_cache_hit_count();
-                return u16_to_i16(value);
+                u16_to_i16(value)
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_half(addr);
                 self.process_cache_miss(addr);
-                return value;
+                value
             }
             _ => {
                 panic!("invalid cache access");
@@ -304,12 +304,12 @@ impl Core {
         match cache_access {
             CacheAccess::HitUHalf(value) => {
                 self.increment_cache_hit_count();
-                return value;
+                value
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_uhalf(addr);
                 self.process_cache_miss(addr);
-                return value;
+                value
             }
             _ => {
                 panic!("invalid cache access");
@@ -328,12 +328,12 @@ impl Core {
         match cache_access {
             CacheAccess::HitWord(value) => {
                 self.increment_cache_hit_count();
-                return value;
+                value
             }
             CacheAccess::Miss => {
                 let value = self.memory.load_word(addr);
                 self.process_cache_miss(addr);
-                return value;
+                value
             }
             _ => {
                 panic!("invalid cache access");
@@ -515,6 +515,7 @@ impl Core {
         self.instruction_count
     }
 
+    #[allow(dead_code)]
     pub fn show_registers(&self) {
         for i in 0..INT_REGISTER_SIZE {
             print!("x{: <2} 0x{:>08x} ", i, self.get_int_register(i));
@@ -534,6 +535,7 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
     fn show_pipeline(&self) {
         // println!(
         //     "IF                  ID                  EX                  MEM                 WB"
@@ -576,6 +578,7 @@ impl Core {
     //     self.memory.show();
     // }
 
+    #[allow(dead_code)]
     fn save_int_registers(&mut self) {
         let mut int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         for (i, int_register) in int_registers.iter_mut().enumerate() {
@@ -584,6 +587,7 @@ impl Core {
         self.int_registers_history.push(int_registers);
     }
 
+    #[allow(dead_code)]
     fn save_pc(&mut self, stalling: bool) {
         if stalling {
             return;
@@ -591,6 +595,7 @@ impl Core {
         self.pc_history.push(self.get_pc());
     }
 
+    #[allow(dead_code)]
     fn show_pc_buffer(&self) {
         print!("pc  ");
         for i in 0..self.pc_history.len() {
@@ -599,6 +604,7 @@ impl Core {
         println!();
     }
 
+    #[allow(dead_code)]
     fn show_int_registers_buffer(&self) {
         let mut strings = vec![vec![]; INT_REGISTER_SIZE];
         for i in 0..self.int_registers_history.len() {
@@ -638,6 +644,7 @@ impl Core {
         );
     }
 
+    #[allow(dead_code)]
     fn show_pc_stats(&self) {
         let mut pc_stats = vec![0; 1 << 25];
         for i in 0..self.pc_history.len() {
@@ -726,8 +733,8 @@ impl Core {
         self.load_data_file(data_file_path);
         self.load_sld_file(sld_file_path);
 
-        self.save_pc(false);
-        self.save_int_registers();
+        // self.save_pc(false);
+        // self.save_int_registers();
 
         if verbose {
             // println!();
@@ -781,13 +788,13 @@ impl Core {
 
             self.remove_forwarding_source_if_possible();
 
-            if verbose {
-                if cycle_num % 1000000 == 0 {
-                    self.show_current_state();
-                }
-                // self.show_pipeline();
-                // self.show_registers();
+            if verbose && cycle_num % 1000000 == 0 {
+                self.show_current_state();
             }
+            // if verbose {
+            //     self.show_pipeline();
+            //     self.show_registers();
+            // }
             if before_output_len != self.output.len() {
                 for i in before_output_len..self.output.len() {
                     let byte = [self.output[i]];

@@ -79,13 +79,11 @@ fn test_four_arithmetic_operation(path: &str, operation: FourArithmeticOperation
                             x1, x2, correct_result, y
                         );
                     }
-                } else {
-                    if correct_result != y {
-                        panic!(
-                            "x1 = {:?}\nx2 = {:?}\nl  = {:?}\nr  = {:?}",
-                            x1, x2, correct_result, y
-                        );
-                    }
+                } else if correct_result != y {
+                    panic!(
+                        "x1 = {:?}\nx2 = {:?}\nl  = {:?}\nr  = {:?}",
+                        x1, x2, correct_result, y
+                    );
                 }
                 cnt += 1;
             }
@@ -166,10 +164,8 @@ fn test_fsqrt() {
                     if exp_of_correct_result != ey {
                         panic!("x1 = {:?}\nl  = {:?}\nr  = {:?}", x1, correct_result, y);
                     }
-                } else {
-                    if correct_result != y {
-                        panic!("x1 = {:?}\nl  = {:?}\nr  = {:?}", x1, correct_result, y);
-                    }
+                } else if correct_result != y {
+                    panic!("x1 = {:?}\nl  = {:?}\nr  = {:?}", x1, correct_result, y);
                 }
                 cnt += 1;
             }
@@ -208,10 +204,8 @@ fn test_fcvtsw() {
                     if exp_of_correct_result != ey {
                         panic!("x1 = {:?}\nl  = {:?}\nr  = {:?}", x1, correct_result, y);
                     }
-                } else {
-                    if correct_result != y {
-                        panic!("x1 = {:?}\nl  = {:?}\nr  = {:?}", x1, correct_result, y);
-                    }
+                } else if correct_result != y {
+                    panic!("x1 = {:?}\nl  = {:?}\nr  = {:?}", x1, correct_result, y);
                 }
                 cnt += 1;
             }
