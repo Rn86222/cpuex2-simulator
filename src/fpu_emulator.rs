@@ -488,41 +488,7 @@ impl PartialEq for FloatingPoint {
 
 impl PartialOrd for FloatingPoint {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let (s1, e1, m1) = self.get_1_8_23_bits();
-        let (s2, e2, m2) = other.get_1_8_23_bits();
-        if s1 != s2 {
-            if s1 == 1 {
-                return Some(Ordering::Less);
-            } else {
-                return Some(Ordering::Greater);
-            }
-        }
-        if e1 == 0 && e2 == 0 {
-            return Some(Ordering::Equal);
-        }
-        if s1 == 0 {
-            if e1 > e2 {
-                Some(Ordering::Greater)
-            } else if e1 < e2 {
-                Some(Ordering::Less)
-            } else if m1 > m2 {
-                Some(Ordering::Greater)
-            } else if m1 < m2 {
-                Some(Ordering::Less)
-            } else {
-                Some(Ordering::Equal)
-            }
-        } else if e1 > e2 {
-            Some(Ordering::Less)
-        } else if e1 < e2 {
-            Some(Ordering::Greater)
-        } else if m1 > m2 {
-            Some(Ordering::Less)
-        } else if m1 < m2 {
-            Some(Ordering::Greater)
-        } else {
-            Some(Ordering::Equal)
-        }
+        Some(self.cmp(other))
     }
 }
 
@@ -530,7 +496,41 @@ impl Eq for FloatingPoint {}
 
 impl Ord for FloatingPoint {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
+        let (s1, e1, m1) = self.get_1_8_23_bits();
+        let (s2, e2, m2) = other.get_1_8_23_bits();
+        if s1 != s2 {
+            if s1 == 1 {
+                return Ordering::Less;
+            } else {
+                return Ordering::Greater;
+            }
+        }
+        if e1 == 0 && e2 == 0 {
+            return Ordering::Equal;
+        }
+        if s1 == 0 {
+            if e1 > e2 {
+                Ordering::Greater
+            } else if e1 < e2 {
+                Ordering::Less
+            } else if m1 > m2 {
+                Ordering::Greater
+            } else if m1 < m2 {
+                Ordering::Less
+            } else {
+                Ordering::Equal
+            }
+        } else if e1 > e2 {
+            Ordering::Less
+        } else if e1 < e2 {
+            Ordering::Greater
+        } else if m1 > m2 {
+            Ordering::Less
+        } else if m1 < m2 {
+            Ordering::Greater
+        } else {
+            Ordering::Equal
+        }
     }
 }
 
