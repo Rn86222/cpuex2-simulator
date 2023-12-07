@@ -694,7 +694,7 @@ impl Core {
         );
     }
 
-    fn output_pc(&self, path: &str) {
+    fn output_pc_file(&self, path: &str) {
         let mut file = File::create(path).unwrap();
         let mut pc_count = 0;
         loop {
@@ -752,7 +752,7 @@ impl Core {
         let mut ppm_file = File::create(ppm_file_path).unwrap();
         let mut before_output_len = 0;
 
-        self.output_pc(pc_file_path);
+        self.output_pc_file(pc_file_path);
 
         self.load_data_file(data_file_path);
         self.load_sld_file(sld_file_path);
