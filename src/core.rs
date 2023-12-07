@@ -34,6 +34,8 @@ pub struct Core {
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
     pc_history: Vec<Address>,
+    pc_stats: HashMap<Address, (String, usize)>,
+    inst_stats: HashMap<String, usize>,
     fetched_instruction: Option<InstructionValue>,
     decoded_instruction: Option<InstructionEnum>,
     instruction_in_exec_stage: Option<InstructionEnum>,
@@ -62,6 +64,8 @@ impl Core {
         let pc = 0;
         let int_registers_history = Vec::new();
         let pc_history = Vec::new();
+        let pc_stats = HashMap::new();
+        let inst_stats = HashMap::new();
         let fetched_instruction = None;
         let decoded_instruction = None;
         let instruction_in_exec_stage = None;
@@ -87,6 +91,8 @@ impl Core {
             pc,
             int_registers_history,
             pc_history,
+            pc_stats,
+            inst_stats,
             fetched_instruction,
             decoded_instruction,
             instruction_in_exec_stage,
@@ -588,11 +594,55 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn save_pc(&mut self, stalling: bool) {
-        if stalling {
-            return;
+    fn save_pc(&mut self) {
+        if let Some(inst) = self.fetched_instruction {
+            let decoded = decode_instruction(inst);
+            if let Instruction::Other = decoded {
+                return;
+            }
+            let decoded = create_instruction_struct(decoded);
+            let pc = self.get_pc();
+            self.pc_stats
+                .entry(pc)
+                .and_modify(|e| e.1 += 1)
+                .or_insert((get_name(&decoded), 1));
         }
-        self.pc_history.push(self.get_pc());
+    }
+
+    fn show_pc_stats(&self) {
+        println!("---------- pc stats ----------");
+        let mut pc_stats = vec![];
+        for (pc, (inst_name, inst_count)) in &self.pc_stats {
+            pc_stats.push((pc, inst_name, inst_count));
+        }
+        pc_stats.sort_by(|a, b| b.2.cmp(&a.2));
+        for pc_stat in &pc_stats {
+            let pc_inst_string = format!("{:>08}({})", pc_stat.0, pc_stat.1);
+            print_filled_with_space(&pc_inst_string, 25);
+            println!("{}", pc_stat.2);
+        }
+    }
+
+    fn save_inst(&mut self) {
+        if let Some(inst) = self.get_instruction_in_exec_stage() {
+            self.inst_stats
+                .entry(get_name(inst))
+                .and_modify(|e| *e += 1)
+                .or_insert(1);
+        }
+    }
+
+    fn show_inst_stats(&self) {
+        println!("---------- inst stats ----------");
+        let mut inst_stats = vec![];
+        for (inst_name, inst_count) in &self.inst_stats {
+            inst_stats.push((inst_name, inst_count));
+        }
+        inst_stats.sort_by(|a, b| b.1.cmp(&a.1));
+        for inst_stat in &inst_stats {
+            print_filled_with_space(&format!("{}", inst_stat.0), 8);
+            println!(" {}", inst_stat.1);
+        }
     }
 
     #[allow(dead_code)]
@@ -642,32 +692,6 @@ impl Core {
             "instruction memory access count: {}",
             self.instruction_memory_access_count
         );
-    }
-
-    #[allow(dead_code)]
-    fn show_pc_stats(&self) {
-        let mut pc_stats = vec![0; 1 << 25];
-        for i in 0..self.pc_history.len() {
-            pc_stats[self.pc_history[i] as usize] += 1;
-        }
-        let mut pc_stats_with_index = vec![];
-        for (i, pc_stat) in pc_stats.iter().enumerate() {
-            pc_stats_with_index.push((i, *pc_stat));
-        }
-        pc_stats_with_index.sort_by(|a, b| b.1.cmp(&a.1));
-        for pc_stat in &pc_stats_with_index {
-            if pc_stat.1 == 0 {
-                break;
-            }
-            let inst = decode_instruction(self.instruction_memory.load(pc_stat.0 as Address));
-            if let Instruction::Other = inst {
-                continue;
-            }
-            let inst = create_instruction_struct(inst);
-            let pc_inst_string = format!("pc: {:>08x}({})", pc_stat.0, get_name(&inst));
-            print_filled_with_space(&pc_inst_string, 25);
-            println!("{}", pc_stat.1);
-        }
     }
 
     fn output_pc(&self, path: &str) {
@@ -775,11 +799,13 @@ impl Core {
 
             if !stalling {
                 exec_instruction(self);
+                self.save_inst();
                 self.increment_instruction_count();
                 if !will_stall {
                     register_fetch(self);
                 }
                 self.fetch_instruction();
+                self.save_pc();
             } else {
                 register_fetch(self);
             }
@@ -802,8 +828,6 @@ impl Core {
                 }
                 before_output_len = self.output.len();
             }
-
-            // self.save_pc(will_stall);
             // self.save_int_registers();
         }
 
@@ -823,6 +847,7 @@ impl Core {
             // self.show_int_registers_buffer();
         }
         self.show_memory_access_info();
-        // self.show_pc_stats();
+        self.show_inst_stats();
+        self.show_pc_stats();
     }
 }
