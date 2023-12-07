@@ -615,7 +615,7 @@ impl Core {
         for (pc, (inst_name, inst_count)) in &self.pc_stats {
             pc_stats.push((pc, inst_name, inst_count));
         }
-        pc_stats.sort_by(|a, b| b.2.cmp(&a.2));
+        pc_stats.sort_by(|a, b| b.2.cmp(a.2));
         for pc_stat in &pc_stats {
             let pc_inst_string = format!("{:>08}({})", pc_stat.0, pc_stat.1);
             print_filled_with_space(&pc_inst_string, 25);
@@ -638,9 +638,9 @@ impl Core {
         for (inst_name, inst_count) in &self.inst_stats {
             inst_stats.push((inst_name, inst_count));
         }
-        inst_stats.sort_by(|a, b| b.1.cmp(&a.1));
+        inst_stats.sort_by(|a, b| b.1.cmp(a.1));
         for inst_stat in &inst_stats {
-            print_filled_with_space(&format!("{}", inst_stat.0), 8);
+            print_filled_with_space(&inst_stat.0.to_string(), 8);
             println!(" {}", inst_stat.1);
         }
     }
