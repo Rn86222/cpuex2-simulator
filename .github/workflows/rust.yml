@@ -57,6 +57,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: ./.github/actions/cache_cargo
+    - name: unlimit stack size
+      run: ulimit -s unlimited
     - name: create minrt_mini ppm
       run: cargo run --release -- --file minrt_mini.bin
     
