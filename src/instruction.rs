@@ -56,9 +56,7 @@ trait InstructionTrait: Clone + Debug {
         None
     }
     fn get_instruction_count(&self) -> Option<InstructionCount>;
-    fn get_name(&self) -> String {
-        "".to_string()
-    }
+    fn get_name(&self) -> String;
 }
 
 #[derive(Clone)]
