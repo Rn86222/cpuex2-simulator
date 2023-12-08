@@ -681,7 +681,7 @@ impl Core {
         }
     }
 
-    fn show_memory_access_info(&self) {
+    fn show_memory_stats(&self) {
         println!("memory access count: {}", self.memory_access_count);
         println!("cache hit count: {}", self.cache_hit_count);
         println!(
@@ -837,16 +837,16 @@ impl Core {
             start_time.elapsed(),
             self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
         );
-        if verbose {
-            // print!("    ");
-            // for i in 0..self.pc_history.len() {
-            //     print!("{:>8}  ", i);
-            // }
-            // println!();
-            // self.show_pc_buffer();
-            // self.show_int_registers_buffer();
-        }
-        self.show_memory_access_info();
+        // if verbose {
+        //     print!("    ");
+        //     for i in 0..self.pc_history.len() {
+        //         print!("{:>8}  ", i);
+        //     }
+        //     println!();
+        //     self.show_pc_buffer();
+        //     self.show_int_registers_buffer();
+        // }
+        self.show_memory_stats();
         self.show_inst_stats();
         self.show_pc_stats();
     }
