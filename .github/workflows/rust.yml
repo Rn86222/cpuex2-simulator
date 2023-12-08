@@ -58,7 +58,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: ./.github/actions/cache_cargo
     - name: create minrt_mini ppm
-      run: ulimit -s unlimited && cargo run --release -- --file minrt_mini.bin
+      run: ulimit -s unlimited && cargo run --release -- --bin minrt_mini.bin
     
     - name: upload minrt_mini ppm
       uses: actions/upload-artifact@v3
