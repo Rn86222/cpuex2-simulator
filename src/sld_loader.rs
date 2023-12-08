@@ -13,7 +13,7 @@ pub fn load_sld_file(file_path: &str) -> Vec<String> {
             }
         }
     } else {
-        eprintln!("Failed in opening sld file ({}).", file_path);
+        eprintln!("Warning: failed to open sld file (dismiss if you don't need it).");
     }
 
     sld_vec

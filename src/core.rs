@@ -406,7 +406,9 @@ impl Core {
                 self.memory.store_word(addr, value);
             }
         } else {
-            panic!("failed to open data file");
+            eprintln!(
+                "Warning: failed to open file for data section (dismiss if you don't need it)."
+            );
         }
     }
 
@@ -467,32 +469,28 @@ impl Core {
             .insert(rs, (inst_cnt, value));
     }
 
-    fn remove_forwarding_source_if_possible_sub(&mut self, inst: &InstructionEnum) {
-        let current_inst_cnt = get_instruction_count(inst).unwrap();
-        let rd = get_destination_register(inst);
-        if let Some(rd) = rd {
-            if rd == 0 {
-                return;
-            }
-            let int_source = self.forwarding_int_source_map.get(&rd);
-            let float_source = self.forwarding_float_source_map.get(&rd);
-            if let Some((inst_cnt, _)) = int_source {
-                if *inst_cnt == current_inst_cnt {
-                    self.forwarding_int_source_map.remove(&rd);
-                }
-            } else if let Some((inst_cnt, _)) = float_source {
-                if *inst_cnt == current_inst_cnt {
-                    self.forwarding_float_source_map.remove(&rd);
-                }
-            } else {
-                unreachable!("invalid destination register");
-            }
-        }
-    }
-
     fn remove_forwarding_source_if_possible(&mut self) {
-        if let Some(inst) = self.get_instruction_in_write_back_stage().clone() {
-            self.remove_forwarding_source_if_possible_sub(&inst);
+        if let Some(inst) = self.get_instruction_in_write_back_stage() {
+            let current_inst_cnt = get_instruction_count(inst).unwrap();
+            let rd = get_destination_register(inst);
+            if let Some(rd) = rd {
+                if rd == 0 {
+                    return;
+                }
+                let int_source = self.forwarding_int_source_map.get(&rd);
+                let float_source = self.forwarding_float_source_map.get(&rd);
+                if let Some((inst_cnt, _)) = int_source {
+                    if *inst_cnt == current_inst_cnt {
+                        self.forwarding_int_source_map.remove(&rd);
+                    }
+                } else if let Some((inst_cnt, _)) = float_source {
+                    if *inst_cnt == current_inst_cnt {
+                        self.forwarding_float_source_map.remove(&rd);
+                    }
+                } else {
+                    unreachable!("invalid destination register");
+                }
+            }
         }
     }
 
@@ -500,13 +498,13 @@ impl Core {
         if self.decoded_instruction.is_none() || self.instruction_in_exec_stage.is_none() {
             return false;
         }
-        let decoded_instruction = self.decoded_instruction.clone().unwrap();
-        let instruction_in_exec_stage = self.instruction_in_exec_stage.clone().unwrap();
-        if !is_load_instruction(&instruction_in_exec_stage) {
+        let decoded_instruction = self.decoded_instruction.as_ref().unwrap();
+        let instruction_in_exec_stage = self.instruction_in_exec_stage.as_ref().unwrap();
+        if !is_load_instruction(instruction_in_exec_stage) {
             return false;
         }
-        let rd = get_destination_register(&instruction_in_exec_stage);
-        let rss = get_source_registers(&decoded_instruction);
+        let rd = get_destination_register(instruction_in_exec_stage);
+        let rss = get_source_registers(decoded_instruction);
         if let Some(rd) = rd {
             for rs in &rss {
                 if *rs == rd {
@@ -529,16 +527,16 @@ impl Core {
                 println!();
             }
         }
-        for i in 0..FLOAT_REGISTER_SIZE {
-            print!(
-                "f{: <2} {:>10.5} ",
-                i,
-                f32::from_bits(self.get_float_register(i).get_32_bits())
-            );
-            if i % 8 == 7 {
-                println!();
-            }
-        }
+        // for i in 0..FLOAT_REGISTER_SIZE {
+        //     print!(
+        //         "f{: <2} {:>10.5} ",
+        //         i,
+        //         f32::from_bits(self.get_float_register(i).get_32_bits())
+        //     );
+        //     if i % 8 == 7 {
+        //         println!();
+        //     }
+        // }
     }
 
     #[allow(dead_code)]
@@ -757,18 +755,18 @@ impl Core {
         self.load_data_file(data_file_path);
         self.load_sld_file(sld_file_path);
 
-        // self.save_pc(false);
-        // self.save_int_registers();
-
         if verbose {
-            // println!();
-            // self.show_registers();
+            self.save_pc();
+            self.save_int_registers();
+            self.show_registers();
+            self.pc_history.push(self.get_pc());
         }
+
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
-                // let pc_string = format!("pc: {}", self.get_pc());
-                // print_filled_with_space(&pc_string, 15);
+                let pc_string = format!("pc: {}", self.get_pc());
+                print_filled_with_space(&pc_string, 15);
             }
             cycle_num += 1;
             if interval != 0 {
@@ -814,13 +812,9 @@ impl Core {
 
             self.remove_forwarding_source_if_possible();
 
-            if verbose && cycle_num % 1000000 == 0 {
+            if cycle_num % 1000000 == 0 {
                 self.show_current_state();
             }
-            // if verbose {
-            //     self.show_pipeline();
-            //     self.show_registers();
-            // }
             if before_output_len != self.output.len() {
                 for i in before_output_len..self.output.len() {
                     let byte = [self.output[i]];
@@ -828,7 +822,12 @@ impl Core {
                 }
                 before_output_len = self.output.len();
             }
-            // self.save_int_registers();
+            if verbose {
+                self.pc_history.push(self.get_pc());
+                self.show_pipeline();
+                self.save_int_registers();
+                self.show_registers()
+            }
         }
 
         println!(
@@ -837,15 +836,15 @@ impl Core {
             start_time.elapsed(),
             self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
         );
-        // if verbose {
-        //     print!("    ");
-        //     for i in 0..self.pc_history.len() {
-        //         print!("{:>8}  ", i);
-        //     }
-        //     println!();
-        //     self.show_pc_buffer();
-        //     self.show_int_registers_buffer();
-        // }
+        if verbose {
+            print!("    ");
+            for i in 0..self.pc_history.len() {
+                print!("{:>8}  ", i);
+            }
+            println!();
+            self.show_pc_buffer();
+            self.show_int_registers_buffer();
+        }
         self.show_memory_stats();
         self.show_inst_stats();
         self.show_pc_stats();

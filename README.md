@@ -1,6 +1,13 @@
 # cpuex2-simulator
-2023年度CPU実験2班 シミュレータ
-```bash
-$ make
+Simulator for CPUEX-Group2 computer
 ```
-`main` で `core.run` を呼び出しているが、第1引数 (bool) が pc などの情報を表示するか否か、第2引数が命令を実行する時間間隔を指定している。
+Usage: simulator [OPTIONS]
+
+Options:
+  -b, --bin <BIN>            Name of the input binary file [default: main.bin]
+  -s, --sld <SLD>            Name of sld file for raytracing [default: ./sld/contest.sld]
+  -v, --verbose              Verbose mode If this flag is set, the simulator will print the value of registers and state of pipeline in each cycle
+  -t, --test-fpu <TEST_FPU>  Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, or fcvtws)
+  -h, --help                 Print help
+  -V, --version              Print version
+```

@@ -1,11 +1,14 @@
 run:
-	ulimit -s unlimited && cargo run --release -- --file main.bin > result.txt
+	ulimit -s unlimited && cargo run --release -- --bin main.bin --verbose > result.txt
 
 minrt:
-	ulimit -s unlimited && cargo run --release -- --file minrt.bin > minrt-result.txt
+	ulimit -s unlimited && cargo run --release -- --bin minrt.bin > minrt-result.txt
 
 minrt_mini:
-	ulimit -s unlimited && cargo run --release -- --file minrt_mini.bin > minrt_mini-result.txt
+	ulimit -s unlimited && cargo run --release -- --bin minrt_mini.bin > minrt_mini-result.txt
+
+help:
+	cargo run --release -- --help
 
 clean:
 	cargo clean

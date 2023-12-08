@@ -24,9 +24,18 @@ use utils::*;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Name of the input file
+    /// Name of the input binary file
     #[arg(short, long, default_value = "main.bin")]
-    file: Option<String>,
+    bin: Option<String>,
+
+    /// Name of sld file for raytracing
+    #[arg(short, long, default_value = "./sld/contest.sld")]
+    sld: Option<String>,
+
+    /// Verbose mode
+    /// If this flag is set, the simulator will print the value of registers and state of pipeline in each cycle
+    #[arg(short, long)]
+    verbose: bool,
 
     /// Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, or fcvtws)
     #[arg(short, long)]
@@ -42,7 +51,7 @@ fn main() {
         let mut core = Core::new();
         core.set_int_register(RA, INSTRUCTION_MEMORY_SIZE as Int);
         core.set_int_register(SP, MEMORY_SIZE as Int);
-        let input = args.file.unwrap();
+        let input = args.bin.unwrap();
         match File::open(input.clone()) {
             Err(e) => {
                 println!("Failed in opening file ({}).", e);
@@ -63,11 +72,11 @@ fn main() {
                 if inst_count % 4 != 0 {
                     panic!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
                 }
-                let verbose = true;
+                let verbose = args.verbose;
                 let interval = 0;
                 let data_file_path = &input.replace(".bin", ".data");
                 let ppm_file_path = &input.replace(".bin", ".ppm");
-                let sld_file_path = "./sld/contest.sld";
+                let sld_file_path = &args.sld.unwrap();
                 let pc_file_path = &input.replace(".bin", ".pc");
                 core.run(
                     verbose,
