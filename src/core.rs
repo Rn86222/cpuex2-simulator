@@ -19,7 +19,7 @@ use crate::utils::*;
 
 const INT_REGISTER_SIZE: usize = 32;
 const FLOAT_REGISTER_SIZE: usize = 32;
-const IO_ADDRESS: Address = 2147483647;
+const IO_ADDRESS: Address = 2147483648;
 
 pub struct Core {
     memory: Memory,
