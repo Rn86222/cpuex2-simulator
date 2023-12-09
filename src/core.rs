@@ -34,7 +34,7 @@ pub struct Core {
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
     pc_history: Vec<Address>,
-    pc_stats: HashMap<Address, (String, usize)>,
+    pc_stats: HashMap<Address, (Instruction, usize)>,
     inst_stats: HashMap<String, usize>,
     fetched_instruction: Option<InstructionValue>,
     decoded_instruction: Option<InstructionEnum>,
@@ -598,19 +598,20 @@ impl Core {
             if let Instruction::Other = decoded {
                 return;
             }
-            let decoded = create_instruction_struct(decoded);
             let pc = self.get_pc();
             self.pc_stats
                 .entry(pc)
                 .and_modify(|e| e.1 += 1)
-                .or_insert((get_name(&decoded), 1));
+                .or_insert((decoded, 1));
         }
     }
 
     fn show_pc_stats(&self) {
         println!("---------- pc stats ----------");
         let mut pc_stats = vec![];
-        for (pc, (inst_name, inst_count)) in &self.pc_stats {
+        for (pc, (decoded, inst_count)) in &self.pc_stats {
+            let inst = create_instruction_struct(*decoded);
+            let inst_name = get_name(&inst);
             pc_stats.push((pc, inst_name, inst_count));
         }
         pc_stats.sort_by(|a, b| b.2.cmp(a.2));
@@ -755,8 +756,9 @@ impl Core {
         self.load_data_file(data_file_path);
         self.load_sld_file(sld_file_path);
 
+        self.save_pc();
+
         if verbose {
-            self.save_pc();
             self.save_int_registers();
             self.show_registers();
             self.pc_history.push(self.get_pc());
@@ -823,10 +825,10 @@ impl Core {
                 before_output_len = self.output.len();
             }
             if verbose {
-                self.pc_history.push(self.get_pc());
                 self.show_pipeline();
+                self.show_registers();
                 self.save_int_registers();
-                self.show_registers()
+                self.pc_history.push(self.get_pc());
             }
         }
 
