@@ -730,6 +730,13 @@ impl Core {
         }
     }
 
+    fn show_output_result(&self) {
+        println!("---------- output ----------");
+        for i in 0..self.output.len() {
+            println!("{} {} {}", i, self.output[i], self.output[i] as char);
+        }
+    }
+
     fn load_sld_file(&mut self, path: &str) {
         self.sld_vec = load_sld_file(path);
     }
@@ -848,6 +855,7 @@ impl Core {
             self.show_int_registers_buffer();
         }
         self.show_memory_stats();
+        self.show_output_result();
         self.show_inst_stats();
         self.show_pc_stats();
     }
