@@ -5,3 +5,4 @@ result*.txt
 /.vscode
 *.ppm
 !minrt_mini.bin
+!minrt_mini_ans.ppm
