@@ -17,7 +17,7 @@ rm ./$minrt.bin ./$minrt.data ./$minrt.ppm > /dev/null 2>&1
 echo -n "Compiling '$minrt.ml'... "
 cd cpuex-2-2023
 ./to_riscv
-make > /dev/null 2>&1
+make
 rm ./test/$minrt.s > /dev/null 2>&1
 ls . ./test
 ./min-caml ./test/$minrt
