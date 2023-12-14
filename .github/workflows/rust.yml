@@ -83,12 +83,7 @@ jobs:
         path: ./cpuex2-assembler
         token: ${{ secrets.CPU_EXPERIMENT }}
 
-
     - name: Make test script executable
       run: chmod +x online_test.sh
-    - name: Run ls
-      run: ls
-    - run: ls ../
-    - run: ls ../../
     - name: Run test script
       run: ./online_test.sh

@@ -16,12 +16,12 @@ rm ./$minrt.bin ./$minrt.data ./$minrt.ppm > /dev/null 2>&1
 
 echo -n "Compiling '$minrt.ml'... "
 cd cpuex-2-2023
-git checkout rn > /dev/null 2>&1
 ./to_riscv
 make > /dev/null 2>&1
-rm test/$minrt.s > /dev/null 2>&1
-./min-caml test/$minrt > /dev/null 2>&1
-mv test/$minrt.s ../$minrt.s
+rm ./test/$minrt.s > /dev/null 2>&1
+ls . ./test
+./min-caml ./test/$minrt
+mv ./test/$minrt.s ../$minrt.s
 cd ..
 echo "done."
 
