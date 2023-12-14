@@ -71,6 +71,7 @@ jobs:
     needs: build_cache
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
       with:
         repository: utokyo-compiler/cpuex-2-2023
         path: ./cpuex-2-2023
@@ -81,13 +82,13 @@ jobs:
         repository: Rn86222/cpuex2-assembler
         path: ./cpuex2-assembler
         token: ${{ secrets.CPU_EXPERIMENT }}
-  
-    - run: ls
 
-    - uses: actions/checkout@v3
+
     - name: Make test script executable
       run: chmod +x online_test.sh
     - name: Run ls
       run: ls
+    - run: ls ../
+    - run: ls ../../
     - name: Run test script
       run: ./online_test.sh
