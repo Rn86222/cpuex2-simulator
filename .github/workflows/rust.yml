@@ -10,37 +10,37 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # build_cache:
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     RUSTC_FORCE_INCREMENTAL: 1
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: ./.github/actions/cache_cargo
-  #     - name: build
-  #       run: cargo build --release --all-targets --all-features
+  build_cache:
+    runs-on: ubuntu-latest
+    env:
+      RUSTC_FORCE_INCREMENTAL: 1
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/cache_cargo
+      - name: build
+        run: cargo build --release --all-targets --all-features
 
-  # fmt:
-  #   runs-on: ubuntu-latest
-  #   needs: build_cache
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - run: rustup component add rustfmt
-  #     - uses: ./.github/actions/cache_cargo
-  #     - name: fmt
-  #       run: cargo fmt --all -- --check
+  fmt:
+    runs-on: ubuntu-latest
+    needs: build_cache
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup component add rustfmt
+      - uses: ./.github/actions/cache_cargo
+      - name: fmt
+        run: cargo fmt --all -- --check
 
-  # clippy:
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     RUSTC_FORCE_INCREMENTAL: 1
-  #   needs: build_cache
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - run: rustup component add clippy
-  #     - uses: ./.github/actions/cache_cargo
-  #     - name: clippy
-  #       run: cargo clippy --all-targets --all-features -- -D warnings
+  clippy:
+    runs-on: ubuntu-latest
+    env:
+      RUSTC_FORCE_INCREMENTAL: 1
+    needs: build_cache
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup component add clippy
+      - uses: ./.github/actions/cache_cargo
+      - name: clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
   # test:
   #   runs-on: ubuntu-latest
@@ -59,31 +59,31 @@ jobs:
   #   - uses: ./.github/actions/cache_cargo
   #   - name: create minrt_mini ppm
   #     run: ulimit -s unlimited && cargo run --release -- --bin minrt_mini.bin
-    
+
   #   - name: upload minrt_mini ppm
   #     uses: actions/upload-artifact@v3
   #     with:
   #       name: output
   #       path: ./minrt_mini.ppm
 
-  test_all:
-    runs-on: ubuntu-latest
-    # needs: build_cache
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/checkout@v3
-      with:
-        repository: utokyo-compiler/cpuex-2-2023
-        path: ./cpuex-2-2023
-        token: ${{ secrets.CPU_EXPERIMENT }}
+  # test_all:
+  #   runs-on: ubuntu-latest
+  #   needs: build_cache
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       repository: utokyo-compiler/cpuex-2-2023
+  #       path: ./cpuex-2-2023
+  #       token: ${{ secrets.CPU_EXPERIMENT }}
 
-    - uses: actions/checkout@v3
-      with:
-        repository: Rn86222/cpuex2-assembler
-        path: ./cpuex2-assembler
-        token: ${{ secrets.CPU_EXPERIMENT }}
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       repository: Rn86222/cpuex2-assembler
+  #       path: ./cpuex2-assembler
+  #       token: ${{ secrets.CPU_EXPERIMENT }}
 
-    - name: Make test script executable
-      run: chmod +x online_test.sh
-    - name: Run test script
-      run: ./online_test.sh
+  #   - name: Make test script executable
+  #     run: chmod +x online_test.sh
+  #   - name: Run test script
+  #     run: ./online_test.sh

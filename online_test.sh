@@ -19,7 +19,6 @@ cd cpuex-2-2023
 ./to_riscv
 make
 rm ./test/$minrt.s > /dev/null 2>&1
-ls . ./test
 ./min-caml ./test/$minrt
 mv ./test/$minrt.s ../$minrt.s
 cd ..
