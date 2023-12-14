@@ -87,5 +87,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Make test script executable
       run: chmod +x online_test.sh
+    - name: Run ls
+      run: ls
     - name: Run test script
       run: ./online_test.sh
