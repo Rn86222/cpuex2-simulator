@@ -3,11 +3,12 @@
 trap 'func' 1 2 3 15
 
 minrt='minrt_mini'
-dirpath=__test_`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1`
+current_path=`pwd`
+dirpath=__test_`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 16 | head -n 1`
 
 function error() {
     status=$?
-    cd ..
+    cd $current_path
     rm -rf $dirpath
     echo "Exit status: $status"
     exit $status
@@ -49,7 +50,7 @@ cd cpuex2-simulator
 rm ./$minrt.bin ./$minrt.data ./$minrt.ppm > /dev/null 2>&1
 mv ../$minrt.bin ./$minrt.bin
 mv ../$minrt.data ./$minrt.data
-ulimit -s unlimited && cargo run --release -- --bin $minrt.bin > /dev/null 2>&1
+ulimit -s unlimited && cargo run --release -- --bin $minrt.bin 2> /dev/null > result$dirpath.txt
 echo "done."
 
 echo "Checking '$minrt.ppm'..."
@@ -60,7 +61,11 @@ else
     echo "Success"
 fi
 
+mv result$dirpath.txt ../../result$dirpath.txt
+echo "Result saved to result$dirpath.txt"
+
 cd ..
 rm -rf cpuex2-simulator
 cd ..
 rm -rf $dirpath
+echo "Done."
