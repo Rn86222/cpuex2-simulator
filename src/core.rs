@@ -73,8 +73,8 @@ impl Core {
         let instruction_in_write_back_stage = None;
         let forwarding_int_source_map = HashMap::new();
         let forwarding_float_source_map = HashMap::new();
-        let inv_map = create_inv_map();
-        let sqrt_map = create_sqrt_map();
+        let inv_map = create_inv_map_f32();
+        let sqrt_map = create_sqrt_map_f32();
         let sld_vec = vec![];
         let sld_counter = 0;
         let output = vec![];

@@ -220,9 +220,6 @@ impl Mul for FloatingPoint {
     fn mul(self, other: Self) -> Self::Output {
         let (s1, e1, m1) = self.get_1_8_23_bits();
         let (s2, e2, m2) = other.get_1_8_23_bits();
-        if e1 == 0 || e2 == 0 {
-            return FloatingPoint { value: 0 };
-        }
         let (h1, h2) = (m1 >> 11, m2 >> 11);
         let (l1, l2) = (m1 & 0x7ff, m2 & 0x7ff);
         let h1i = h1 | 0x1000;
@@ -230,22 +227,24 @@ impl Mul for FloatingPoint {
         let h1h2 = (h1i * h2i) as u64;
         let h1l2 = (h1i * l2) as u64;
         let l1h2 = (l1 * h2i) as u64;
-        let l1l2 = (l1 * l2) as u64;
-        let m1m2 = (h1h2 << 22) + (h1l2 << 11) + (l1h2 << 11) + l1l2;
-        let se = 63 - m1m2.leading_zeros();
-        let myi = m1m2 & ((1 << se) - 1);
-        let my = if se < 23 {
-            myi << (23 - se)
-        } else {
-            myi >> (se - 23)
-        };
-        let ei = match se {
-            47.. => e1 + e2 + 1,
-            46 => e1 + e2,
-            _ => panic!(),
-        };
-        let ey = if ei < 127 { 0 } else { ei - 127 };
         let sy = s1 ^ s2;
+        let eys = e1 + e2 + 129;
+        let m1m2 = h1h2 + (h1l2 >> 11) + (l1h2 >> 11) + 2;
+        let eysi = eys + 1;
+        let ey = if e1 == 0 || e2 == 0 || (eys >> 8) & 1 == 0 {
+            0
+        } else if m1m2 & (1 << 25) != 0 {
+            to_n_bits_u32(eysi, 8)
+        } else {
+            to_n_bits_u32(eys, 8)
+        };
+        let my = if ey == 0 {
+            0
+        } else if m1m2 & (1 << 25) != 0 {
+            to_n_bits_u64(m1m2 >> 2, 23)
+        } else {
+            to_n_bits_u64(m1m2 >> 1, 23)
+        };
         let y = (sy << 31) + (ey << 23) + (my as u32);
         FloatingPoint { value: y }
     }
@@ -253,6 +252,7 @@ impl Mul for FloatingPoint {
 
 pub type InvMap = Vec<(FloatingPoint, FloatingPoint)>;
 
+#[allow(dead_code)]
 pub fn create_inv_map() -> InvMap {
     let eps = 2_f64.powf(-10.);
     let mut inv_map = Vec::new();
@@ -324,6 +324,7 @@ pub fn div_fp(this: FloatingPoint, other: FloatingPoint, inv_map: &InvMap) -> Fl
 
 pub type SqrtMap = Vec<(FloatingPoint, FloatingPoint)>;
 
+#[allow(dead_code)]
 pub fn create_sqrt_map() -> SqrtMap {
     let mut sqrt_map = Vec::new();
     let mut eps = 2_f64.powf(-9.);
@@ -572,8 +573,8 @@ mod tests {
     use rand::prelude::*;
 
     fn gen_one_random_operand(rng: &mut ThreadRng) -> f32 {
-        let left = -0.0000000000000000001;
-        let right = 0.0000000000000000001;
+        let left = -100.;
+        let right = 100.;
         rng.gen_range(left..=right)
     }
 
@@ -691,7 +692,7 @@ mod tests {
 
     #[test]
     fn test_div() {
-        let inv_map = create_inv_map();
+        let inv_map = create_inv_map_f32();
         let mut rng = rand::thread_rng();
         let relative_eps = 2_f64.powf(-20.);
         let absolute_eps = 2_f64.powf(-126.);
@@ -717,7 +718,7 @@ mod tests {
 
     #[test]
     fn test_sqrt() {
-        let sqrt_map = create_sqrt_map();
+        let sqrt_map = create_sqrt_map_f32();
         let relative_eps = 2_f64.powf(-20.);
         let absolute_eps = 2_f64.powf(-126.);
         let s = 0;
