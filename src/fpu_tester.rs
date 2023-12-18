@@ -31,6 +31,28 @@ pub fn test_fpu(operation: &str) {
         "flt" => test_flt(),
         "fcvtsw" => test_fcvtsw(),
         "fcvtws" => test_fcvtws(),
+        "all" => {
+            test_four_arithmetic_operation(
+                "../test_result/fadd_result.txt",
+                FourArithmeticOperation::Add,
+            );
+            test_four_arithmetic_operation(
+                "../test_result/fsub_result.txt",
+                FourArithmeticOperation::Sub,
+            );
+            test_four_arithmetic_operation(
+                "../test_result/fmul_result.txt",
+                FourArithmeticOperation::Mul,
+            );
+            test_four_arithmetic_operation(
+                "../test_result/fdiv_result.txt",
+                FourArithmeticOperation::Div,
+            );
+            test_fsqrt();
+            test_flt();
+            test_fcvtsw();
+            test_fcvtws();
+        }
         _ => panic!(
             "FPU operation name must be fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, or fcvtws."
         ),
@@ -39,7 +61,7 @@ pub fn test_fpu(operation: &str) {
 
 fn test_four_arithmetic_operation(path: &str, operation: FourArithmeticOperation) {
     let file = std::fs::File::open(path);
-    let inv_map = create_inv_map_f32();
+    let inv_map = create_inv_map();
     match file {
         Err(e) => {
             eprintln!("Failed in opening file ({}).", e);
@@ -134,7 +156,7 @@ fn test_flt() {
 
 fn test_fsqrt() {
     let file = std::fs::File::open("../test_result/fsqrt_result.txt");
-    let sqrt_map = create_sqrt_map_f32();
+    let sqrt_map = create_sqrt_map();
     match file {
         Err(e) => {
             eprintln!("Failed in opening file ({}).", e);

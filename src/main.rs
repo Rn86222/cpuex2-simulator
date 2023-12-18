@@ -37,7 +37,7 @@ struct Args {
     #[arg(short, long)]
     verbose: bool,
 
-    /// Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, or fcvtws)
+    /// Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, fcvtws, or all)
     #[arg(short, long)]
     test_fpu: Option<String>,
 }

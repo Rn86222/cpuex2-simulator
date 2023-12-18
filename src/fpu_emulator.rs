@@ -252,7 +252,6 @@ impl Mul for FloatingPoint {
 
 pub type InvMap = Vec<(FloatingPoint, FloatingPoint)>;
 
-#[allow(dead_code)]
 pub fn create_inv_map() -> InvMap {
     let eps = 2_f64.powf(-10.);
     let mut inv_map = Vec::new();
@@ -269,27 +268,6 @@ pub fn create_inv_map() -> InvMap {
         let b = middle_y - a * middle_x;
         let a_fp = FloatingPoint::new_f32(a.abs() as f32);
         let b_fp = FloatingPoint::new_f32(b as f32);
-        inv_map.push((a_fp, b_fp));
-    }
-    inv_map
-}
-
-pub fn create_inv_map_f32() -> InvMap {
-    let eps = 2_f32.powf(-10.);
-    let mut inv_map = Vec::new();
-    for i in 0..1024 {
-        let left = 1. + (i as f32) * eps;
-        let right = 1. + ((i + 1) as f32) * eps;
-        let middle_x = (left + right) / 2.;
-        let left_inv = 1. / left;
-        let right_inv = 1. / right;
-        let a = (right_inv - left_inv) / eps;
-        let middle_y_up = (left_inv + right_inv) / 2.;
-        let middle_y_down = 1. / middle_x;
-        let middle_y = (middle_y_up + middle_y_down) / 2.;
-        let b = middle_y - a * middle_x;
-        let a_fp = FloatingPoint::new_f32(a.abs());
-        let b_fp = FloatingPoint::new_f32(b);
         inv_map.push((a_fp, b_fp));
     }
     inv_map
@@ -324,7 +302,6 @@ pub fn div_fp(this: FloatingPoint, other: FloatingPoint, inv_map: &InvMap) -> Fl
 
 pub type SqrtMap = Vec<(FloatingPoint, FloatingPoint)>;
 
-#[allow(dead_code)]
 pub fn create_sqrt_map() -> SqrtMap {
     let mut sqrt_map = Vec::new();
     let mut eps = 2_f64.powf(-9.);
@@ -343,32 +320,6 @@ pub fn create_sqrt_map() -> SqrtMap {
             let b = middle_y - a * middle_x;
             let a_fp = FloatingPoint::new_f32(a as f32);
             let b_fp = FloatingPoint::new_f32(b as f32);
-            sqrt_map.push((a_fp, b_fp));
-        }
-        eps *= 2.;
-        start += 1.;
-    }
-    sqrt_map
-}
-
-pub fn create_sqrt_map_f32() -> SqrtMap {
-    let mut sqrt_map = Vec::new();
-    let mut eps = 2_f32.powf(-9.);
-    let mut start = 1.;
-    for _ in 0..2 {
-        for i in 0..512 {
-            let left = start + (i as f32) * eps;
-            let right = start + ((i + 1) as f32) * eps;
-            let middle_x = (left + right) / 2.;
-            let left_sqrt = left.sqrt();
-            let right_sqrt = right.sqrt();
-            let a = (right_sqrt - left_sqrt) / eps;
-            let middle_y_up = middle_x.sqrt();
-            let middle_y_down = (left_sqrt + right_sqrt) / 2.;
-            let middle_y = (middle_y_up + middle_y_down) / 2.;
-            let b = middle_y - a * middle_x;
-            let a_fp = FloatingPoint::new_f32(a);
-            let b_fp = FloatingPoint::new_f32(b);
             sqrt_map.push((a_fp, b_fp));
         }
         eps *= 2.;
@@ -692,7 +643,7 @@ mod tests {
 
     #[test]
     fn test_div() {
-        let inv_map = create_inv_map_f32();
+        let inv_map = create_inv_map();
         let mut rng = rand::thread_rng();
         let relative_eps = 2_f64.powf(-20.);
         let absolute_eps = 2_f64.powf(-126.);
@@ -718,7 +669,7 @@ mod tests {
 
     #[test]
     fn test_sqrt() {
-        let sqrt_map = create_sqrt_map_f32();
+        let sqrt_map = create_sqrt_map();
         let relative_eps = 2_f64.powf(-20.);
         let absolute_eps = 2_f64.powf(-126.);
         let s = 0;
