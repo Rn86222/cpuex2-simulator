@@ -11,54 +11,33 @@ pub enum FourArithmeticOperation {
 
 pub fn test_fpu(operation: &str) {
     match operation {
-        "fadd" => test_four_arithmetic_operation(
-            "../test_result/fadd_result.txt",
-            FourArithmeticOperation::Add,
-        ),
-        "fsub" => test_four_arithmetic_operation(
-            "../test_result/fsub_result.txt",
-            FourArithmeticOperation::Sub,
-        ),
-        "fmul" => test_four_arithmetic_operation(
-            "../test_result/fmul_result.txt",
-            FourArithmeticOperation::Mul,
-        ),
-        "fdiv" => test_four_arithmetic_operation(
-            "../test_result/fdiv_result.txt",
-            FourArithmeticOperation::Div,
-        ),
+        "fadd" => test_fadd(),
+        "fsub" => test_fsub(),
+        "fmul" => test_fmul(),
+        "fdiv" => test_fdiv(),
         "fsqrt" => test_fsqrt(),
         "flt" => test_flt(),
+        "feq" => test_feq(),
         "fcvtsw" => test_fcvtsw(),
         "fcvtws" => test_fcvtws(),
         "all" => {
-            test_four_arithmetic_operation(
-                "../test_result/fadd_result.txt",
-                FourArithmeticOperation::Add,
-            );
-            test_four_arithmetic_operation(
-                "../test_result/fsub_result.txt",
-                FourArithmeticOperation::Sub,
-            );
-            test_four_arithmetic_operation(
-                "../test_result/fmul_result.txt",
-                FourArithmeticOperation::Mul,
-            );
-            test_four_arithmetic_operation(
-                "../test_result/fdiv_result.txt",
-                FourArithmeticOperation::Div,
-            );
+            test_fadd();
+            test_fsub();
+            test_fmul();
+            test_fdiv();
             test_fsqrt();
             test_flt();
+            test_feq();
             test_fcvtsw();
             test_fcvtws();
         }
         _ => panic!(
-            "FPU operation name must be fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, or fcvtws."
+            "FPU operation name must be fadd, fsub, fmul, fdiv, fsqrt, flt, feq, fcvtsw, or fcvtws."
         ),
     }
 }
 
+#[inline]
 fn test_four_arithmetic_operation(path: &str, operation: FourArithmeticOperation) {
     let file = std::fs::File::open(path);
     let inv_map = create_inv_map();
@@ -114,6 +93,34 @@ fn test_four_arithmetic_operation(path: &str, operation: FourArithmeticOperation
     }
 }
 
+fn test_fadd() {
+    test_four_arithmetic_operation(
+        "../test_result/fadd_result.txt",
+        FourArithmeticOperation::Add,
+    )
+}
+
+fn test_fsub() {
+    test_four_arithmetic_operation(
+        "../test_result/fsub_result.txt",
+        FourArithmeticOperation::Sub,
+    )
+}
+
+fn test_fmul() {
+    test_four_arithmetic_operation(
+        "../test_result/fmul_result.txt",
+        FourArithmeticOperation::Mul,
+    )
+}
+
+fn test_fdiv() {
+    test_four_arithmetic_operation(
+        "../test_result/fdiv_result.txt",
+        FourArithmeticOperation::Div,
+    )
+}
+
 fn test_flt() {
     let file = std::fs::File::open("../test_result/flt_result.txt");
     match file {
@@ -141,6 +148,46 @@ fn test_flt() {
                 let y = u32::from_str_radix(line[2], 2).unwrap();
                 let y = y == 1;
                 let correct_result = x1 < x2;
+                if correct_result != y {
+                    panic!(
+                        "x1 = {:?}\nx2 = {:?}\nl  = {:?}\nr  = {:?}",
+                        x1, x2, correct_result, y
+                    );
+                }
+                cnt += 1;
+            }
+            println!("{} tests passed.", cnt);
+        }
+    }
+}
+
+fn test_feq() {
+    let file = std::fs::File::open("../test_result/feq_result.txt");
+    match file {
+        Err(e) => {
+            eprintln!("Failed in opening file ({}).", e);
+        }
+        Ok(file) => {
+            eprintln!("Success in opening file.");
+            let reader = BufReader::new(file);
+            let mut cnt = 0;
+            for line in reader.lines() {
+                let line = line.unwrap();
+                let line: Vec<&str> = line.split_whitespace().collect();
+                if line.len() != 3 {
+                    continue;
+                }
+                let x1 = u32::from_str_radix(line[0], 2);
+                if x1.is_err() {
+                    continue;
+                }
+                let x1 = x1.unwrap();
+                let x1 = FloatingPoint::new(x1);
+                let x2 = u32::from_str_radix(line[1], 2).unwrap();
+                let x2 = FloatingPoint::new(x2);
+                let y = u32::from_str_radix(line[2], 2).unwrap();
+                let y = y == 1;
+                let correct_result = x1 == x2;
                 if correct_result != y {
                     panic!(
                         "x1 = {:?}\nx2 = {:?}\nl  = {:?}\nr  = {:?}",

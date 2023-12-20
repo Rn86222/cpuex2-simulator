@@ -434,7 +434,9 @@ impl Neg for FloatingPoint {
 
 impl PartialEq for FloatingPoint {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
+        let (s1, e1, m1) = self.get_1_8_23_bits();
+        let (s2, e2, m2) = other.get_1_8_23_bits();
+        (e1 == 0 && e2 == 0) || (s1 == s2 && e1 == e2 && m1 == m2)
     }
 }
 
@@ -450,15 +452,15 @@ impl Ord for FloatingPoint {
     fn cmp(&self, other: &Self) -> Ordering {
         let (s1, e1, m1) = self.get_1_8_23_bits();
         let (s2, e2, m2) = other.get_1_8_23_bits();
+        if e1 == 0 && e2 == 0 {
+            return Ordering::Equal;
+        }
         if s1 != s2 {
             if s1 == 1 {
                 return Ordering::Less;
             } else {
                 return Ordering::Greater;
             }
-        }
-        if e1 == 0 && e2 == 0 {
-            return Ordering::Equal;
         }
         if s1 == 0 {
             if e1 > e2 {
