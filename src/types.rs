@@ -1,3 +1,5 @@
+use crate::fpu_emulator::FloatingPoint;
+
 pub type Byte = i8;
 pub type UByte = u8;
 pub type Half = i16;
@@ -14,6 +16,15 @@ pub type Tag = u32;
 pub type CacheIndex = usize;
 pub type Imm12 = i16;
 pub type Imm20 = i32;
+pub enum RegisterType {
+    Int,
+    Float,
+}
+pub type RegisterId = (RegisterType, Rs);
+pub enum RegisterValue {
+    Int(Int),
+    Float(FloatingPoint),
+}
 pub type Rs1 = u8;
 pub type Rs2 = u8;
 pub type Rs = u8;

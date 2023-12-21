@@ -108,13 +108,13 @@ impl Core {
         }
     }
 
-    pub fn get_decoded_instruction(&self) -> &Option<InstructionEnum> {
-        &self.decoded_instruction
-    }
+    // pub fn get_decoded_instruction(&self) -> &Option<InstructionEnum> {
+    //     &self.decoded_instruction
+    // }
 
-    pub fn set_decoded_instruction(&mut self, inst: Option<InstructionEnum>) {
-        self.decoded_instruction = inst;
-    }
+    // pub fn set_decoded_instruction(&mut self, inst: Option<InstructionEnum>) {
+    //     self.decoded_instruction = inst;
+    // }
 
     pub fn get_instruction_in_exec_stage(&self) -> &Option<InstructionEnum> {
         &self.instruction_in_exec_stage
@@ -134,6 +134,38 @@ impl Core {
 
     pub fn get_instruction_in_write_back_stage(&self) -> &Option<InstructionEnum> {
         &self.instruction_in_write_back_stage
+    }
+
+    fn register_fetch(&mut self) {
+        if self.decoded_instruction.is_none() {
+            return;
+        }
+        let rs_ids = {
+            let decoded_instruction = self.decoded_instruction.as_ref().unwrap();
+            decoded_instruction.pseudo_get_source_registers()
+        };
+        let mut fetched_rss = vec![];
+        for (rs_type, rs) in rs_ids {
+            match rs_type {
+                RegisterType::Int => {
+                    if let Some(&(_, value)) = self.get_forwarding_int_source(rs) {
+                        fetched_rss.push(RegisterValue::Int(value));
+                    } else {
+                        fetched_rss.push(RegisterValue::Int(self.get_int_register(rs as usize)));
+                    }
+                }
+                RegisterType::Float => {
+                    if let Some(&(_, value)) = self.get_forwarding_float_source(rs) {
+                        fetched_rss.push(RegisterValue::Float(value));
+                    } else {
+                        fetched_rss
+                            .push(RegisterValue::Float(self.get_float_register(rs as usize)));
+                    }
+                }
+            }
+        }
+        let decoded_instruction = self.decoded_instruction.as_mut().unwrap();
+        decoded_instruction.pseudo_register_fetch(&fetched_rss, self.instruction_count, self.pc);
     }
 
     fn fetch_instruction(&mut self) {
@@ -515,9 +547,9 @@ impl Core {
         false
     }
 
-    pub fn get_instruction_count(&self) -> InstructionCount {
-        self.instruction_count
-    }
+    // pub fn get_instruction_count(&self) -> InstructionCount {
+    //     self.instruction_count
+    // }
 
     #[allow(dead_code)]
     pub fn show_registers(&self) {
@@ -809,12 +841,14 @@ impl Core {
                 self.save_inst();
                 self.increment_instruction_count();
                 if !will_stall {
-                    register_fetch(self);
+                    // register_fetch(self);
+                    self.register_fetch();
                 }
                 self.fetch_instruction();
                 self.save_pc();
             } else {
-                register_fetch(self);
+                // register_fetch(self);
+                self.register_fetch();
             }
 
             self.set_next_pc(will_stall);

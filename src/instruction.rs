@@ -35,12 +35,16 @@ pub fn sign_extention_i32(value: i32, before_bit: usize) -> i32 {
 //     colorized_println(text, RED);
 // }
 
-trait InstructionTrait: Clone + Debug {
-    fn register_fetch(&mut self, _: &Core) {}
+pub trait InstructionTrait: Clone + Debug {
+    // fn register_fetch(&mut self, _: &Core) {}
+    fn pseudo_register_fetch(&mut self, _: &[RegisterValue], _: u128, _: u32) {}
     fn exec(&mut self, _: &mut Core) {}
     fn memory(&mut self, _: &mut Core) {}
     fn write_back(&self, _: &mut Core) {}
     fn get_source_registers(&self) -> Vec<Rs> {
+        vec![]
+    }
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
         vec![]
     }
     fn get_destination_register(&self) -> Option<Rd> {
@@ -227,15 +231,25 @@ impl Debug for Lb {
 }
 
 impl InstructionTrait for Lb {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -257,6 +271,10 @@ impl InstructionTrait for Lb {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -309,15 +327,25 @@ impl Debug for Lh {
 }
 
 impl InstructionTrait for Lh {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -339,6 +367,10 @@ impl InstructionTrait for Lh {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -391,15 +423,25 @@ impl Debug for Lw {
 }
 
 impl InstructionTrait for Lw {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -421,6 +463,10 @@ impl InstructionTrait for Lw {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -472,15 +518,25 @@ impl Debug for Lbu {
 }
 
 impl InstructionTrait for Lbu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value as Int);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value as Int);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -502,6 +558,10 @@ impl InstructionTrait for Lbu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -553,15 +613,25 @@ impl Debug for Lhu {
 }
 
 impl InstructionTrait for Lhu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value as Int);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value as Int);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -583,6 +653,10 @@ impl InstructionTrait for Lhu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -634,15 +708,25 @@ impl Debug for Addi {
 }
 
 impl InstructionTrait for Addi {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -663,6 +747,10 @@ impl InstructionTrait for Addi {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -707,15 +795,25 @@ impl Debug for Slli {
 }
 
 impl InstructionTrait for Slli {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.uimm = Some((self.data.imm & 0x1f) as u32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value as Int);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.uimm = Some((self.data.imm & 0x1f) as u32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value as Int);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -735,6 +833,10 @@ impl InstructionTrait for Slli {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -782,15 +884,25 @@ impl Debug for Slti {
 }
 
 impl InstructionTrait for Slti {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -815,6 +927,10 @@ impl InstructionTrait for Slti {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -862,15 +978,25 @@ impl Debug for Sltiu {
 }
 
 impl InstructionTrait for Sltiu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -895,6 +1021,10 @@ impl InstructionTrait for Sltiu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -942,15 +1072,25 @@ impl Debug for Xori {
 }
 
 impl InstructionTrait for Xori {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -971,6 +1111,10 @@ impl InstructionTrait for Xori {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1015,15 +1159,25 @@ impl Debug for Srli {
 }
 
 impl InstructionTrait for Srli {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.uimm = Some((self.data.imm & 0x1f) as u32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value as Int);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.uimm = Some((self.data.imm & 0x1f) as u32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value as Int);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1043,6 +1197,10 @@ impl InstructionTrait for Srli {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1087,15 +1245,25 @@ impl Debug for Srai {
 }
 
 impl InstructionTrait for Srai {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.uimm = Some((self.data.imm & 0x1f) as u32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value as Int);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.uimm = Some((self.data.imm & 0x1f) as u32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value as Int);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1115,6 +1283,10 @@ impl InstructionTrait for Srai {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1162,15 +1334,25 @@ impl Debug for Ori {
 }
 
 impl InstructionTrait for Ori {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1191,6 +1373,10 @@ impl InstructionTrait for Ori {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1238,15 +1424,25 @@ impl Debug for Andi {
 }
 
 impl InstructionTrait for Andi {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1267,6 +1463,10 @@ impl InstructionTrait for Andi {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1308,10 +1508,16 @@ impl Debug for Auipc {
 }
 
 impl InstructionTrait for Auipc {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.upimm = Some(self.data.imm << 12);
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    // }
+
+    fn pseudo_register_fetch(&mut self, _: &[RegisterValue], inst_count: u128, pc: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.upimm = Some(self.data.imm << 12);
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(pc - 4);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1376,21 +1582,36 @@ impl Debug for Sb {
 }
 
 impl InstructionTrait for Sb {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -1406,6 +1627,13 @@ impl InstructionTrait for Sb {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1450,21 +1678,36 @@ impl Debug for Sh {
 }
 
 impl InstructionTrait for Sh {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -1480,6 +1723,13 @@ impl InstructionTrait for Sh {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1524,21 +1774,36 @@ impl Debug for Sw {
 }
 
 impl InstructionTrait for Sw {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -1554,6 +1819,13 @@ impl InstructionTrait for Sw {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1596,20 +1868,34 @@ impl Debug for Add {
 }
 
 impl InstructionTrait for Add {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1630,6 +1916,13 @@ impl InstructionTrait for Add {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1676,20 +1969,34 @@ impl Debug for Sub {
 }
 
 impl InstructionTrait for Sub {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1710,6 +2017,13 @@ impl InstructionTrait for Sub {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1756,20 +2070,34 @@ impl Debug for Sll {
 }
 
 impl InstructionTrait for Sll {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value as Int);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value as Int);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value as Int);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value as Int);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1791,6 +2119,13 @@ impl InstructionTrait for Sll {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1837,20 +2172,34 @@ impl Debug for Slt {
 }
 
 impl InstructionTrait for Slt {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1875,6 +2224,13 @@ impl InstructionTrait for Slt {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -1921,20 +2277,34 @@ impl Debug for Sltu {
 }
 
 impl InstructionTrait for Sltu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1959,6 +2329,13 @@ impl InstructionTrait for Sltu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -2005,20 +2382,34 @@ impl Debug for Xor {
 }
 
 impl InstructionTrait for Xor {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -2039,6 +2430,13 @@ impl InstructionTrait for Xor {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -2085,20 +2483,34 @@ impl Debug for Srl {
 }
 
 impl InstructionTrait for Srl {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -2120,6 +2532,13 @@ impl InstructionTrait for Srl {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -2166,20 +2585,34 @@ impl Debug for Sra {
 }
 
 impl InstructionTrait for Sra {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -2201,6 +2634,13 @@ impl InstructionTrait for Sra {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -2247,20 +2687,34 @@ impl Debug for Or {
 }
 
 impl InstructionTrait for Or {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -2281,6 +2735,13 @@ impl InstructionTrait for Or {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -2327,20 +2788,34 @@ impl Debug for And {
 }
 
 impl InstructionTrait for And {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -2361,6 +2836,13 @@ impl InstructionTrait for And {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -2402,10 +2884,16 @@ impl Debug for Lui {
 }
 
 impl InstructionTrait for Lui {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.upimm = Some(self.data.imm << 12);
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    // }
+
+    fn pseudo_register_fetch(&mut self, _: &[RegisterValue], inst_count: u128, pc: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.upimm = Some(self.data.imm << 12);
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(pc - 4);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -2473,22 +2961,38 @@ impl Debug for Beq {
 }
 
 impl InstructionTrait for Beq {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        self.data.inst_count = Some(inst_count);
+        self.data.origin_pc = Some(pc - 4);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -2503,6 +3007,13 @@ impl InstructionTrait for Beq {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2560,22 +3071,38 @@ impl Debug for Bne {
 }
 
 impl InstructionTrait for Bne {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        self.data.inst_count = Some(inst_count);
+        self.data.origin_pc = Some(pc - 4);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -2590,6 +3117,13 @@ impl InstructionTrait for Bne {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2647,22 +3181,38 @@ impl Debug for Blt {
 }
 
 impl InstructionTrait for Blt {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        self.data.inst_count = Some(inst_count);
+        self.data.origin_pc = Some(pc - 4);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -2677,6 +3227,13 @@ impl InstructionTrait for Blt {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2734,22 +3291,38 @@ impl Debug for Bge {
 }
 
 impl InstructionTrait for Bge {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        self.data.inst_count = Some(inst_count);
+        self.data.origin_pc = Some(pc - 4);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -2764,6 +3337,13 @@ impl InstructionTrait for Bge {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2821,22 +3401,38 @@ impl Debug for Bltu {
 }
 
 impl InstructionTrait for Bltu {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        self.data.inst_count = Some(inst_count);
+        self.data.origin_pc = Some(pc - 4);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -2851,6 +3447,13 @@ impl InstructionTrait for Bltu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2908,22 +3511,38 @@ impl Debug for Bgeu {
 }
 
 impl InstructionTrait for Bgeu {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+        self.data.inst_count = Some(inst_count);
+        self.data.origin_pc = Some(pc - 4);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -2938,6 +3557,13 @@ impl InstructionTrait for Bgeu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2995,16 +3621,27 @@ impl Debug for Jalr {
 }
 
 impl InstructionTrait for Jalr {
-    fn register_fetch(&mut self, core: &Core) {
-        self.origin_pc = Some(core.get_pc() - 4);
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.origin_pc = Some(core.get_pc() - 4);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
+        self.origin_pc = Some(pc - 4);
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3026,6 +3663,10 @@ impl InstructionTrait for Jalr {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3077,10 +3718,16 @@ impl Debug for Jal {
 }
 
 impl InstructionTrait for Jal {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.extended_imm = Some(sign_extention_i32(self.data.imm, 20));
+    //     self.data.origin_pc = Some(core.get_pc() - 4);
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    // }
+
+    fn pseudo_register_fetch(&mut self, _: &[RegisterValue], inst_count: u128, pc: u32) {
         self.data.extended_imm = Some(sign_extention_i32(self.data.imm, 20));
-        self.data.origin_pc = Some(core.get_pc() - 4);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.origin_pc = Some(pc - 4);
+        self.data.inst_count = Some(inst_count);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3152,20 +3799,34 @@ impl Debug for Mul {
 }
 
 impl InstructionTrait for Mul {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3186,6 +3847,13 @@ impl InstructionTrait for Mul {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3232,20 +3900,34 @@ impl Debug for Mulh {
 }
 
 impl InstructionTrait for Mulh {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3267,6 +3949,13 @@ impl InstructionTrait for Mulh {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3313,20 +4002,34 @@ impl Debug for Mulhsu {
 }
 
 impl InstructionTrait for Mulhsu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3347,6 +4050,13 @@ impl InstructionTrait for Mulhsu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3393,20 +4103,34 @@ impl Debug for Mulhu {
 }
 
 impl InstructionTrait for Mulhu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3427,6 +4151,13 @@ impl InstructionTrait for Mulhu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3473,20 +4204,34 @@ impl Debug for Div {
 }
 
 impl InstructionTrait for Div {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3507,6 +4252,13 @@ impl InstructionTrait for Div {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3553,20 +4305,34 @@ impl Debug for Divu {
 }
 
 impl InstructionTrait for Divu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3587,6 +4353,13 @@ impl InstructionTrait for Divu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3633,20 +4406,34 @@ impl Debug for Rem {
 }
 
 impl InstructionTrait for Rem {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3667,6 +4454,13 @@ impl InstructionTrait for Rem {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3713,20 +4507,34 @@ impl Debug for Remu {
 }
 
 impl InstructionTrait for Remu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3747,6 +4555,13 @@ impl InstructionTrait for Remu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.rs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Int, self.data.rs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3793,20 +4608,34 @@ impl Debug for Fadd {
 }
 
 impl InstructionTrait for Fadd {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3827,6 +4656,13 @@ impl InstructionTrait for Fadd {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3873,20 +4709,34 @@ impl Debug for Fsub {
 }
 
 impl InstructionTrait for Fsub {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3907,6 +4757,13 @@ impl InstructionTrait for Fsub {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -3953,20 +4810,34 @@ impl Debug for Fmul {
 }
 
 impl InstructionTrait for Fmul {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3987,6 +4858,13 @@ impl InstructionTrait for Fmul {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4033,20 +4911,34 @@ impl Debug for Fdiv {
 }
 
 impl InstructionTrait for Fdiv {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4067,6 +4959,13 @@ impl InstructionTrait for Fdiv {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4109,14 +5008,23 @@ impl Debug for Fsqrt {
 }
 
 impl InstructionTrait for Fsqrt {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4136,6 +5044,10 @@ impl InstructionTrait for Fsqrt {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Float, self.data.fs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4182,20 +5094,34 @@ impl Debug for Fsgnj {
 }
 
 impl InstructionTrait for Fsgnj {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4216,6 +5142,13 @@ impl InstructionTrait for Fsgnj {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4262,20 +5195,34 @@ impl Debug for Fsgnjn {
 }
 
 impl InstructionTrait for Fsgnjn {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4296,6 +5243,13 @@ impl InstructionTrait for Fsgnjn {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4342,20 +5296,34 @@ impl Debug for Fsgnjx {
 }
 
 impl InstructionTrait for Fsgnjx {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4376,6 +5344,13 @@ impl InstructionTrait for Fsgnjx {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4422,20 +5397,34 @@ impl Debug for Fmin {
 }
 
 impl InstructionTrait for Fmin {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4460,6 +5449,13 @@ impl InstructionTrait for Fmin {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4506,20 +5502,34 @@ impl Debug for Fmax {
 }
 
 impl InstructionTrait for Fmax {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.rs2_value = Some(*rs2_value);
-        } else {
-            self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.rs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.rs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4544,6 +5554,13 @@ impl InstructionTrait for Fmax {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4590,20 +5607,34 @@ impl Debug for Feq {
 }
 
 impl InstructionTrait for Feq {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.fs1_value = Some(*rs1_value);
-        } else {
-            self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.fs2_value = Some(*rs2_value);
-        } else {
-            self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.fs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.fs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4624,6 +5655,13 @@ impl InstructionTrait for Feq {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4670,20 +5708,34 @@ impl Debug for Flt {
 }
 
 impl InstructionTrait for Flt {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.fs1_value = Some(*rs1_value);
-        } else {
-            self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.fs2_value = Some(*rs2_value);
-        } else {
-            self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.fs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.fs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4704,6 +5756,13 @@ impl InstructionTrait for Flt {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4750,20 +5809,34 @@ impl Debug for Fle {
 }
 
 impl InstructionTrait for Fle {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.fs1_value = Some(*rs1_value);
-        } else {
-            self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.fs2_value = Some(*rs2_value);
-        } else {
-            self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.fs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.fs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -4791,6 +5864,13 @@ impl InstructionTrait for Fle {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Float, self.data.fs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4839,15 +5919,25 @@ impl Debug for Flw {
 }
 
 impl InstructionTrait for Flw {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -4869,6 +5959,10 @@ impl InstructionTrait for Flw {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -4921,21 +6015,36 @@ impl Debug for Fsw {
 }
 
 impl InstructionTrait for Fsw {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    //     let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
+    //     if let Some((_, rs2_value)) = forwarding_source_2 {
+    //         self.data.fs2_value = Some(*rs2_value);
+    //     } else {
+    //         self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
-        let forwarding_source_2 = core.get_forwarding_float_source(self.data.fs2);
-        if let Some((_, rs2_value)) = forwarding_source_2 {
-            self.data.fs2_value = Some(*rs2_value);
-        } else {
-            self.data.fs2_value = Some(core.get_float_register(self.data.fs2 as usize));
-        }
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
+        let rs2_value = match rs_values[1] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs2_value = Some(rs2_value);
     }
 
     fn exec(&mut self, _: &mut Core) {
@@ -4951,6 +6060,13 @@ impl InstructionTrait for Fsw {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1, self.data.fs2]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            (RegisterType::Int, self.data.rs1),
+            (RegisterType::Float, self.data.fs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4989,14 +6105,23 @@ impl Debug for FcvtWS {
 }
 
 impl InstructionTrait for FcvtWS {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.fs1_value = Some(*rs1_value);
-        } else {
-            self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.fs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -5016,6 +6141,10 @@ impl InstructionTrait for FcvtWS {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Float, self.data.fs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -5058,14 +6187,23 @@ impl Debug for FcvtWuS {
 }
 
 impl InstructionTrait for FcvtWuS {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.fs1_value = Some(*rs1_value);
-        } else {
-            self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.fs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -5086,6 +6224,10 @@ impl InstructionTrait for FcvtWuS {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Float, self.data.fs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -5128,14 +6270,23 @@ impl Debug for FcvtSW {
 }
 
 impl InstructionTrait for FcvtSW {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -5155,6 +6306,10 @@ impl InstructionTrait for FcvtSW {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -5197,14 +6352,23 @@ impl Debug for FcvtSWu {
 }
 
 impl InstructionTrait for FcvtSWu {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -5229,6 +6393,10 @@ impl InstructionTrait for FcvtSWu {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -5271,14 +6439,23 @@ impl Debug for FmvXW {
 }
 
 impl InstructionTrait for FmvXW {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.fs1_value = Some(*rs1_value);
-        } else {
-            self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.fs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.fs1_value = Some(core.get_float_register(self.data.fs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Float(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.fs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -5298,6 +6475,10 @@ impl InstructionTrait for FmvXW {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.fs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Float, self.data.fs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -5340,14 +6521,23 @@ impl Debug for FmvWX {
 }
 
 impl InstructionTrait for FmvWX {
-    fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
-        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-        if let Some((_, rs1_value)) = forwarding_source_1 {
-            self.data.rs1_value = Some(*rs1_value);
-        } else {
-            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-        }
+    // fn register_fetch(&mut self, core: &Core) {
+    //     self.data.inst_count = Some(core.get_instruction_count());
+    //     let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+    //     if let Some((_, rs1_value)) = forwarding_source_1 {
+    //         self.data.rs1_value = Some(*rs1_value);
+    //     } else {
+    //         self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, _: u32) {
+        self.data.inst_count = Some(inst_count);
+        let rs1_value = match rs_values[0] {
+            RegisterValue::Int(value) => value,
+            _ => panic!("Invalid register value"),
+        };
+        self.data.rs1_value = Some(rs1_value);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -5367,6 +6557,10 @@ impl InstructionTrait for FmvWX {
 
     fn get_source_registers(&self) -> Vec<Rs> {
         vec![self.data.rs1]
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        vec![(RegisterType::Int, self.data.rs1)]
     }
 
     fn get_destination_register(&self) -> Option<Rd> {
@@ -5526,74 +6720,277 @@ impl Debug for InstructionEnum {
 }
 
 impl InstructionTrait for InstructionEnum {
-    fn register_fetch(&mut self, core: &Core) {
+    // fn register_fetch(&mut self, core: &Core) {
+    //     match self {
+    //         InstructionEnum::Lb(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Lh(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Lw(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Lbu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Lhu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Addi(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Slli(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Slti(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sltiu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Xori(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Srli(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Srai(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Ori(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Andi(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Auipc(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sb(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sh(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sw(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Add(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sub(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sll(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Slt(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sltu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Xor(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Srl(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Sra(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Or(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::And(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Lui(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Beq(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Bne(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Blt(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Bge(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Bltu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Bgeu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Jalr(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Jal(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Mul(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Mulh(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Mulhsu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Mulhu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Div(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Divu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Rem(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Remu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fadd(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fsub(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fmul(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fdiv(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fsqrt(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fsgnj(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fsgnjn(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fsgnjx(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fmin(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fmax(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Feq(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Flt(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fle(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Flw(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::Fsw(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::FcvtWS(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::FcvtWuS(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::FcvtSW(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::FcvtSWu(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::FmvXW(instruction) => instruction.register_fetch(core),
+    //         InstructionEnum::FmvWX(instruction) => instruction.register_fetch(core),
+    //     }
+    // }
+
+    fn pseudo_register_fetch(&mut self, rs_values: &[RegisterValue], inst_count: u128, pc: u32) {
         match self {
-            InstructionEnum::Lb(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Lh(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Lw(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Lbu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Lhu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Addi(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Slli(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Slti(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sltiu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Xori(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Srli(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Srai(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Ori(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Andi(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Auipc(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sb(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sh(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sw(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Add(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sub(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sll(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Slt(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sltu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Xor(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Srl(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Sra(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Or(instruction) => instruction.register_fetch(core),
-            InstructionEnum::And(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Lui(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Beq(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Bne(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Blt(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Bge(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Bltu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Bgeu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Jalr(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Jal(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Mul(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Mulh(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Mulhsu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Mulhu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Div(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Divu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Rem(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Remu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fadd(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fsub(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fmul(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fdiv(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fsqrt(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fsgnj(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fsgnjn(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fsgnjx(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fmin(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fmax(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Feq(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Flt(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fle(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Flw(instruction) => instruction.register_fetch(core),
-            InstructionEnum::Fsw(instruction) => instruction.register_fetch(core),
-            InstructionEnum::FcvtWS(instruction) => instruction.register_fetch(core),
-            InstructionEnum::FcvtWuS(instruction) => instruction.register_fetch(core),
-            InstructionEnum::FcvtSW(instruction) => instruction.register_fetch(core),
-            InstructionEnum::FcvtSWu(instruction) => instruction.register_fetch(core),
-            InstructionEnum::FmvXW(instruction) => instruction.register_fetch(core),
-            InstructionEnum::FmvWX(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Lb(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Lh(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Lw(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Lbu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Lhu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Addi(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Slli(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Slti(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sltiu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Xori(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Srli(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Srai(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Ori(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Andi(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Auipc(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sb(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sh(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sw(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Add(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sub(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sll(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Slt(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sltu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Xor(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Srl(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Sra(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Or(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::And(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Lui(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Beq(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Bne(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Blt(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Bge(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Bltu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Bgeu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Jalr(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Jal(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Mul(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Mulh(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Mulhsu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Mulhu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Div(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Divu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Rem(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Remu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fadd(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fsub(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fmul(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fdiv(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fsqrt(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fsgnj(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fsgnjn(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fsgnjx(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fmin(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fmax(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Feq(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Flt(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fle(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Flw(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::Fsw(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::FcvtWS(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::FcvtWuS(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::FcvtSW(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::FcvtSWu(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::FmvXW(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
+            InstructionEnum::FmvWX(instruction) => {
+                instruction.pseudo_register_fetch(rs_values, inst_count, pc)
+            }
         }
     }
 
@@ -5878,6 +7275,77 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.get_source_registers(),
             InstructionEnum::FmvXW(instruction) => instruction.get_source_registers(),
             InstructionEnum::FmvWX(instruction) => instruction.get_source_registers(),
+        }
+    }
+
+    fn pseudo_get_source_registers(&self) -> Vec<RegisterId> {
+        match self {
+            InstructionEnum::Lb(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Lh(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Lw(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Lbu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Lhu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Addi(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Slli(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Slti(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sltiu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Xori(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Srli(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Srai(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Ori(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Andi(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Auipc(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sb(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sh(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sw(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Add(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sub(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sll(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Slt(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sltu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Xor(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Srl(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Sra(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Or(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::And(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Lui(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Beq(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Bne(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Blt(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Bge(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Bltu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Bgeu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Jalr(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Jal(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Mul(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Mulh(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Mulhsu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Mulhu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Div(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Divu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Rem(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Remu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fadd(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fsub(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fmul(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fdiv(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fsqrt(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fsgnj(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fsgnjn(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fsgnjx(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fmin(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fmax(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Feq(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Flt(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fle(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Flw(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::Fsw(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::FcvtWS(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::FcvtWuS(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::FcvtSW(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::FcvtSWu(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::FmvXW(instruction) => instruction.pseudo_get_source_registers(),
+            InstructionEnum::FmvWX(instruction) => instruction.pseudo_get_source_registers(),
         }
     }
 
@@ -6600,14 +8068,22 @@ pub fn create_instruction_struct(inst: Instruction) -> InstructionEnum {
     }
 }
 
-pub fn register_fetch(core: &mut Core) {
-    if core.get_decoded_instruction().is_none() {
-        return;
-    }
-    let mut inst = core.get_decoded_instruction().clone().unwrap();
-    inst.register_fetch(core);
-    core.set_decoded_instruction(Some(inst));
-}
+// pub fn register_fetch(core: &mut Core) {
+//     if core.get_decoded_instruction().is_none() {
+//         return;
+//     }
+// let sources = get_source_registers(core.get_decoded_instruction().as_ref().unwrap());
+
+// if let Some(inst) = &mut core.decoded_instruction {
+//     take_mut::take(inst, |mut inst: InstructionEnum| {
+//         inst.register_fetch(core);
+//         inst
+//     });
+// }
+//     let mut inst = core.get_decoded_instruction().clone().unwrap();
+//     inst.register_fetch(core);
+//     core.set_decoded_instruction(Some(inst));
+// }
 
 pub fn exec_instruction(core: &mut Core) {
     if core.get_instruction_in_exec_stage().is_none() {
@@ -6638,6 +8114,10 @@ pub fn write_back(core: &mut Core) {
 pub fn get_source_registers(inst: &InstructionEnum) -> Vec<Rs> {
     inst.get_source_registers()
 }
+
+// pub fn pseudo_get_source_registers(inst: &InstructionEnum) -> Vec<RegisterId> {
+//     inst.pseudo_get_source_registers()
+// }
 
 pub fn get_destination_register(inst: &InstructionEnum) -> Option<Rd> {
     inst.get_destination_register()
