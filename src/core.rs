@@ -144,28 +144,33 @@ impl Core {
             let decoded_instruction = self.decoded_instruction.as_ref().unwrap();
             decoded_instruction.pseudo_get_source_registers()
         };
-        let mut fetched_rss = vec![];
-        for (rs_type, rs) in rs_ids {
-            match rs_type {
+
+        let fetched_rs_values = rs_ids
+            .iter()
+            .map(|(rs_type, rs)| match rs_type {
                 RegisterType::Int => {
-                    if let Some(&(_, value)) = self.get_forwarding_int_source(rs) {
-                        fetched_rss.push(RegisterValue::Int(value));
+                    if let Some(&(_, value)) = self.get_forwarding_int_source(*rs) {
+                        RegisterValue::Int(value)
                     } else {
-                        fetched_rss.push(RegisterValue::Int(self.get_int_register(rs as usize)));
+                        RegisterValue::Int(self.get_int_register(*rs as usize))
                     }
                 }
                 RegisterType::Float => {
-                    if let Some(&(_, value)) = self.get_forwarding_float_source(rs) {
-                        fetched_rss.push(RegisterValue::Float(value));
+                    if let Some(&(_, value)) = self.get_forwarding_float_source(*rs) {
+                        RegisterValue::Float(value)
                     } else {
-                        fetched_rss
-                            .push(RegisterValue::Float(self.get_float_register(rs as usize)));
+                        RegisterValue::Float(self.get_float_register(*rs as usize))
                     }
                 }
-            }
-        }
+            })
+            .collect::<Vec<RegisterValue>>();
+
         let decoded_instruction = self.decoded_instruction.as_mut().unwrap();
-        decoded_instruction.pseudo_register_fetch(&fetched_rss, self.instruction_count, self.pc);
+        decoded_instruction.pseudo_register_fetch(
+            &fetched_rs_values,
+            self.instruction_count,
+            self.pc,
+        );
     }
 
     fn fetch_instruction(&mut self) {
@@ -880,7 +885,7 @@ impl Core {
         }
 
         if let Ok(report) = guard.report().build() {
-            let file = File::create("flamegraph2.svg").unwrap();
+            let file = File::create("flamegraph3.svg").unwrap();
             report.flamegraph(file).unwrap();
         };
 
