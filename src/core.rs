@@ -771,6 +771,12 @@ impl Core {
             self.pc_history.push(self.get_pc());
         }
 
+        let guard = pprof::ProfilerGuardBuilder::default()
+            .frequency(1000)
+            .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+            .build()
+            .unwrap();
+
         loop {
             if verbose {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
@@ -838,6 +844,11 @@ impl Core {
                 self.pc_history.push(self.get_pc());
             }
         }
+
+        if let Ok(report) = guard.report().build() {
+            let file = File::create("flamegraph2.svg").unwrap();
+            report.flamegraph(file).unwrap();
+        };
 
         println!(
             "inst_count: {}\nelapsed time: {:?}\n{:.2} MIPS",
