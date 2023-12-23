@@ -846,7 +846,7 @@ impl Core {
         }
 
         if let Ok(report) = guard.report().build() {
-            let file = File::create("flamegraph2.svg").unwrap();
+            let file = File::create("flamegraph_256.svg").unwrap();
             report.flamegraph(file).unwrap();
         };
 
