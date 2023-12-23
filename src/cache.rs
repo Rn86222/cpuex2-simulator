@@ -92,15 +92,16 @@ impl Cache {
         (tag, index, offset)
     }
 
-    fn update_on_get(&mut self, cache_line: &CacheLine, tag: Tag, index: CacheIndex) {
-        let mut cache_line = (*cache_line).clone();
+    fn update_on_get(&mut self, cache_line: CacheLine, tag: Tag, index: CacheIndex) {
+        let mut cache_line = cache_line;
         cache_line.accessed = true;
         cache_line.valid = true;
         self.values[index].swap_remove(&tag);
         self.values[index].insert(tag, cache_line);
     }
 
-    fn update_on_set(&mut self, mut cache_line: CacheLine, tag: Tag, index: CacheIndex) {
+    fn update_on_set(&mut self, cache_line: CacheLine, tag: Tag, index: CacheIndex) {
+        let mut cache_line = cache_line;
         cache_line.dirty = true;
         cache_line.accessed = true;
         cache_line.valid = true;
@@ -110,15 +111,14 @@ impl Cache {
 
     pub fn get_ubyte(&mut self, addr: Address) -> CacheAccess {
         let (tag, index, offset) = self.get_status(addr);
-        let cache_line_candidates = self.values[index].clone();
-        let cache_line = cache_line_candidates.get(&tag);
+        let cache_line = self.values[index].get(&tag);
         match cache_line {
             Some(cache_line) => {
                 if !cache_line.valid {
                     return CacheAccess::Miss;
                 }
                 let value = cache_line.value[offset];
-                self.update_on_get(cache_line, tag, index);
+                self.update_on_get(cache_line.clone(), tag, index);
                 CacheAccess::HitUByte(value)
             }
             None => CacheAccess::Miss,
@@ -127,8 +127,7 @@ impl Cache {
 
     pub fn get_uhalf(&mut self, addr: Address) -> CacheAccess {
         let (tag, index, offset) = self.get_status(addr);
-        let cache_line_candidates = self.values[index].clone();
-        let cache_line = cache_line_candidates.get(&tag);
+        let cache_line = self.values[index].get(&tag);
         match cache_line {
             Some(cache_line) => {
                 if !cache_line.valid {
@@ -138,7 +137,7 @@ impl Cache {
                 for i in 0..2 {
                     value += (cache_line.value[offset + i] as UHalf) << (8 * i);
                 }
-                self.update_on_get(cache_line, tag, index);
+                self.update_on_get(cache_line.clone(), tag, index);
                 CacheAccess::HitUHalf(value)
             }
             None => CacheAccess::Miss,
@@ -147,8 +146,7 @@ impl Cache {
 
     pub fn get_word(&mut self, addr: Address) -> CacheAccess {
         let (tag, index, offset) = self.get_status(addr);
-        let cache_line_candidates = self.values[index].clone();
-        let cache_line = cache_line_candidates.get(&tag);
+        let cache_line = self.values[index].get(&tag);
         match cache_line {
             Some(cache_line) => {
                 if !cache_line.valid {
@@ -158,7 +156,7 @@ impl Cache {
                 for i in 0..4 {
                     value += (cache_line.value[offset + i] as u32) << (8 * i);
                 }
-                self.update_on_get(cache_line, tag, index);
+                self.update_on_get(cache_line.clone(), tag, index);
                 CacheAccess::HitWord(u32_to_i32(value))
             }
             None => CacheAccess::Miss,
@@ -213,14 +211,13 @@ impl Cache {
 
     pub fn set_ubyte(&mut self, addr: Address, value: UByte) -> CacheAccess {
         let (tag, index, offset) = self.get_status(addr);
-        let cache_line_candidates = self.values[index].clone();
-        let cache_line = cache_line_candidates.get(&tag);
+        let cache_line = self.values[index].get(&tag);
         match cache_line {
             Some(cache_line) => {
+                let mut cache_line = cache_line.clone();
                 if !cache_line.valid {
                     return CacheAccess::Miss;
                 }
-                let mut cache_line = (*cache_line).clone();
                 cache_line.value[offset] = value;
                 self.update_on_set(cache_line, tag, index);
                 CacheAccess::HitSet
@@ -231,11 +228,10 @@ impl Cache {
 
     pub fn set_uhalf(&mut self, addr: Address, value: UHalf) -> CacheAccess {
         let (tag, index, offset) = self.get_status(addr);
-        let cache_line_candidates = &self.values[index];
-        let cache_line = cache_line_candidates.get(&tag);
+        let cache_line = self.values[index].get(&tag);
         match cache_line {
             Some(cache_line) => {
-                let mut cache_line = (*cache_line).clone();
+                let mut cache_line = cache_line.clone();
                 if !cache_line.valid {
                     return CacheAccess::Miss;
                 }
@@ -251,12 +247,11 @@ impl Cache {
 
     pub fn set_word(&mut self, addr: Address, value: Word) -> CacheAccess {
         let (tag, index, offset) = self.get_status(addr);
-        let cache_line_candidates = &self.values[index];
-        let cache_line = cache_line_candidates.get(&tag);
+        let cache_line = self.values[index].get(&tag);
         match cache_line {
             Some(cache_line) => {
                 let value = i32_to_u32(value);
-                let mut cache_line = (*cache_line).clone();
+                let mut cache_line = cache_line.clone();
                 if !cache_line.valid {
                     return CacheAccess::Miss;
                 }
