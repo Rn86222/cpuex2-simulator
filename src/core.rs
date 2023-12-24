@@ -33,6 +33,7 @@ pub struct Core {
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
+    instruction_count_history: Vec<InstructionCount>,
     pc_history: Vec<Address>,
     pc_stats: HashMap<Address, (Instruction, usize)>,
     inst_stats: HashMap<String, usize>,
@@ -64,6 +65,7 @@ impl Core {
         let pc = 0;
         let int_registers_history = Vec::new();
         let pc_history = Vec::new();
+        let instruction_count_history = Vec::new();
         let pc_stats = HashMap::new();
         let inst_stats = HashMap::new();
         let fetched_instruction = None;
@@ -91,6 +93,7 @@ impl Core {
             pc,
             int_registers_history,
             pc_history,
+            instruction_count_history,
             pc_stats,
             inst_stats,
             fetched_instruction,
@@ -645,6 +648,15 @@ impl Core {
     }
 
     #[allow(dead_code)]
+    fn show_instruction_count_buffer(&self) {
+        print!("    ");
+        for i in 0..self.instruction_count_history.len() {
+            print!("{:>8}  ", self.instruction_count_history[i]);
+        }
+        println!();
+    }
+
+    #[allow(dead_code)]
     fn show_pc_buffer(&self) {
         print!("pc  ");
         for i in 0..self.pc_history.len() {
@@ -842,6 +854,8 @@ impl Core {
                 self.show_registers();
                 self.save_int_registers();
                 self.pc_history.push(self.get_pc());
+                self.instruction_count_history
+                    .push(self.get_instruction_count());
             }
         }
 
@@ -857,11 +871,7 @@ impl Core {
             self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
         );
         if verbose {
-            print!("    ");
-            for i in 0..self.pc_history.len() {
-                print!("{:>8}  ", i);
-            }
-            println!();
+            self.show_instruction_count_buffer();
             self.show_pc_buffer();
             self.show_int_registers_buffer();
         }
