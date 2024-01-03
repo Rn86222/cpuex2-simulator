@@ -33,6 +33,7 @@ pub struct Core {
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
+    float_registers_history: Vec<[FloatRegister; FLOAT_REGISTER_SIZE]>,
     instruction_count_history: Vec<InstructionCount>,
     pc_history: Vec<Address>,
     pc_stats: HashMap<Address, (Instruction, usize)>,
@@ -64,6 +65,7 @@ impl Core {
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
         let int_registers_history = Vec::new();
+        let float_registers_history = Vec::new();
         let pc_history = Vec::new();
         let instruction_count_history = Vec::new();
         let pc_stats = HashMap::new();
@@ -92,6 +94,7 @@ impl Core {
             float_registers,
             pc,
             int_registers_history,
+            float_registers_history,
             pc_history,
             instruction_count_history,
             pc_stats,
@@ -530,16 +533,16 @@ impl Core {
                 println!();
             }
         }
-        // for i in 0..FLOAT_REGISTER_SIZE {
-        //     print!(
-        //         "f{: <2} {:>10.5} ",
-        //         i,
-        //         f32::from_bits(self.get_float_register(i).get_32_bits())
-        //     );
-        //     if i % 8 == 7 {
-        //         println!();
-        //     }
-        // }
+        for i in 0..FLOAT_REGISTER_SIZE {
+            print!(
+                "f{: <2} 0x{:>08x} ",
+                i,
+                self.get_float_register(i).get_32_bits()
+            );
+            if i % 8 == 7 {
+                println!();
+            }
+        }
     }
 
     #[allow(dead_code)]
@@ -592,6 +595,15 @@ impl Core {
             int_register.set(self.get_int_register(i));
         }
         self.int_registers_history.push(int_registers);
+    }
+
+    #[allow(dead_code)]
+    fn save_float_registers(&mut self) {
+        let mut float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
+        for (i, float_register) in float_registers.iter_mut().enumerate() {
+            float_register.set(self.get_float_register(i));
+        }
+        self.float_registers_history.push(float_registers);
     }
 
     #[allow(dead_code)]
@@ -692,6 +704,34 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
+    fn show_float_registers_buffer(&self) {
+        let mut strings = vec![vec![]; INT_REGISTER_SIZE];
+        for i in 0..self.float_registers_history.len() {
+            for (j, string) in strings.iter_mut().enumerate() {
+                let value = self.float_registers_history[i][j].get();
+                string.push(format!("{:>08x}", value.get_32_bits()));
+            }
+        }
+        let mut line = String::from("");
+        for _ in 0..self.float_registers_history.len() {
+            line += "-----"
+        }
+        for (i, string) in strings.iter().enumerate() {
+            print!("f{: <2} ", i);
+            let mut before_string = String::from("");
+            for value in string {
+                if before_string != *value {
+                    print!("{} |", value);
+                    before_string = value.clone();
+                } else {
+                    print!("---------|");
+                }
+            }
+            println!();
+        }
+    }
+
     fn show_memory_stats(&self) {
         println!("memory access count: {}", self.memory_access_count);
         println!("cache hit count: {}", self.cache_hit_count);
@@ -779,6 +819,7 @@ impl Core {
 
         if verbose {
             self.save_int_registers();
+            self.save_float_registers();
             self.show_registers();
             self.pc_history.push(self.get_pc());
         }
@@ -853,6 +894,7 @@ impl Core {
                 self.show_pipeline();
                 self.show_registers();
                 self.save_int_registers();
+                self.save_float_registers();
                 self.pc_history.push(self.get_pc());
                 self.instruction_count_history
                     .push(self.get_instruction_count());
@@ -874,6 +916,7 @@ impl Core {
             self.show_instruction_count_buffer();
             self.show_pc_buffer();
             self.show_int_registers_buffer();
+            self.show_float_registers_buffer();
         }
         self.show_memory_stats();
         self.show_output_result();
