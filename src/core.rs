@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufRead;
+// use std::io::BufRead;
 use std::io::Write;
 use std::thread;
 use std::time::Duration;
@@ -402,21 +402,21 @@ impl Core {
         }
     }
 
-    pub fn load_data_file(&mut self, path: &str) {
-        if let Ok(file) = File::open(path) {
-            let reader = std::io::BufReader::new(file);
-            for line in reader.lines().flatten() {
-                let mut iter = line.split_whitespace();
-                let addr = iter.next().unwrap().parse::<Address>().unwrap();
-                let value = u32_to_i32(iter.next().unwrap().parse::<u32>().unwrap());
-                self.memory.store_word(addr, value);
-            }
-        } else {
-            eprintln!(
-                "Warning: failed to open file for data section (dismiss if you don't need it)."
-            );
-        }
-    }
+    // pub fn load_data_file(&mut self, path: &str) {
+    //     if let Ok(file) = File::open(path) {
+    //         let reader = std::io::BufReader::new(file);
+    //         for line in reader.lines().flatten() {
+    //             let mut iter = line.split_whitespace();
+    //             let addr = iter.next().unwrap().parse::<Address>().unwrap();
+    //             let value = u32_to_i32(iter.next().unwrap().parse::<u32>().unwrap());
+    //             self.memory.store_word(addr, value);
+    //         }
+    //     } else {
+    //         eprintln!(
+    //             "Warning: failed to open file for data section (dismiss if you don't need it)."
+    //         );
+    //     }
+    // }
 
     pub fn move_instructions_to_next_stage(&mut self) {
         self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
@@ -800,7 +800,7 @@ impl Core {
         &mut self,
         verbose: bool,
         interval: u64,
-        data_file_path: &str,
+        // data_file_path: &str,
         ppm_file_path: &str,
         sld_file_path: &str,
         pc_file_path: &str,
@@ -815,7 +815,7 @@ impl Core {
 
         self.output_pc_file(pc_file_path);
 
-        self.load_data_file(data_file_path);
+        // self.load_data_file(data_file_path);
         self.load_sld_file(sld_file_path);
 
         self.save_pc();
@@ -827,11 +827,11 @@ impl Core {
             self.pc_history.push(self.get_pc());
         }
 
-        let guard = pprof::ProfilerGuardBuilder::default()
-            .frequency(1000)
-            .blocklist(&["libc", "libgcc", "pthread", "vdso"])
-            .build()
-            .unwrap();
+        // let guard = pprof::ProfilerGuardBuilder::default()
+        //     .frequency(1000)
+        //     .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+        //     .build()
+        //     .unwrap();
 
         loop {
             if verbose {
@@ -904,10 +904,10 @@ impl Core {
             }
         }
 
-        if let Ok(report) = guard.report().build() {
-            let file = File::create("flamegraph_256.svg").unwrap();
-            report.flamegraph(file).unwrap();
-        };
+        // if let Ok(report) = guard.report().build() {
+        //     let file = File::create("flamegraph_256.svg").unwrap();
+        //     report.flamegraph(file).unwrap();
+        // };
 
         println!(
             "inst_count: {}\nelapsed time: {:?}\n{:.2} MIPS",

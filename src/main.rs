@@ -74,14 +74,14 @@ fn main() {
                 }
                 let verbose = args.verbose;
                 let interval = 0;
-                let data_file_path = &input.replace(".bin", ".data");
+                // let data_file_path = &input.replace(".bin", ".data");
                 let ppm_file_path = &input.replace(".bin", ".ppm");
                 let sld_file_path = &args.sld.unwrap();
                 let pc_file_path = &input.replace(".bin", ".pc");
                 core.run(
                     verbose,
                     interval,
-                    data_file_path,
+                    // data_file_path,
                     ppm_file_path,
                     sld_file_path,
                     pc_file_path,
