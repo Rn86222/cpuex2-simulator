@@ -22,7 +22,7 @@ cd $dirpath
 echo -n "Compiling '$minrt.ml'... "
 git clone https://github.com/utokyo-compiler/cpuex-2-2023.git > /dev/null 2>&1
 cd cpuex-2-2023
-git checkout rn > /dev/null 2>&1
+# git checkout rn > /dev/null 2>&1
 ./to_riscv
 make > /dev/null 2>&1
 rm test/$minrt.s > /dev/null 2>&1
