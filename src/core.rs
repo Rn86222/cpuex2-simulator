@@ -785,7 +785,10 @@ impl Core {
     fn show_output_result(&self) {
         println!("---------- output ----------");
         for i in 0..self.output.len() {
-            println!("{} {} {}", i, self.output[i], self.output[i] as char);
+            println!(
+                "{} {} 0x{:>02x} {}",
+                i, self.output[i], self.output[i], self.output[i] as char
+            );
         }
     }
 
