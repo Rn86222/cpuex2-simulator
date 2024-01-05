@@ -946,3 +946,39 @@ impl Core {
         self.show_pc_stats();
     }
 }
+
+pub fn disassemble(buf: &Vec<u8>, path: &str) {
+    let mut inst_count = 0;
+    let mut inst = 0;
+    let mut core = Core::new();
+    for &byte in buf {
+        inst += (byte as u32) << ((inst_count % 4) * 8);
+        inst_count += 1;
+        if inst_count % 4 == 0 {
+            core.store_instruction(inst_count - 4, inst);
+            inst = 0;
+        }
+    }
+    let mut file = File::create(path).unwrap();
+    let mut pc_count = 0;
+    loop {
+        let inst = core.instruction_memory.load(pc_count as Address);
+        let decoded = decode_instruction(inst);
+        match decoded {
+            Instruction::Other => {
+                break;
+            }
+            _ => {
+                let inst = create_instruction_struct(decoded);
+                core.set_decoded_instruction(Some(inst));
+                core.increment_pc();
+                register_fetch(&mut core);
+                let inst = core.decoded_instruction.clone().unwrap();
+                let inst_string = format!("{}: {:?}", pc_count, inst);
+                file.write_all(inst_string.as_bytes()).unwrap();
+                file.write_all("\n".as_bytes()).unwrap();
+                pc_count += 4;
+            }
+        }
+    }
+}

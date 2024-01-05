@@ -40,6 +40,12 @@ struct Args {
     /// Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, fcvtws, or all)
     #[arg(short, long)]
     test_fpu: Option<String>,
+
+    /// Disassemble mode
+    /// If this flag is set, the simulator will print the disassembled instructions
+    /// The output file name is the same as the input binary file name, but the extension is changed to ".dasm"
+    #[arg(short, long)]
+    disassemble: bool,
 }
 
 fn main() {
@@ -61,8 +67,8 @@ fn main() {
                 file.read_to_end(&mut buf).unwrap();
                 let mut inst_count = 0;
                 let mut inst = 0;
-                for byte in buf {
-                    inst += (byte as u32) << ((inst_count % 4) * 8);
+                for byte in &buf {
+                    inst += (*byte as u32) << ((inst_count % 4) * 8);
                     inst_count += 1;
                     if inst_count % 4 == 0 {
                         core.store_instruction(inst_count - 4, inst);
@@ -71,6 +77,10 @@ fn main() {
                 }
                 if inst_count % 4 != 0 {
                     panic!("Reading file failed.\nThe size of sum of instructions is not a multiple of 4. {}", inst_count);
+                }
+                if args.disassemble {
+                    let disassemble_file_path = &input.replace(".bin", ".dasm");
+                    disassemble(&buf, disassemble_file_path);
                 }
                 let verbose = args.verbose;
                 let interval = 0;
