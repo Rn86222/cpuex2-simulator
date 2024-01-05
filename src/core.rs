@@ -589,7 +589,7 @@ impl Core {
     // }
 
     #[allow(dead_code)]
-    fn save_int_registers(&mut self) {
+    fn add_int_registers_to_history(&mut self) {
         let mut int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         for (i, int_register) in int_registers.iter_mut().enumerate() {
             int_register.set(self.get_int_register(i));
@@ -598,7 +598,7 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn save_float_registers(&mut self) {
+    fn add_float_registers_to_history(&mut self) {
         let mut float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         for (i, float_register) in float_registers.iter_mut().enumerate() {
             float_register.set(self.get_float_register(i));
@@ -607,7 +607,24 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn save_pc(&mut self) {
+    fn add_registers_to_history(&mut self) {
+        self.add_int_registers_to_history();
+        self.add_float_registers_to_history();
+    }
+
+    #[allow(dead_code)]
+    fn add_pc_to_history(&mut self) {
+        self.pc_history.push(self.get_pc());
+    }
+
+    #[allow(dead_code)]
+    fn add_instruction_count_to_history(&mut self) {
+        self.instruction_count_history
+            .push(self.get_instruction_count());
+    }
+
+    #[allow(dead_code)]
+    fn update_pc_stats(&mut self) {
         if let Some(inst) = self.fetched_instruction {
             let decoded = decode_instruction(inst);
             if let Instruction::Other = decoded {
@@ -637,7 +654,7 @@ impl Core {
         }
     }
 
-    fn save_inst(&mut self) {
+    fn update_inst_stats(&mut self) {
         if let Some(inst) = self.get_instruction_in_exec_stage() {
             self.inst_stats
                 .entry(get_name(inst))
@@ -660,7 +677,7 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn show_instruction_count_buffer(&self) {
+    fn show_instruction_count_history(&self) {
         print!("    ");
         for i in 0..self.instruction_count_history.len() {
             print!("{:>8}  ", self.instruction_count_history[i]);
@@ -669,7 +686,7 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn show_pc_buffer(&self) {
+    fn show_pc_history(&self) {
         print!("pc  ");
         for i in 0..self.pc_history.len() {
             print!("{:>8}  ", self.pc_history[i]);
@@ -678,7 +695,7 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn show_int_registers_buffer(&self) {
+    fn show_int_registers_history(&self) {
         let mut strings = vec![vec![]; INT_REGISTER_SIZE];
         for i in 0..self.int_registers_history.len() {
             for (j, string) in strings.iter_mut().enumerate() {
@@ -705,7 +722,7 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn show_float_registers_buffer(&self) {
+    fn show_float_registers_history(&self) {
         let mut strings = vec![vec![]; INT_REGISTER_SIZE];
         for i in 0..self.float_registers_history.len() {
             for (j, string) in strings.iter_mut().enumerate() {
@@ -730,6 +747,12 @@ impl Core {
             }
             println!();
         }
+    }
+
+    #[allow(dead_code)]
+    fn show_register_history(&self) {
+        self.show_int_registers_history();
+        self.show_float_registers_history();
     }
 
     fn show_memory_stats(&self) {
@@ -818,13 +841,12 @@ impl Core {
         // self.load_data_file(data_file_path);
         self.load_sld_file(sld_file_path);
 
-        self.save_pc();
+        self.update_pc_stats();
 
         if verbose {
-            self.save_int_registers();
-            self.save_float_registers();
             self.show_registers();
-            self.pc_history.push(self.get_pc());
+            self.add_registers_to_history();
+            self.add_pc_to_history();
         }
 
         // let guard = pprof::ProfilerGuardBuilder::default()
@@ -868,13 +890,13 @@ impl Core {
 
             if !stalling {
                 exec_instruction(self);
-                self.save_inst();
                 self.increment_instruction_count();
                 if !will_stall {
                     register_fetch(self);
                 }
                 self.fetch_instruction();
-                self.save_pc();
+                self.update_inst_stats();
+                self.update_pc_stats();
             } else {
                 register_fetch(self);
             }
@@ -896,11 +918,9 @@ impl Core {
             if verbose {
                 self.show_pipeline();
                 self.show_registers();
-                self.save_int_registers();
-                self.save_float_registers();
-                self.pc_history.push(self.get_pc());
-                self.instruction_count_history
-                    .push(self.get_instruction_count());
+                self.add_registers_to_history();
+                self.add_pc_to_history();
+                self.add_instruction_count_to_history();
             }
         }
 
@@ -916,10 +936,9 @@ impl Core {
             self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
         );
         if verbose {
-            self.show_instruction_count_buffer();
-            self.show_pc_buffer();
-            self.show_int_registers_buffer();
-            self.show_float_registers_buffer();
+            self.show_instruction_count_history();
+            self.show_pc_history();
+            self.show_register_history();
         }
         self.show_memory_stats();
         self.show_output_result();
