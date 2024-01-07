@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/bin/bash -eu
 
-trap 'func' 1 2 3 15
 
 minrt='minrt_mini'
 current_path=`pwd`
@@ -24,8 +23,14 @@ git clone https://github.com/utokyo-compiler/cpuex-2-2023.git > /dev/null 2>&1
 cd cpuex-2-2023
 # git checkout rn > /dev/null 2>&1
 ./to_riscv
+set +e
 make > /dev/null 2>&1
 rm test/$minrt.s > /dev/null 2>&1
+set -e
+if [ ! -e ./min-caml ]; then
+    echo "Compilation Failed"
+    exit 1
+fi
 ./min-caml test/$minrt > /dev/null 2>&1
 mv test/$minrt.s ../$minrt.s
 cd ..
@@ -35,9 +40,15 @@ echo "done."
 echo -n "Assembling '$minrt.s'... "
 git clone https://github.com/Rn86222/cpuex2-assembler.git > /dev/null 2>&1
 cd cpuex2-assembler
+set +e
 rm ./$minrt.s ./$minrt.bin ./$minrt.data > /dev/null 2>&1
+set -e
 mv ../$minrt.s ./$minrt.s
 cargo run --release -- --file $minrt.s --style bin > /dev/null 2>&1
+if [ ! -e ./$minrt.bin ]; then
+    echo "Assembling Failed"
+    exit 1
+fi
 mv ./$minrt.bin ../$minrt.bin
 mv ./$minrt.data ../$minrt.data
 cd ..
@@ -47,7 +58,9 @@ echo "done."
 echo -n "Simulating '$minrt.bin'... "
 git clone https://github.com/Rn86222/cpuex2-simulator.git > /dev/null 2>&1
 cd cpuex2-simulator
+set +e
 rm ./$minrt.bin ./$minrt.data ./$minrt.ppm > /dev/null 2>&1
+set -e
 mv ../$minrt.bin ./$minrt.bin
 mv ../$minrt.data ./$minrt.data
 ulimit -s unlimited && cargo run --release -- --bin $minrt.bin 2> /dev/null > result$dirpath.txt
