@@ -33,9 +33,11 @@ struct Args {
     sld: Option<String>,
 
     /// Verbose mode
-    /// If this flag is set, the simulator will print the value of registers and state of pipeline in each cycle
+    /// If this flag is not set, the simulator won't print anything in each cycle
+    /// If this flag is set to 1, the simulator will print the information about only pipeline in each cycle
+    /// If this flag is set to 2, the simulator will print the information about pipeline and registers in each cycle, and save history of registers and pc
     #[arg(short, long)]
-    verbose: bool,
+    verbose: Option<u32>,
 
     /// Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, fcvtws, or all)
     #[arg(short, long)]
@@ -82,7 +84,7 @@ fn main() {
                     let disassemble_file_path = &input.replace(".bin", ".dasm");
                     disassemble(&buf, disassemble_file_path);
                 }
-                let verbose = args.verbose;
+                let verbose = args.verbose.unwrap_or(0);
                 let interval = 0;
                 // let data_file_path = &input.replace(".bin", ".data");
                 let ppm_file_path = &input.replace(".bin", ".ppm");

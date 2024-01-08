@@ -826,7 +826,7 @@ impl Core {
 
     pub fn run(
         &mut self,
-        verbose: bool,
+        verbose: u32,
         interval: u64,
         // data_file_path: &str,
         ppm_file_path: &str,
@@ -848,7 +848,7 @@ impl Core {
 
         self.update_pc_stats();
 
-        if verbose {
+        if verbose == 2 {
             self.show_registers();
             self.add_registers_to_history();
             self.add_pc_to_history();
@@ -861,7 +861,7 @@ impl Core {
         //     .unwrap();
 
         loop {
-            if verbose {
+            if verbose >= 1 {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
                 let pc_string = format!("pc: {}", self.get_pc());
                 print_filled_with_space(&pc_string, 15);
@@ -920,8 +920,10 @@ impl Core {
                 }
                 before_output_len = self.output.len();
             }
-            if verbose {
+            if verbose >= 1 {
                 self.show_pipeline();
+            }
+            if verbose == 2 {
                 self.show_registers();
                 self.add_registers_to_history();
                 self.add_pc_to_history();
@@ -940,7 +942,7 @@ impl Core {
             start_time.elapsed(),
             self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
         );
-        if verbose {
+        if verbose == 2 {
             self.show_instruction_count_history();
             self.show_pc_history();
             self.show_register_history();
