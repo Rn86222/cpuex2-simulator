@@ -2499,7 +2499,13 @@ impl Beq {
 impl Debug for Beq {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
-        let origin_pc = self.data.origin_pc.unwrap();
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
         write!(
             f,
             "beq x{}, x{}, {} + {}",
@@ -2589,7 +2595,13 @@ impl Bne {
 impl Debug for Bne {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
-        let origin_pc = self.data.origin_pc.unwrap();
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
         write!(
             f,
             "bne x{}, x{}, {} + {}",
@@ -2679,7 +2691,13 @@ impl Blt {
 impl Debug for Blt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
-        let origin_pc = self.data.origin_pc.unwrap();
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
         write!(
             f,
             "blt x{}, x{}, {} + {}",
@@ -2769,7 +2787,13 @@ impl Bge {
 impl Debug for Bge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
-        let origin_pc = self.data.origin_pc.unwrap();
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
         write!(
             f,
             "bge x{}, x{}, {} + {}",
@@ -2859,7 +2883,13 @@ impl Bltu {
 impl Debug for Bltu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
-        let origin_pc = self.data.origin_pc.unwrap();
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
         write!(
             f,
             "bltu x{}, x{}, {} + {}",
@@ -2949,7 +2979,13 @@ impl Bgeu {
 impl Debug for Bgeu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let extended_imm = sign_extention_i16(self.data.imm, 12);
-        let origin_pc = self.data.origin_pc.unwrap();
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
         write!(
             f,
             "bgeu x{}, x{}, {} + {}",
