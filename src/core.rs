@@ -824,6 +824,10 @@ impl Core {
         self.sld_vec = load_sld_file(path);
     }
 
+    pub fn end(&mut self) {
+        self.pc = INSTRUCTION_MEMORY_SIZE as Address;
+    }
+
     pub fn run(
         &mut self,
         verbose: u32,

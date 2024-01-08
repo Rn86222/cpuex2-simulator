@@ -5539,6 +5539,41 @@ impl InstructionTrait for FmvWX {
 }
 
 #[derive(Clone)]
+pub struct End {
+    inst_count: Option<InstructionCount>,
+}
+
+impl End {
+    fn new() -> Self {
+        End { inst_count: None }
+    }
+}
+
+impl Debug for End {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "end")
+    }
+}
+
+impl InstructionTrait for End {
+    fn register_fetch(&mut self, core: &Core) {
+        self.inst_count = Some(core.get_instruction_count());
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        core.end();
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "end".to_string()
+    }
+}
+
+#[derive(Clone)]
 pub enum InstructionEnum {
     Lb(Lb),
     Lh(Lh),
@@ -5606,6 +5641,7 @@ pub enum InstructionEnum {
     FcvtSWu(FcvtSWu),
     FmvXW(FmvXW),
     FmvWX(FmvWX),
+    End(End),
 }
 
 impl Debug for InstructionEnum {
@@ -5677,6 +5713,7 @@ impl Debug for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::FmvXW(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::FmvWX(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::End(instruction) => write!(f, "{:?}", instruction),
         }
     }
 }
@@ -5750,6 +5787,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.register_fetch(core),
             InstructionEnum::FmvXW(instruction) => instruction.register_fetch(core),
             InstructionEnum::FmvWX(instruction) => instruction.register_fetch(core),
+            InstructionEnum::End(instruction) => instruction.register_fetch(core),
         }
     }
 
@@ -5821,6 +5859,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.exec(core),
             InstructionEnum::FmvXW(instruction) => instruction.exec(core),
             InstructionEnum::FmvWX(instruction) => instruction.exec(core),
+            InstructionEnum::End(instruction) => instruction.exec(core),
         }
     }
 
@@ -5892,6 +5931,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.memory(core),
             InstructionEnum::FmvXW(instruction) => instruction.memory(core),
             InstructionEnum::FmvWX(instruction) => instruction.memory(core),
+            InstructionEnum::End(instruction) => instruction.memory(core),
         }
     }
 
@@ -5963,6 +6003,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.write_back(core),
             InstructionEnum::FmvXW(instruction) => instruction.write_back(core),
             InstructionEnum::FmvWX(instruction) => instruction.write_back(core),
+            InstructionEnum::End(instruction) => instruction.write_back(core),
         }
     }
 
@@ -6034,6 +6075,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.get_source_registers(),
             InstructionEnum::FmvXW(instruction) => instruction.get_source_registers(),
             InstructionEnum::FmvWX(instruction) => instruction.get_source_registers(),
+            InstructionEnum::End(instruction) => instruction.get_source_registers(),
         }
     }
 
@@ -6105,6 +6147,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.get_destination_register(),
             InstructionEnum::FmvXW(instruction) => instruction.get_destination_register(),
             InstructionEnum::FmvWX(instruction) => instruction.get_destination_register(),
+            InstructionEnum::End(instruction) => instruction.get_destination_register(),
         }
     }
 
@@ -6188,6 +6231,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::FmvXW(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::FmvWX(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::End(instruction) => instruction.is_branch_instruction(),
         }
     }
 
@@ -6259,6 +6303,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.get_jump_address(),
             InstructionEnum::FmvXW(instruction) => instruction.get_jump_address(),
             InstructionEnum::FmvWX(instruction) => instruction.get_jump_address(),
+            InstructionEnum::End(instruction) => instruction.get_jump_address(),
         }
     }
 
@@ -6330,6 +6375,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.get_instruction_count(),
             InstructionEnum::FmvXW(instruction) => instruction.get_instruction_count(),
             InstructionEnum::FmvWX(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::End(instruction) => instruction.get_instruction_count(),
         }
     }
 
@@ -6401,6 +6447,7 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FcvtSWu(instruction) => instruction.get_name(),
             InstructionEnum::FmvXW(instruction) => instruction.get_name(),
             InstructionEnum::FmvWX(instruction) => instruction.get_name(),
+            InstructionEnum::End(instruction) => instruction.get_name(),
         }
     }
 }
@@ -6453,6 +6500,12 @@ fn create_i_instruction_struct(
         },
         7 => match funct3 {
             0b010 => InstructionEnum::Flw(Flw::new(imm, rs1, rd)),
+            _ => {
+                panic!("unexpected funct3: {}", funct3)
+            }
+        },
+        115 => match funct3 {
+            0b000 => InstructionEnum::End(End::new()),
             _ => {
                 panic!("unexpected funct3: {}", funct3)
             }
