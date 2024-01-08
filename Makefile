@@ -1,5 +1,5 @@
 run:
-	ulimit -s unlimited && cargo run --release -- --bin main.bin --verbose > result.txt
+	ulimit -s unlimited && cargo run --release -- --bin main.bin --verbose 2 > result.txt
 
 minrt:
 	ulimit -s unlimited && cargo run --release -- --bin minrt.bin > minrt-result.txt
