@@ -480,21 +480,26 @@ impl Core {
             let current_inst_cnt = get_instruction_count(inst).unwrap();
             let rd = get_destination_register(inst);
             if let Some(rd) = rd {
-                if rd == 0 {
-                    return;
-                }
-                let int_source = self.forwarding_int_source_map.get(&rd);
-                let float_source = self.forwarding_float_source_map.get(&rd);
-                if let Some((inst_cnt, _)) = int_source {
-                    if *inst_cnt == current_inst_cnt {
-                        self.forwarding_int_source_map.remove(&rd);
+                match rd {
+                    RegisterId::Int(rd) => {
+                        if rd == 0 {
+                            return;
+                        }
+                        let int_source = self.forwarding_int_source_map.get(&rd);
+                        if let Some((inst_cnt, _)) = int_source {
+                            if *inst_cnt == current_inst_cnt {
+                                self.forwarding_int_source_map.remove(&rd);
+                            }
+                        }
                     }
-                } else if let Some((inst_cnt, _)) = float_source {
-                    if *inst_cnt == current_inst_cnt {
-                        self.forwarding_float_source_map.remove(&rd);
+                    RegisterId::Float(rd) => {
+                        let float_source = self.forwarding_float_source_map.get(&rd);
+                        if let Some((inst_cnt, _)) = float_source {
+                            if *inst_cnt == current_inst_cnt {
+                                self.forwarding_float_source_map.remove(&rd);
+                            }
+                        }
                     }
-                } else {
-                    unreachable!("invalid destination register");
                 }
             }
         }

@@ -40,10 +40,10 @@ trait InstructionTrait: Clone + Debug {
     fn exec(&mut self, _: &mut Core) {}
     fn memory(&mut self, _: &mut Core) {}
     fn write_back(&self, _: &mut Core) {}
-    fn get_source_registers(&self) -> Vec<Rs> {
+    fn get_source_registers(&self) -> Vec<RegisterId> {
         vec![]
     }
-    fn get_destination_register(&self) -> Option<Rd> {
+    fn get_destination_register(&self) -> Option<RegisterId> {
         None
     }
     fn is_load_instruction(&self) -> bool {
@@ -255,12 +255,12 @@ impl InstructionTrait for Lb {
         core.set_int_register(self.data.rd as usize, load_value as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn is_load_instruction(&self) -> bool {
@@ -337,12 +337,12 @@ impl InstructionTrait for Lh {
         core.set_int_register(self.data.rd as usize, load_value as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn is_load_instruction(&self) -> bool {
@@ -419,12 +419,12 @@ impl InstructionTrait for Lw {
         core.set_int_register(self.data.rd as usize, load_value as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn is_load_instruction(&self) -> bool {
@@ -500,12 +500,12 @@ impl InstructionTrait for Lbu {
         core.set_int_register(self.data.rd as usize, load_value as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn is_load_instruction(&self) -> bool {
@@ -581,12 +581,12 @@ impl InstructionTrait for Lhu {
         core.set_int_register(self.data.rd as usize, load_value as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn is_load_instruction(&self) -> bool {
@@ -661,12 +661,12 @@ impl InstructionTrait for Addi {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -733,12 +733,12 @@ impl InstructionTrait for Slli {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -813,12 +813,12 @@ impl InstructionTrait for Slti {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -893,12 +893,12 @@ impl InstructionTrait for Sltiu {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -969,12 +969,12 @@ impl InstructionTrait for Xori {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1041,12 +1041,12 @@ impl InstructionTrait for Srli {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1113,12 +1113,12 @@ impl InstructionTrait for Srai {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1189,12 +1189,12 @@ impl InstructionTrait for Ori {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1265,12 +1265,12 @@ impl InstructionTrait for Andi {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1330,8 +1330,8 @@ impl InstructionTrait for Auipc {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1404,8 +1404,11 @@ impl InstructionTrait for Sb {
         core.store_byte(addr, (self.data.rs2_value.unwrap() & 0xff) as Byte);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1478,8 +1481,11 @@ impl InstructionTrait for Sh {
         core.store_half(addr, (self.data.rs2_value.unwrap() & 0xffff) as Half);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1552,8 +1558,11 @@ impl InstructionTrait for Sw {
         core.store_word(addr, self.data.rs2_value.unwrap());
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1628,12 +1637,15 @@ impl InstructionTrait for Add {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1708,12 +1720,15 @@ impl InstructionTrait for Sub {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1789,12 +1804,15 @@ impl InstructionTrait for Sll {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1873,12 +1891,15 @@ impl InstructionTrait for Slt {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -1957,12 +1978,15 @@ impl InstructionTrait for Sltu {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -2037,12 +2061,15 @@ impl InstructionTrait for Xor {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -2118,12 +2145,15 @@ impl InstructionTrait for Srl {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -2199,12 +2229,15 @@ impl InstructionTrait for Sra {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -2279,12 +2312,15 @@ impl InstructionTrait for Or {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -2359,12 +2395,15 @@ impl InstructionTrait for And {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -2422,8 +2461,8 @@ impl InstructionTrait for Lui {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -2501,8 +2540,11 @@ impl InstructionTrait for Beq {
         }
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2588,8 +2630,11 @@ impl InstructionTrait for Bne {
         }
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2675,8 +2720,11 @@ impl InstructionTrait for Blt {
         }
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2762,8 +2810,11 @@ impl InstructionTrait for Bge {
         }
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2849,8 +2900,11 @@ impl InstructionTrait for Bltu {
         }
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -2936,8 +2990,11 @@ impl InstructionTrait for Bgeu {
         }
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -3024,12 +3081,12 @@ impl InstructionTrait for Jalr {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -3100,8 +3157,8 @@ impl InstructionTrait for Jal {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn is_branch_instruction(&self) -> bool {
@@ -3184,12 +3241,15 @@ impl InstructionTrait for Mul {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3265,12 +3325,15 @@ impl InstructionTrait for Mulh {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3345,12 +3408,15 @@ impl InstructionTrait for Mulhsu {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3425,12 +3491,15 @@ impl InstructionTrait for Mulhu {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3505,12 +3574,15 @@ impl InstructionTrait for Div {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3585,12 +3657,15 @@ impl InstructionTrait for Divu {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3665,12 +3740,15 @@ impl InstructionTrait for Rem {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3745,12 +3823,15 @@ impl InstructionTrait for Remu {
         core.set_int_register(self.data.rd as usize, result as Int);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.rs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3825,12 +3906,15 @@ impl InstructionTrait for Fadd {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3905,12 +3989,15 @@ impl InstructionTrait for Fsub {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -3985,12 +4072,15 @@ impl InstructionTrait for Fmul {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4065,12 +4155,15 @@ impl InstructionTrait for Fdiv {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4134,12 +4227,12 @@ impl InstructionTrait for Fsqrt {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Float(self.data.fs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4214,12 +4307,15 @@ impl InstructionTrait for Fsgnj {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4294,12 +4390,15 @@ impl InstructionTrait for Fsgnjn {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4374,12 +4473,15 @@ impl InstructionTrait for Fsgnjx {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4458,12 +4560,15 @@ impl InstructionTrait for Fmin {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4542,12 +4647,15 @@ impl InstructionTrait for Fmax {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4622,12 +4730,15 @@ impl InstructionTrait for Feq {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4702,12 +4813,15 @@ impl InstructionTrait for Flt {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4789,12 +4903,15 @@ impl InstructionTrait for Fle {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.fs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -4867,12 +4984,12 @@ impl InstructionTrait for Flw {
         core.set_float_register(self.data.fd as usize, load_value as FloatingPoint);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn is_load_instruction(&self) -> bool {
@@ -4949,8 +5066,11 @@ impl InstructionTrait for Fsw {
         core.store_word(addr, u32_to_i32(self.data.fs2_value.unwrap().get_32_bits()));
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1, self.data.fs2]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Float(self.data.fs2),
+        ]
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -5014,12 +5134,12 @@ impl InstructionTrait for FcvtWS {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Float(self.data.fs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -5084,12 +5204,12 @@ impl InstructionTrait for FcvtWuS {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Float(self.data.fs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -5153,12 +5273,12 @@ impl InstructionTrait for FcvtSW {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -5227,12 +5347,12 @@ impl InstructionTrait for FcvtSWu {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -5296,12 +5416,12 @@ impl InstructionTrait for FmvXW {
         core.set_int_register(self.data.rd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.fs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Float(self.data.fs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.rd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -5365,12 +5485,12 @@ impl InstructionTrait for FmvWX {
         core.set_float_register(self.data.fd as usize, result);
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
-        vec![self.data.rs1]
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.data.rs1)]
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
-        Some(self.data.fd)
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.data.fd))
     }
 
     fn get_instruction_count(&self) -> Option<InstructionCount> {
@@ -5810,7 +5930,7 @@ impl InstructionTrait for InstructionEnum {
         }
     }
 
-    fn get_source_registers(&self) -> Vec<Rs> {
+    fn get_source_registers(&self) -> Vec<RegisterId> {
         match self {
             InstructionEnum::Lb(instruction) => instruction.get_source_registers(),
             InstructionEnum::Lh(instruction) => instruction.get_source_registers(),
@@ -5881,7 +6001,7 @@ impl InstructionTrait for InstructionEnum {
         }
     }
 
-    fn get_destination_register(&self) -> Option<Rd> {
+    fn get_destination_register(&self) -> Option<RegisterId> {
         match self {
             InstructionEnum::Lb(instruction) => instruction.get_destination_register(),
             InstructionEnum::Lh(instruction) => instruction.get_destination_register(),
@@ -6635,11 +6755,11 @@ pub fn write_back(core: &mut Core) {
     inst.write_back(core);
 }
 
-pub fn get_source_registers(inst: &InstructionEnum) -> Vec<Rs> {
+pub fn get_source_registers(inst: &InstructionEnum) -> Vec<RegisterId> {
     inst.get_source_registers()
 }
 
-pub fn get_destination_register(inst: &InstructionEnum) -> Option<Rd> {
+pub fn get_destination_register(inst: &InstructionEnum) -> Option<RegisterId> {
     inst.get_destination_register()
 }
 

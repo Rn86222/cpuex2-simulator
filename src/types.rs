@@ -14,6 +14,11 @@ pub type Tag = u32;
 pub type CacheIndex = usize;
 pub type Imm12 = i16;
 pub type Imm20 = i32;
+#[derive(PartialEq, Eq)]
+pub enum RegisterId {
+    Int(u8),
+    Float(u8),
+}
 pub type Rs1 = u8;
 pub type Rs2 = u8;
 pub type Rs = u8;
