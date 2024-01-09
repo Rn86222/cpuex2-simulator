@@ -43,8 +43,8 @@ pub struct Core {
     instruction_in_exec_stage: Option<InstructionEnum>,
     instruction_in_memory_stage: Option<InstructionEnum>,
     instruction_in_write_back_stage: Option<InstructionEnum>,
-    forwarding_int_source_map: HashMap<Rs, (InstructionCount, Int)>,
-    forwarding_float_source_map: HashMap<Rs, (InstructionCount, FloatingPoint)>,
+    forwarding_int_sources: [Option<(InstructionCount, Int)>; 32],
+    forwarding_float_sources: [Option<(InstructionCount, FloatingPoint)>; 32],
     inv_map: InvMap,
     sqrt_map: SqrtMap,
     sld_vec: Vec<String>,
@@ -75,8 +75,8 @@ impl Core {
         let instruction_in_exec_stage = None;
         let instruction_in_memory_stage = None;
         let instruction_in_write_back_stage = None;
-        let forwarding_int_source_map = HashMap::new();
-        let forwarding_float_source_map = HashMap::new();
+        let forwarding_int_sources = [None; 32];
+        let forwarding_float_sources = [None; 32];
         let inv_map = create_inv_map();
         let sqrt_map = create_sqrt_map();
         let sld_vec = vec![];
@@ -104,8 +104,8 @@ impl Core {
             instruction_in_exec_stage,
             instruction_in_memory_stage,
             instruction_in_write_back_stage,
-            forwarding_int_source_map,
-            forwarding_float_source_map,
+            forwarding_int_sources,
+            forwarding_float_sources,
             inv_map,
             sqrt_map,
             sld_vec,
@@ -445,21 +445,21 @@ impl Core {
     }
 
     pub fn get_forwarding_int_source(&self, rs: Rs) -> Option<&(InstructionCount, Int)> {
-        self.forwarding_int_source_map.get(&rs)
+        self.forwarding_int_sources[rs as usize].as_ref()
     }
 
     pub fn set_forwarding_int_source(&mut self, rs: Rs, inst_cnt: InstructionCount, value: Int) {
         if rs == 0 {
             return;
         }
-        self.forwarding_int_source_map.insert(rs, (inst_cnt, value));
+        self.forwarding_int_sources[rs as usize] = Some((inst_cnt, value));
     }
 
     pub fn get_forwarding_float_source(
         &self,
         rs: Rs,
     ) -> Option<&(InstructionCount, FloatingPoint)> {
-        self.forwarding_float_source_map.get(&rs)
+        self.forwarding_float_sources[rs as usize].as_ref()
     }
 
     pub fn set_forwarding_float_source(
@@ -471,8 +471,7 @@ impl Core {
         if rs == 0 {
             return;
         }
-        self.forwarding_float_source_map
-            .insert(rs, (inst_cnt, value));
+        self.forwarding_float_sources[rs as usize] = Some((inst_cnt, value));
     }
 
     fn remove_forwarding_source_if_possible(&mut self) {
@@ -485,18 +484,18 @@ impl Core {
                         if rd == 0 {
                             return;
                         }
-                        let int_source = self.forwarding_int_source_map.get(&rd);
+                        let int_source = self.forwarding_int_sources[rd as usize];
                         if let Some((inst_cnt, _)) = int_source {
-                            if *inst_cnt == current_inst_cnt {
-                                self.forwarding_int_source_map.remove(&rd);
+                            if inst_cnt == current_inst_cnt {
+                                self.forwarding_int_sources[rd as usize] = None;
                             }
                         }
                     }
                     RegisterId::Float(rd) => {
-                        let float_source = self.forwarding_float_source_map.get(&rd);
+                        let float_source = self.forwarding_float_sources[rd as usize];
                         if let Some((inst_cnt, _)) = float_source {
-                            if *inst_cnt == current_inst_cnt {
-                                self.forwarding_float_source_map.remove(&rd);
+                            if inst_cnt == current_inst_cnt {
+                                self.forwarding_float_sources[rd as usize] = None;
                             }
                         }
                     }
@@ -936,7 +935,7 @@ impl Core {
         }
 
         // if let Ok(report) = guard.report().build() {
-        //     let file = File::create("flamegraph_256.svg").unwrap();
+        //     let file = File::create("flamegraph_16_2.svg").unwrap();
         //     report.flamegraph(file).unwrap();
         // };
 
