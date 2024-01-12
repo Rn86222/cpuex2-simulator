@@ -5,5 +5,9 @@ result*.txt
 /.vscode
 *.ppm
 .PERSONAL
+minrt_4*
+minrt_256*
+minrt_mini_4*
+minrt_result[0-9].txt
 !minrt_mini.bin
 !minrt_mini_ans.ppm
