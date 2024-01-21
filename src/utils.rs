@@ -2,29 +2,29 @@ pub const ZERO: usize = 0;
 pub const RA: usize = 1;
 pub const SP: usize = 2;
 
-pub fn u8_to_i8(value: u8) -> i8 {
-    if value <= i8::MAX as u8 {
-        value as i8
-    } else {
-        (value as i16 - (u8::MAX as i16 + 1)) as i8
-    }
-}
+// pub fn u8_to_i8(value: u8) -> i8 {
+//     if value <= i8::MAX as u8 {
+//         value as i8
+//     } else {
+//         (value as i16 - (u8::MAX as i16 + 1)) as i8
+//     }
+// }
 
-pub fn i8_to_u8(value: i8) -> u8 {
-    if value >= 0 {
-        value as u8
-    } else {
-        (value as i16 + (u8::MAX as i16 + 1)) as u8
-    }
-}
+// pub fn i8_to_u8(value: i8) -> u8 {
+//     if value >= 0 {
+//         value as u8
+//     } else {
+//         (value as i16 + (u8::MAX as i16 + 1)) as u8
+//     }
+// }
 
-pub fn u16_to_i16(value: u16) -> i16 {
-    if value <= i16::MAX as u16 {
-        value as i16
-    } else {
-        (value as i32 - (u16::MAX as i32 + 1)) as i16
-    }
-}
+// pub fn u16_to_i16(value: u16) -> i16 {
+//     if value <= i16::MAX as u16 {
+//         value as i16
+//     } else {
+//         (value as i32 - (u16::MAX as i32 + 1)) as i16
+//     }
+// }
 
 #[allow(dead_code)]
 pub fn i16_to_u16(value: i16) -> u16 {

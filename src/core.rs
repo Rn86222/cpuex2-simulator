@@ -236,103 +236,103 @@ impl Core {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn load_byte(&mut self, addr: Address) -> Byte {
-        self.increment_memory_access_count();
-        let cache_access = self.cache.get_ubyte(addr);
-        match cache_access {
-            CacheAccess::HitUByte(value) => {
-                self.increment_cache_hit_count();
-                u8_to_i8(value) as Byte
-            }
-            CacheAccess::Miss => {
-                let value = self.memory.load_byte(addr);
-                self.process_cache_miss(addr);
-                value
-            }
-            _ => {
-                panic!("invalid cache access");
-            }
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn load_byte(&mut self, addr: Address) -> Byte {
+    //     self.increment_memory_access_count();
+    //     let cache_access = self.cache.get_ubyte(addr);
+    //     match cache_access {
+    //         CacheAccess::HitUByte(value) => {
+    //             self.increment_cache_hit_count();
+    //             u8_to_i8(value) as Byte
+    //         }
+    //         CacheAccess::Miss => {
+    //             let value = self.memory.load_byte(addr);
+    //             self.process_cache_miss(addr);
+    //             value
+    //         }
+    //         _ => {
+    //             panic!("invalid cache access");
+    //         }
+    //     }
+    // }
 
-    #[allow(dead_code)]
-    pub fn load_ubyte(&mut self, addr: Address) -> UByte {
-        self.increment_memory_access_count();
-        let cache_access = self.cache.get_ubyte(addr);
-        match cache_access {
-            CacheAccess::HitUByte(value) => {
-                self.increment_cache_hit_count();
-                value
-            }
-            CacheAccess::Miss => {
-                let value = self.memory.load_ubyte(addr);
-                self.process_cache_miss(addr);
-                value
-            }
-            _ => {
-                panic!("invalid cache access");
-            }
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn load_ubyte(&mut self, addr: Address) -> UByte {
+    //     self.increment_memory_access_count();
+    //     let cache_access = self.cache.get_ubyte(addr);
+    //     match cache_access {
+    //         CacheAccess::HitUByte(value) => {
+    //             self.increment_cache_hit_count();
+    //             value
+    //         }
+    //         CacheAccess::Miss => {
+    //             let value = self.memory.load_ubyte(addr);
+    //             self.process_cache_miss(addr);
+    //             value
+    //         }
+    //         _ => {
+    //             panic!("invalid cache access");
+    //         }
+    //     }
+    // }
 
-    #[allow(dead_code)]
-    pub fn store_byte(&mut self, addr: Address, value: Byte) {
-        self.increment_memory_access_count();
-        let cache_access = self.cache.set_ubyte(addr, i8_to_u8(value));
-        match cache_access {
-            CacheAccess::HitSet => {
-                self.increment_cache_hit_count();
-            }
-            CacheAccess::Miss => {
-                self.memory.store_byte(addr, value);
-                self.process_cache_miss(addr);
-            }
-            _ => {
-                panic!("invalid cache access");
-            }
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn store_byte(&mut self, addr: Address, value: Byte) {
+    //     self.increment_memory_access_count();
+    //     let cache_access = self.cache.set_ubyte(addr, i8_to_u8(value));
+    //     match cache_access {
+    //         CacheAccess::HitSet => {
+    //             self.increment_cache_hit_count();
+    //         }
+    //         CacheAccess::Miss => {
+    //             self.memory.store_byte(addr, value);
+    //             self.process_cache_miss(addr);
+    //         }
+    //         _ => {
+    //             panic!("invalid cache access");
+    //         }
+    //     }
+    // }
 
-    #[allow(dead_code)]
-    pub fn load_half(&mut self, addr: Address) -> Half {
-        self.increment_memory_access_count();
-        let cache_access = self.cache.get_uhalf(addr);
-        match cache_access {
-            CacheAccess::HitUHalf(value) => {
-                self.increment_cache_hit_count();
-                u16_to_i16(value)
-            }
-            CacheAccess::Miss => {
-                let value = self.memory.load_half(addr);
-                self.process_cache_miss(addr);
-                value
-            }
-            _ => {
-                panic!("invalid cache access");
-            }
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn load_half(&mut self, addr: Address) -> Half {
+    //     self.increment_memory_access_count();
+    //     let cache_access = self.cache.get_uhalf(addr);
+    //     match cache_access {
+    //         CacheAccess::HitUHalf(value) => {
+    //             self.increment_cache_hit_count();
+    //             u16_to_i16(value)
+    //         }
+    //         CacheAccess::Miss => {
+    //             let value = self.memory.load_half(addr);
+    //             self.process_cache_miss(addr);
+    //             value
+    //         }
+    //         _ => {
+    //             panic!("invalid cache access");
+    //         }
+    //     }
+    // }
 
-    #[allow(dead_code)]
-    pub fn load_uhalf(&mut self, addr: Address) -> UHalf {
-        self.increment_memory_access_count();
-        let cache_access = self.cache.get_uhalf(addr);
-        match cache_access {
-            CacheAccess::HitUHalf(value) => {
-                self.increment_cache_hit_count();
-                value
-            }
-            CacheAccess::Miss => {
-                let value = self.memory.load_uhalf(addr);
-                self.process_cache_miss(addr);
-                value
-            }
-            _ => {
-                panic!("invalid cache access");
-            }
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn load_uhalf(&mut self, addr: Address) -> UHalf {
+    //     self.increment_memory_access_count();
+    //     let cache_access = self.cache.get_uhalf(addr);
+    //     match cache_access {
+    //         CacheAccess::HitUHalf(value) => {
+    //             self.increment_cache_hit_count();
+    //             value
+    //         }
+    //         CacheAccess::Miss => {
+    //             let value = self.memory.load_uhalf(addr);
+    //             self.process_cache_miss(addr);
+    //             value
+    //         }
+    //         _ => {
+    //             panic!("invalid cache access");
+    //         }
+    //     }
+    // }
 
     pub fn load_word(&mut self, addr: Address) -> Word {
         if addr == IO_ADDRESS {
@@ -369,23 +369,23 @@ impl Core {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn store_half(&mut self, addr: Address, value: Half) {
-        self.increment_memory_access_count();
-        let cache_access = self.cache.set_uhalf(addr, i16_to_u16(value));
-        match cache_access {
-            CacheAccess::HitSet => {
-                self.increment_cache_hit_count();
-            }
-            CacheAccess::Miss => {
-                self.memory.store_half(addr, value);
-                self.process_cache_miss(addr);
-            }
-            _ => {
-                panic!("invalid cache access");
-            }
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn store_half(&mut self, addr: Address, value: Half) {
+    //     self.increment_memory_access_count();
+    //     let cache_access = self.cache.set_uhalf(addr, i16_to_u16(value));
+    //     match cache_access {
+    //         CacheAccess::HitSet => {
+    //             self.increment_cache_hit_count();
+    //         }
+    //         CacheAccess::Miss => {
+    //             self.memory.store_half(addr, value);
+    //             self.process_cache_miss(addr);
+    //         }
+    //         _ => {
+    //             panic!("invalid cache access");
+    //         }
+    //     }
+    // }
 
     pub fn store_word(&mut self, addr: Address, value: Word) {
         if addr == IO_ADDRESS {
