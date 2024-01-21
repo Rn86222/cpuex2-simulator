@@ -236,6 +236,7 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
     pub fn load_byte(&mut self, addr: Address) -> Byte {
         self.increment_memory_access_count();
         let cache_access = self.cache.get_ubyte(addr);
@@ -255,6 +256,7 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
     pub fn load_ubyte(&mut self, addr: Address) -> UByte {
         self.increment_memory_access_count();
         let cache_access = self.cache.get_ubyte(addr);
@@ -274,6 +276,7 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
     pub fn store_byte(&mut self, addr: Address, value: Byte) {
         self.increment_memory_access_count();
         let cache_access = self.cache.set_ubyte(addr, i8_to_u8(value));
@@ -291,6 +294,7 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
     pub fn load_half(&mut self, addr: Address) -> Half {
         self.increment_memory_access_count();
         let cache_access = self.cache.get_uhalf(addr);
@@ -310,6 +314,7 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
     pub fn load_uhalf(&mut self, addr: Address) -> UHalf {
         self.increment_memory_access_count();
         let cache_access = self.cache.get_uhalf(addr);
@@ -364,6 +369,7 @@ impl Core {
         }
     }
 
+    #[allow(dead_code)]
     pub fn store_half(&mut self, addr: Address, value: Half) {
         self.increment_memory_access_count();
         let cache_access = self.cache.set_uhalf(addr, i16_to_u16(value));
@@ -401,22 +407,6 @@ impl Core {
             }
         }
     }
-
-    // pub fn load_data_file(&mut self, path: &str) {
-    //     if let Ok(file) = File::open(path) {
-    //         let reader = std::io::BufReader::new(file);
-    //         for line in reader.lines().flatten() {
-    //             let mut iter = line.split_whitespace();
-    //             let addr = iter.next().unwrap().parse::<Address>().unwrap();
-    //             let value = u32_to_i32(iter.next().unwrap().parse::<u32>().unwrap());
-    //             self.memory.store_word(addr, value);
-    //         }
-    //     } else {
-    //         eprintln!(
-    //             "Warning: failed to open file for data section (dismiss if you don't need it)."
-    //         );
-    //     }
-    // }
 
     pub fn move_instructions_to_next_stage(&mut self) {
         self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
