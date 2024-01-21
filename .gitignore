@@ -1,4 +1,5 @@
 /target
+/test
 *.bin
 out.txt
 result*.txt
