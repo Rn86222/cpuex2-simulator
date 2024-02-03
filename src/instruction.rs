@@ -5010,7 +5010,7 @@ impl InstructionTrait for Flw {
 
     fn memory(&mut self, core: &mut Core) {
         let addr = self.addr.unwrap();
-        let value = FloatingPoint::new(i32_to_u32(core.load_word_fp(addr)));
+        let value = FloatingPoint::new(i32_to_u32(core.load_word(addr)));
         self.data.fd_value = Some(value);
         core.set_forwarding_float_source(self.data.fd, self.data.inst_count.unwrap(), value);
     }
@@ -5574,6 +5574,159 @@ impl InstructionTrait for End {
 }
 
 #[derive(Clone)]
+pub struct In {
+    rd: Rd,
+    rd_value: Option<Int>,
+    inst_count: Option<InstructionCount>,
+}
+
+impl In {
+    fn new(rd: Rd) -> Self {
+        In {
+            rd,
+            rd_value: None,
+            inst_count: None,
+        }
+    }
+}
+
+impl Debug for In {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "in x{}", self.rd)
+    }
+}
+
+impl InstructionTrait for In {
+    fn register_fetch(&mut self, core: &Core) {
+        self.inst_count = Some(core.get_instruction_count());
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        self.rd_value = Some(core.read_int());
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.rd_value.unwrap();
+        core.set_int_register(self.rd as usize, result);
+    }
+
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.rd))
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "in".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Fin {
+    rd: Rd,
+    rd_value: Option<FloatingPoint>,
+    inst_count: Option<InstructionCount>,
+}
+
+impl Fin {
+    fn new(rd: Rd) -> Self {
+        Fin {
+            rd,
+            rd_value: None,
+            inst_count: None,
+        }
+    }
+}
+
+impl Debug for Fin {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "in x{}", self.rd)
+    }
+}
+
+impl InstructionTrait for Fin {
+    fn register_fetch(&mut self, core: &Core) {
+        self.inst_count = Some(core.get_instruction_count());
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let value = core.read_float();
+        self.rd_value = Some(FloatingPoint::new(i32_to_u32(value)));
+    }
+
+    fn write_back(&self, core: &mut Core) {
+        let result = self.rd_value.unwrap();
+        core.set_float_register(self.rd as usize, result);
+    }
+
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Float(self.rd))
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "fin".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Outchar {
+    rs2: Rs1,
+    rs2_value: Option<Int>,
+    inst_count: Option<InstructionCount>,
+}
+
+impl Outchar {
+    fn new(rs2: Rs2) -> Self {
+        Outchar {
+            rs2,
+            rs2_value: None,
+            inst_count: None,
+        }
+    }
+}
+
+impl Debug for Outchar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "outchar x{}", self.rs2)
+    }
+}
+
+impl InstructionTrait for Outchar {
+    fn register_fetch(&mut self, core: &Core) {
+        self.inst_count = Some(core.get_instruction_count());
+        let forwarding_source = core.get_forwarding_int_source(self.rs2);
+        if let Some((_, rs2_value)) = forwarding_source {
+            self.rs2_value = Some(*rs2_value);
+        } else {
+            self.rs2_value = Some(core.get_int_register(self.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, core: &mut Core) {
+        let value = self.rs2_value.unwrap();
+        core.print_char(value);
+    }
+
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![RegisterId::Int(self.rs2)]
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "outchar".to_string()
+    }
+}
+
+#[derive(Clone)]
 pub enum InstructionEnum {
     // Lb(Lb),
     // Lh(Lh),
@@ -5642,6 +5795,9 @@ pub enum InstructionEnum {
     FmvXW(FmvXW),
     FmvWX(FmvWX),
     End(End),
+    In(In),
+    Fin(Fin),
+    Outchar(Outchar),
 }
 
 impl Debug for InstructionEnum {
@@ -5714,6 +5870,9 @@ impl Debug for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::FmvWX(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::End(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::In(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Fin(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Outchar(instruction) => write!(f, "{:?}", instruction),
         }
     }
 }
@@ -5788,6 +5947,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.register_fetch(core),
             InstructionEnum::FmvWX(instruction) => instruction.register_fetch(core),
             InstructionEnum::End(instruction) => instruction.register_fetch(core),
+            InstructionEnum::In(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Fin(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Outchar(instruction) => instruction.register_fetch(core),
         }
     }
 
@@ -5860,6 +6022,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.exec(core),
             InstructionEnum::FmvWX(instruction) => instruction.exec(core),
             InstructionEnum::End(instruction) => instruction.exec(core),
+            InstructionEnum::In(instruction) => instruction.exec(core),
+            InstructionEnum::Fin(instruction) => instruction.exec(core),
+            InstructionEnum::Outchar(instruction) => instruction.exec(core),
         }
     }
 
@@ -5932,6 +6097,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.memory(core),
             InstructionEnum::FmvWX(instruction) => instruction.memory(core),
             InstructionEnum::End(instruction) => instruction.memory(core),
+            InstructionEnum::In(instruction) => instruction.memory(core),
+            InstructionEnum::Fin(instruction) => instruction.memory(core),
+            InstructionEnum::Outchar(instruction) => instruction.memory(core),
         }
     }
 
@@ -6004,6 +6172,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.write_back(core),
             InstructionEnum::FmvWX(instruction) => instruction.write_back(core),
             InstructionEnum::End(instruction) => instruction.write_back(core),
+            InstructionEnum::In(instruction) => instruction.write_back(core),
+            InstructionEnum::Fin(instruction) => instruction.write_back(core),
+            InstructionEnum::Outchar(instruction) => instruction.write_back(core),
         }
     }
 
@@ -6076,6 +6247,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.get_source_registers(),
             InstructionEnum::FmvWX(instruction) => instruction.get_source_registers(),
             InstructionEnum::End(instruction) => instruction.get_source_registers(),
+            InstructionEnum::In(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Fin(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Outchar(instruction) => instruction.get_source_registers(),
         }
     }
 
@@ -6148,6 +6322,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.get_destination_register(),
             InstructionEnum::FmvWX(instruction) => instruction.get_destination_register(),
             InstructionEnum::End(instruction) => instruction.get_destination_register(),
+            InstructionEnum::In(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Fin(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Outchar(instruction) => instruction.get_destination_register(),
         }
     }
 
@@ -6232,6 +6409,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::FmvWX(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::End(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::In(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Fin(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Outchar(instruction) => instruction.is_branch_instruction(),
         }
     }
 
@@ -6304,6 +6484,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.get_jump_address(),
             InstructionEnum::FmvWX(instruction) => instruction.get_jump_address(),
             InstructionEnum::End(instruction) => instruction.get_jump_address(),
+            InstructionEnum::In(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Fin(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Outchar(instruction) => instruction.get_jump_address(),
         }
     }
 
@@ -6376,6 +6559,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.get_instruction_count(),
             InstructionEnum::FmvWX(instruction) => instruction.get_instruction_count(),
             InstructionEnum::End(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::In(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Fin(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Outchar(instruction) => instruction.get_instruction_count(),
         }
     }
 
@@ -6448,6 +6634,9 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::FmvXW(instruction) => instruction.get_name(),
             InstructionEnum::FmvWX(instruction) => instruction.get_name(),
             InstructionEnum::End(instruction) => instruction.get_name(),
+            InstructionEnum::In(instruction) => instruction.get_name(),
+            InstructionEnum::Fin(instruction) => instruction.get_name(),
+            InstructionEnum::Outchar(instruction) => instruction.get_name(),
         }
     }
 }
@@ -6506,6 +6695,13 @@ fn create_i_instruction_struct(
         },
         115 => match funct3 {
             0b000 => InstructionEnum::End(End::new()),
+            _ => {
+                panic!("unexpected funct3: {}", funct3)
+            }
+        },
+        116 => match funct3 {
+            0b000 => InstructionEnum::In(In::new(rd)),
+            0b001 => InstructionEnum::Fin(Fin::new(rd)),
             _ => {
                 panic!("unexpected funct3: {}", funct3)
             }
@@ -6651,6 +6847,12 @@ fn create_s_instruction_struct(
         },
         39 => match funct3 {
             0b010 => InstructionEnum::Fsw(Fsw::new(imm, rs2, rs1)),
+            _ => {
+                panic!("unexpected funct3: {}", funct3)
+            }
+        },
+        117 => match funct3 {
+            0b000 => InstructionEnum::Outchar(Outchar::new(rs2)),
             _ => {
                 panic!("unexpected funct3: {}", funct3)
             }

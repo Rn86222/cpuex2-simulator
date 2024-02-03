@@ -19,7 +19,7 @@ use crate::utils::*;
 
 const INT_REGISTER_SIZE: usize = 32;
 const FLOAT_REGISTER_SIZE: usize = 32;
-const IO_ADDRESS: Address = 2147483648;
+// const IO_ADDRESS: Address = 2147483648;
 
 pub struct Core {
     memory: Memory,
@@ -334,12 +334,25 @@ impl Core {
     //     }
     // }
 
+    pub fn read_int(&mut self) -> Word {
+        let value = self.sld_vec[self.sld_counter].parse::<i32>().unwrap();
+        self.sld_counter += 1;
+        value
+    }
+
+    pub fn read_float(&mut self) -> Word {
+        let value = self.sld_vec[self.sld_counter].parse::<f32>().unwrap();
+        let fp = FloatingPoint::new_f32(value);
+        self.sld_counter += 1;
+        u32_to_i32(fp.get_32_bits())
+    }
+
     pub fn load_word(&mut self, addr: Address) -> Word {
-        if addr == IO_ADDRESS {
-            let value = self.sld_vec[self.sld_counter].parse::<i32>().unwrap();
-            self.sld_counter += 1;
-            return value;
-        }
+        // if addr == IO_ADDRESS {
+        //     let value = self.sld_vec[self.sld_counter].parse::<i32>().unwrap();
+        //     self.sld_counter += 1;
+        //     return value;
+        // }
         self.increment_memory_access_count();
         let cache_access = self.cache.get_word(addr);
         match cache_access {
@@ -358,16 +371,16 @@ impl Core {
         }
     }
 
-    pub fn load_word_fp(&mut self, addr: Address) -> Word {
-        if addr == IO_ADDRESS {
-            let value = self.sld_vec[self.sld_counter].parse::<f32>().unwrap();
-            let fp = FloatingPoint::new_f32(value);
-            self.sld_counter += 1;
-            u32_to_i32(fp.get_32_bits())
-        } else {
-            self.load_word(addr)
-        }
-    }
+    // pub fn load_word_fp(&mut self, addr: Address) -> Word {
+    //     if addr == IO_ADDRESS {
+    //         let value = self.sld_vec[self.sld_counter].parse::<f32>().unwrap();
+    //         let fp = FloatingPoint::new_f32(value);
+    //         self.sld_counter += 1;
+    //         u32_to_i32(fp.get_32_bits())
+    //     } else {
+    //         self.load_word(addr)
+    //     }
+    // }
 
     // #[allow(dead_code)]
     // pub fn store_half(&mut self, addr: Address, value: Half) {
@@ -387,11 +400,15 @@ impl Core {
     //     }
     // }
 
+    pub fn print_char(&mut self, value: Word) {
+        self.output.push(value as u8);
+    }
+
     pub fn store_word(&mut self, addr: Address, value: Word) {
-        if addr == IO_ADDRESS {
-            self.output.push(value as u8);
-            return;
-        }
+        // if addr == IO_ADDRESS {
+        //     self.output.push(value as u8);
+        //     return;
+        // }
         self.increment_memory_access_count();
         let cache_access = self.cache.set_word(addr, value);
         match cache_access {
