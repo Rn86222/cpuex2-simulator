@@ -6000,6 +6000,7 @@ impl InstructionTrait for In {
 
     fn exec(&mut self, core: &mut Core) {
         self.rd_value = Some(core.read_int());
+        core.set_forwarding_int_source(self.rd, self.inst_count.unwrap(), self.rd_value.unwrap());
     }
 
     fn write_back(&self, core: &mut Core) {
@@ -6051,6 +6052,7 @@ impl InstructionTrait for Fin {
     fn exec(&mut self, core: &mut Core) {
         let value = core.read_float();
         self.rd_value = Some(FloatingPoint::new(i32_to_u32(value)));
+        core.set_forwarding_float_source(self.rd, self.inst_count.unwrap(), self.rd_value.unwrap());
     }
 
     fn write_back(&self, core: &mut Core) {
