@@ -2011,88 +2011,88 @@ impl InstructionTrait for Sub {
 //     }
 // }
 
-// #[derive(Clone)]
-// pub struct Xor {
-//     data: IntRInstructionData,
-// }
+#[derive(Clone)]
+pub struct Xor {
+    data: IntRInstructionData,
+}
 
-// impl Xor {
-//     fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
-//         let data = IntRInstructionData {
-//             rs2,
-//             rs1,
-//             rd,
-//             rs2_value: None,
-//             rs1_value: None,
-//             rd_value: None,
-//             inst_count: None,
-//         };
-//         Xor { data }
-//     }
-// }
+impl Xor {
+    fn new(rs2: Rs2, rs1: Rs1, rd: Rd) -> Self {
+        let data = IntRInstructionData {
+            rs2,
+            rs1,
+            rd,
+            rs2_value: None,
+            rs1_value: None,
+            rd_value: None,
+            inst_count: None,
+        };
+        Xor { data }
+    }
+}
 
-// impl Debug for Xor {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(
-//             f,
-//             "xor x{}, x{}, x{}",
-//             self.data.rd, self.data.rs1, self.data.rs2
-//         )
-//     }
-// }
+impl Debug for Xor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "xor x{}, x{}, x{}",
+            self.data.rd, self.data.rs1, self.data.rs2
+        )
+    }
+}
 
-// impl InstructionTrait for Xor {
-//     fn register_fetch(&mut self, core: &Core) {
-//         self.data.inst_count = Some(core.get_instruction_count());
-//         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
-//         if let Some((_, rs1_value)) = forwarding_source_1 {
-//             self.data.rs1_value = Some(*rs1_value);
-//         } else {
-//             self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
-//         }
-//         let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
-//         if let Some((_, rs2_value)) = forwarding_source_2 {
-//             self.data.rs2_value = Some(*rs2_value);
-//         } else {
-//             self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
-//         }
-//     }
+impl InstructionTrait for Xor {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.inst_count = Some(core.get_instruction_count());
+        let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
+        if let Some((_, rs1_value)) = forwarding_source_1 {
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_int_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_int_source(self.data.rs2);
+        if let Some((_, rs2_value)) = forwarding_source_2 {
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_int_register(self.data.rs2 as usize));
+        }
+    }
 
-//     fn exec(&mut self, core: &mut Core) {
-//         let rs1_value = self.data.rs1_value.unwrap();
-//         let rs2_value = self.data.rs2_value.unwrap();
-//         self.data.rd_value = Some(rs1_value ^ rs2_value);
-//         core.set_forwarding_int_source(
-//             self.data.rd,
-//             self.data.inst_count.unwrap(),
-//             self.data.rd_value.unwrap(),
-//         );
-//     }
+    fn exec(&mut self, core: &mut Core) {
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        self.data.rd_value = Some(rs1_value ^ rs2_value);
+        core.set_forwarding_int_source(
+            self.data.rd,
+            self.data.inst_count.unwrap(),
+            self.data.rd_value.unwrap(),
+        );
+    }
 
-//     fn write_back(&self, core: &mut Core) {
-//         let result = self.data.rd_value.unwrap();
-//         core.set_int_register(self.data.rd as usize, result as Int);
-//     }
+    fn write_back(&self, core: &mut Core) {
+        let result = self.data.rd_value.unwrap();
+        core.set_int_register(self.data.rd as usize, result as Int);
+    }
 
-//     fn get_source_registers(&self) -> Vec<RegisterId> {
-//         vec![
-//             RegisterId::Int(self.data.rs1),
-//             RegisterId::Int(self.data.rs2),
-//         ]
-//     }
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Int(self.data.rs1),
+            RegisterId::Int(self.data.rs2),
+        ]
+    }
 
-//     fn get_destination_register(&self) -> Option<RegisterId> {
-//         Some(RegisterId::Int(self.data.rd))
-//     }
+    fn get_destination_register(&self) -> Option<RegisterId> {
+        Some(RegisterId::Int(self.data.rd))
+    }
 
-//     fn get_instruction_count(&self) -> Option<InstructionCount> {
-//         self.data.inst_count
-//     }
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
 
-//     fn get_name(&self) -> String {
-//         "xor".to_string()
-//     }
-// }
+    fn get_name(&self) -> String {
+        "xor".to_string()
+    }
+}
 
 // #[derive(Clone)]
 // pub struct Srl {
@@ -6148,7 +6148,7 @@ pub enum InstructionEnum {
     // Sll(Sll),
     // Slt(Slt),
     // Sltu(Sltu),
-    // Xor(Xor),
+    Xor(Xor),
     // Srl(Srl),
     // Sra(Sra),
     // Or(Or),
@@ -6227,7 +6227,7 @@ impl Debug for InstructionEnum {
             // InstructionEnum::Sll(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Slt(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Sltu(instruction) => write!(f, "{:?}", instruction),
-            // InstructionEnum::Xor(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Xor(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Srl(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Sra(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Or(instruction) => write!(f, "{:?}", instruction),
@@ -6308,7 +6308,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Slt(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Sltu(instruction) => instruction.register_fetch(core),
-            // InstructionEnum::Xor(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Xor(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Srl(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Sra(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Or(instruction) => instruction.register_fetch(core),
@@ -6387,7 +6387,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.exec(core),
             // InstructionEnum::Slt(instruction) => instruction.exec(core),
             // InstructionEnum::Sltu(instruction) => instruction.exec(core),
-            // InstructionEnum::Xor(instruction) => instruction.exec(core),
+            InstructionEnum::Xor(instruction) => instruction.exec(core),
             // InstructionEnum::Srl(instruction) => instruction.exec(core),
             // InstructionEnum::Sra(instruction) => instruction.exec(core),
             // InstructionEnum::Or(instruction) => instruction.exec(core),
@@ -6466,7 +6466,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.memory(core),
             // InstructionEnum::Slt(instruction) => instruction.memory(core),
             // InstructionEnum::Sltu(instruction) => instruction.memory(core),
-            // InstructionEnum::Xor(instruction) => instruction.memory(core),
+            InstructionEnum::Xor(instruction) => instruction.memory(core),
             // InstructionEnum::Srl(instruction) => instruction.memory(core),
             // InstructionEnum::Sra(instruction) => instruction.memory(core),
             // InstructionEnum::Or(instruction) => instruction.memory(core),
@@ -6545,7 +6545,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.write_back(core),
             // InstructionEnum::Slt(instruction) => instruction.write_back(core),
             // InstructionEnum::Sltu(instruction) => instruction.write_back(core),
-            // InstructionEnum::Xor(instruction) => instruction.write_back(core),
+            InstructionEnum::Xor(instruction) => instruction.write_back(core),
             // InstructionEnum::Srl(instruction) => instruction.write_back(core),
             // InstructionEnum::Sra(instruction) => instruction.write_back(core),
             // InstructionEnum::Or(instruction) => instruction.write_back(core),
@@ -6624,7 +6624,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Slt(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Sltu(instruction) => instruction.get_source_registers(),
-            // InstructionEnum::Xor(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Xor(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Srl(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Sra(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Or(instruction) => instruction.get_source_registers(),
@@ -6703,7 +6703,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Slt(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Sltu(instruction) => instruction.get_destination_register(),
-            // InstructionEnum::Xor(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Xor(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Srl(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Sra(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Or(instruction) => instruction.get_destination_register(),
@@ -6794,7 +6794,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Slt(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Sltu(instruction) => instruction.is_branch_instruction(),
-            // InstructionEnum::Xor(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Xor(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Srl(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Sra(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Or(instruction) => instruction.is_branch_instruction(),
@@ -6873,7 +6873,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Slt(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Sltu(instruction) => instruction.get_jump_address(),
-            // InstructionEnum::Xor(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Xor(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Srl(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Sra(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Or(instruction) => instruction.get_jump_address(),
@@ -6952,7 +6952,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Slt(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Sltu(instruction) => instruction.get_instruction_count(),
-            // InstructionEnum::Xor(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Xor(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Srl(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Sra(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Or(instruction) => instruction.get_instruction_count(),
@@ -7031,7 +7031,7 @@ impl InstructionTrait for InstructionEnum {
             // InstructionEnum::Sll(instruction) => instruction.get_name(),
             // InstructionEnum::Slt(instruction) => instruction.get_name(),
             // InstructionEnum::Sltu(instruction) => instruction.get_name(),
-            // InstructionEnum::Xor(instruction) => instruction.get_name(),
+            InstructionEnum::Xor(instruction) => instruction.get_name(),
             // InstructionEnum::Srl(instruction) => instruction.get_name(),
             // InstructionEnum::Sra(instruction) => instruction.get_name(),
             // InstructionEnum::Or(instruction) => instruction.get_name(),
@@ -7196,13 +7196,13 @@ fn create_r_instruction_struct(
             //         panic!("unexpected funct7: {}", funct7);
             //     }
             // },
-            // 0b100 => match funct7 {
-            //     // 0b0000000 => InstructionEnum::Xor(Xor::new(rs2, rs1, rd)),
-            //     // 0b0000001 => InstructionEnum::Div(Div::new(rs2, rs1, rd)),
-            //     _ => {
-            //         panic!("unexpected funct7: {}", funct7);
-            //     }
-            // },
+            0b100 => match funct7 {
+                0b0000000 => InstructionEnum::Xor(Xor::new(rs2, rs1, rd)),
+                // 0b0000001 => InstructionEnum::Div(Div::new(rs2, rs1, rd)),
+                _ => {
+                    panic!("unexpected funct7: {}", funct7);
+                }
+            },
             // 0b101 => match funct7 {
             //     // 0b0000000 => InstructionEnum::Srl(Srl::new(rs2, rs1, rd)),
             //     // 0b0100000 => InstructionEnum::Sra(Sra::new(rs2, rs1, rd)),
