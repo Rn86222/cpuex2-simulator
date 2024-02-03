@@ -161,6 +161,19 @@ struct BInstructionData {
 }
 
 #[derive(Clone)]
+struct FBInstructionData {
+    imm: Imm12,
+    rs2: Rs2,
+    rs1: Rs1,
+    extended_imm: Option<i32>,
+    rs2_value: Option<FloatingPoint>,
+    rs1_value: Option<FloatingPoint>,
+    inst_count: Option<InstructionCount>,
+    origin_pc: Option<Address>,
+    jump_address: Option<Address>,
+}
+
+#[derive(Clone)]
 struct JInstructionData {
     imm: Imm20,
     rd: Rd,
@@ -3051,6 +3064,390 @@ impl InstructionTrait for Bge {
 // }
 
 #[derive(Clone)]
+pub struct Fbeq {
+    data: FBInstructionData,
+}
+
+impl Fbeq {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = FBInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+            origin_pc: None,
+            jump_address: None,
+        };
+        Fbeq { data }
+    }
+}
+
+impl Debug for Fbeq {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
+        write!(
+            f,
+            "fbeq x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
+        )
+    }
+}
+
+impl InstructionTrait for Fbeq {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.origin_pc = Some(core.get_pc() - 4);
+        let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
+        if let Some((_, rs1_value)) = forwarding_source_1 {
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_float_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_float_source(self.data.rs2);
+        if let Some((_, rs2_value)) = forwarding_source_2 {
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_float_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        if rs1_value == rs2_value {
+            self.data.jump_address =
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+        }
+    }
+
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.rs1),
+            RegisterId::Float(self.data.rs2),
+        ]
+    }
+
+    fn is_branch_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_jump_address(&self) -> Option<Address> {
+        self.data.jump_address
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "fbeq".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Fbne {
+    data: FBInstructionData,
+}
+
+impl Fbne {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = FBInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+            origin_pc: None,
+            jump_address: None,
+        };
+        Fbne { data }
+    }
+}
+
+impl Debug for Fbne {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
+        write!(
+            f,
+            "fbne x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
+        )
+    }
+}
+
+impl InstructionTrait for Fbne {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.origin_pc = Some(core.get_pc() - 4);
+        let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
+        if let Some((_, rs1_value)) = forwarding_source_1 {
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_float_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_float_source(self.data.rs2);
+        if let Some((_, rs2_value)) = forwarding_source_2 {
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_float_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        if rs1_value != rs2_value {
+            self.data.jump_address =
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+        }
+    }
+
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.rs1),
+            RegisterId::Float(self.data.rs2),
+        ]
+    }
+
+    fn is_branch_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_jump_address(&self) -> Option<Address> {
+        self.data.jump_address
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "fbne".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Fblt {
+    data: FBInstructionData,
+}
+
+impl Fblt {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = FBInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+            origin_pc: None,
+            jump_address: None,
+        };
+        Fblt { data }
+    }
+}
+
+impl Debug for Fblt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
+        write!(
+            f,
+            "fblt x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
+        )
+    }
+}
+
+impl InstructionTrait for Fblt {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.origin_pc = Some(core.get_pc() - 4);
+        let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
+        if let Some((_, rs1_value)) = forwarding_source_1 {
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_float_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_float_source(self.data.rs2);
+        if let Some((_, rs2_value)) = forwarding_source_2 {
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_float_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        if rs1_value < rs2_value {
+            self.data.jump_address =
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+        }
+    }
+
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.rs1),
+            RegisterId::Float(self.data.rs2),
+        ]
+    }
+
+    fn is_branch_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_jump_address(&self) -> Option<Address> {
+        self.data.jump_address
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "fblt".to_string()
+    }
+}
+
+#[derive(Clone)]
+pub struct Fble {
+    data: FBInstructionData,
+}
+
+impl Fble {
+    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+        let data = FBInstructionData {
+            imm,
+            rs2,
+            rs1,
+            extended_imm: None,
+            rs2_value: None,
+            rs1_value: None,
+            inst_count: None,
+            origin_pc: None,
+            jump_address: None,
+        };
+        Fble { data }
+    }
+}
+
+impl Debug for Fble {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
+        write!(
+            f,
+            "fble x{}, x{}, {} + {}",
+            self.data.rs1,
+            self.data.rs2,
+            origin_pc,
+            extended_imm << 1
+        )
+    }
+}
+
+impl InstructionTrait for Fble {
+    fn register_fetch(&mut self, core: &Core) {
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.origin_pc = Some(core.get_pc() - 4);
+        let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
+        if let Some((_, rs1_value)) = forwarding_source_1 {
+            self.data.rs1_value = Some(*rs1_value);
+        } else {
+            self.data.rs1_value = Some(core.get_float_register(self.data.rs1 as usize));
+        }
+        let forwarding_source_2 = core.get_forwarding_float_source(self.data.rs2);
+        if let Some((_, rs2_value)) = forwarding_source_2 {
+            self.data.rs2_value = Some(*rs2_value);
+        } else {
+            self.data.rs2_value = Some(core.get_float_register(self.data.rs2 as usize));
+        }
+    }
+
+    fn exec(&mut self, _: &mut Core) {
+        let extended_imm = self.data.extended_imm.unwrap();
+        let rs1_value = self.data.rs1_value.unwrap();
+        let rs2_value = self.data.rs2_value.unwrap();
+        if rs1_value <= rs2_value {
+            self.data.jump_address =
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+        }
+    }
+
+    fn get_source_registers(&self) -> Vec<RegisterId> {
+        vec![
+            RegisterId::Float(self.data.rs1),
+            RegisterId::Float(self.data.rs2),
+        ]
+    }
+
+    fn is_branch_instruction(&self) -> bool {
+        true
+    }
+
+    fn get_jump_address(&self) -> Option<Address> {
+        self.data.jump_address
+    }
+
+    fn get_instruction_count(&self) -> Option<InstructionCount> {
+        self.data.inst_count
+    }
+
+    fn get_name(&self) -> String {
+        "fble".to_string()
+    }
+}
+
+#[derive(Clone)]
 pub struct Jalr {
     data: IntIInstructionData,
     origin_pc: Option<Address>,
@@ -5763,6 +6160,10 @@ pub enum InstructionEnum {
     Bge(Bge),
     // Bltu(Bltu),
     // Bgeu(Bgeu),
+    Fbeq(Fbeq),
+    Fbne(Fbne),
+    Fblt(Fblt),
+    Fble(Fble),
     Jalr(Jalr),
     Jal(Jal),
     // Mul(Mul),
@@ -5838,6 +6239,10 @@ impl Debug for InstructionEnum {
             InstructionEnum::Bge(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Bltu(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Bgeu(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Fbeq(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Fbne(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Fblt(instruction) => write!(f, "{:?}", instruction),
+            InstructionEnum::Fble(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Jalr(instruction) => write!(f, "{:?}", instruction),
             InstructionEnum::Jal(instruction) => write!(f, "{:?}", instruction),
             // InstructionEnum::Mul(instruction) => write!(f, "{:?}", instruction),
@@ -5915,6 +6320,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Bltu(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Bgeu(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Fbeq(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Fbne(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Fblt(instruction) => instruction.register_fetch(core),
+            InstructionEnum::Fble(instruction) => instruction.register_fetch(core),
             InstructionEnum::Jalr(instruction) => instruction.register_fetch(core),
             InstructionEnum::Jal(instruction) => instruction.register_fetch(core),
             // InstructionEnum::Mul(instruction) => instruction.register_fetch(core),
@@ -5990,6 +6399,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.exec(core),
             // InstructionEnum::Bltu(instruction) => instruction.exec(core),
             // InstructionEnum::Bgeu(instruction) => instruction.exec(core),
+            InstructionEnum::Fbeq(instruction) => instruction.exec(core),
+            InstructionEnum::Fbne(instruction) => instruction.exec(core),
+            InstructionEnum::Fblt(instruction) => instruction.exec(core),
+            InstructionEnum::Fble(instruction) => instruction.exec(core),
             InstructionEnum::Jalr(instruction) => instruction.exec(core),
             InstructionEnum::Jal(instruction) => instruction.exec(core),
             // InstructionEnum::Mul(instruction) => instruction.exec(core),
@@ -6065,6 +6478,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.memory(core),
             // InstructionEnum::Bltu(instruction) => instruction.memory(core),
             // InstructionEnum::Bgeu(instruction) => instruction.memory(core),
+            InstructionEnum::Fbeq(instruction) => instruction.memory(core),
+            InstructionEnum::Fbne(instruction) => instruction.memory(core),
+            InstructionEnum::Fblt(instruction) => instruction.memory(core),
+            InstructionEnum::Fble(instruction) => instruction.memory(core),
             InstructionEnum::Jalr(instruction) => instruction.memory(core),
             InstructionEnum::Jal(instruction) => instruction.memory(core),
             // InstructionEnum::Mul(instruction) => instruction.memory(core),
@@ -6140,6 +6557,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.write_back(core),
             // InstructionEnum::Bltu(instruction) => instruction.write_back(core),
             // InstructionEnum::Bgeu(instruction) => instruction.write_back(core),
+            InstructionEnum::Fbeq(instruction) => instruction.write_back(core),
+            InstructionEnum::Fbne(instruction) => instruction.write_back(core),
+            InstructionEnum::Fblt(instruction) => instruction.write_back(core),
+            InstructionEnum::Fble(instruction) => instruction.write_back(core),
             InstructionEnum::Jalr(instruction) => instruction.write_back(core),
             InstructionEnum::Jal(instruction) => instruction.write_back(core),
             // InstructionEnum::Mul(instruction) => instruction.write_back(core),
@@ -6215,6 +6636,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Bltu(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Bgeu(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Fbeq(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Fbne(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Fblt(instruction) => instruction.get_source_registers(),
+            InstructionEnum::Fble(instruction) => instruction.get_source_registers(),
             InstructionEnum::Jalr(instruction) => instruction.get_source_registers(),
             InstructionEnum::Jal(instruction) => instruction.get_source_registers(),
             // InstructionEnum::Mul(instruction) => instruction.get_source_registers(),
@@ -6290,6 +6715,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Bltu(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Bgeu(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Fbeq(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Fbne(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Fblt(instruction) => instruction.get_destination_register(),
+            InstructionEnum::Fble(instruction) => instruction.get_destination_register(),
             InstructionEnum::Jalr(instruction) => instruction.get_destination_register(),
             InstructionEnum::Jal(instruction) => instruction.get_destination_register(),
             // InstructionEnum::Mul(instruction) => instruction.get_destination_register(),
@@ -6377,6 +6806,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Bltu(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Bgeu(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Fbeq(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Fbne(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Fblt(instruction) => instruction.is_branch_instruction(),
+            InstructionEnum::Fble(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Jalr(instruction) => instruction.is_branch_instruction(),
             InstructionEnum::Jal(instruction) => instruction.is_branch_instruction(),
             // InstructionEnum::Mul(instruction) => instruction.is_branch_instruction(),
@@ -6452,6 +6885,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Bltu(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Bgeu(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Fbeq(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Fbne(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Fblt(instruction) => instruction.get_jump_address(),
+            InstructionEnum::Fble(instruction) => instruction.get_jump_address(),
             InstructionEnum::Jalr(instruction) => instruction.get_jump_address(),
             InstructionEnum::Jal(instruction) => instruction.get_jump_address(),
             // InstructionEnum::Mul(instruction) => instruction.get_jump_address(),
@@ -6527,6 +6964,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Bltu(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Bgeu(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Fbeq(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Fbne(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Fblt(instruction) => instruction.get_instruction_count(),
+            InstructionEnum::Fble(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jalr(instruction) => instruction.get_instruction_count(),
             InstructionEnum::Jal(instruction) => instruction.get_instruction_count(),
             // InstructionEnum::Mul(instruction) => instruction.get_instruction_count(),
@@ -6602,6 +7043,10 @@ impl InstructionTrait for InstructionEnum {
             InstructionEnum::Bge(instruction) => instruction.get_name(),
             // InstructionEnum::Bltu(instruction) => instruction.get_name(),
             // InstructionEnum::Bgeu(instruction) => instruction.get_name(),
+            InstructionEnum::Fbeq(instruction) => instruction.get_name(),
+            InstructionEnum::Fbne(instruction) => instruction.get_name(),
+            InstructionEnum::Fblt(instruction) => instruction.get_name(),
+            InstructionEnum::Fble(instruction) => instruction.get_name(),
             InstructionEnum::Jalr(instruction) => instruction.get_name(),
             InstructionEnum::Jal(instruction) => instruction.get_name(),
             // InstructionEnum::Mul(instruction) => instruction.get_name(),
@@ -6876,6 +7321,17 @@ fn create_b_instruction_struct(
             0b001 => InstructionEnum::Bne(Bne::new(imm, rs2, rs1)),
             0b100 => InstructionEnum::Blt(Blt::new(imm, rs2, rs1)),
             0b101 => InstructionEnum::Bge(Bge::new(imm, rs2, rs1)),
+            // 0b110 => InstructionEnum::Bltu(Bltu::new(imm, rs2, rs1)),
+            // 0b111 => InstructionEnum::Bgeu(Bgeu::new(imm, rs2, rs1)),
+            _ => {
+                panic!("unexpected funct3: {}", funct3);
+            }
+        },
+        100 => match funct3 {
+            0b000 => InstructionEnum::Fbeq(Fbeq::new(imm, rs2, rs1)),
+            0b001 => InstructionEnum::Fbne(Fbne::new(imm, rs2, rs1)),
+            0b100 => InstructionEnum::Fblt(Fblt::new(imm, rs2, rs1)),
+            0b101 => InstructionEnum::Fble(Fble::new(imm, rs2, rs1)),
             // 0b110 => InstructionEnum::Bltu(Bltu::new(imm, rs2, rs1)),
             // 0b111 => InstructionEnum::Bgeu(Bgeu::new(imm, rs2, rs1)),
             _ => {
