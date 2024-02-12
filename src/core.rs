@@ -6,12 +6,13 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
-use crate::cache::*;
+// use crate::cache::*;
 use crate::decoder::*;
 use crate::fpu_emulator::*;
 use crate::instruction::*;
 use crate::instruction_memory::*;
 use crate::memory::*;
+use crate::pseudo_lru_cache::*;
 use crate::register::*;
 use crate::sld_loader::*;
 use crate::types::*;
@@ -23,7 +24,7 @@ const FLOAT_REGISTER_SIZE: usize = 32;
 
 pub struct Core {
     memory: Memory,
-    cache: Cache,
+    cache: PseudoLRUCache,
     memory_access_count: usize,
     cache_hit_count: usize,
     instruction_memory: InstructionMemory,
@@ -55,7 +56,7 @@ pub struct Core {
 impl Core {
     pub fn new() -> Self {
         let memory = Memory::new();
-        let cache = Cache::new();
+        let cache = PseudoLRUCache::new();
         let memory_access_count = 0;
         let cache_hit_count = 0;
         let instruction_memory = InstructionMemory::new();
