@@ -6,6 +6,7 @@ mod fpu_tester;
 mod instruction;
 mod instruction_memory;
 mod memory;
+mod pseudo_lru_cache;
 mod register;
 mod sld_loader;
 mod types;
