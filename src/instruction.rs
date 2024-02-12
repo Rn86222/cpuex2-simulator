@@ -61,7 +61,7 @@ trait InstructionTrait: Clone + Debug {
 
 #[derive(Clone)]
 struct IntIInstructionData {
-    imm: Imm12,
+    imm: Imm13,
     rs1: Rs1,
     rd: Rd,
     extended_imm: Option<i32>,
@@ -72,7 +72,7 @@ struct IntIInstructionData {
 
 #[derive(Clone)]
 struct FloatIInstructionData {
-    imm: Imm12,
+    imm: Imm13,
     rs1: Rs1,
     fd: Fd,
     extended_imm: Option<i32>,
@@ -83,7 +83,7 @@ struct FloatIInstructionData {
 
 #[derive(Clone)]
 struct IntSInstructionData {
-    imm: Imm12,
+    imm: Imm13,
     rs2: Rs2,
     rs1: Rs1,
     extended_imm: Option<i32>,
@@ -94,7 +94,7 @@ struct IntSInstructionData {
 
 #[derive(Clone)]
 struct FloatSInstructionData {
-    imm: Imm12,
+    imm: Imm13,
     fs2: Fs2,
     rs1: Rs1,
     extended_imm: Option<i32>,
@@ -149,7 +149,7 @@ struct IntFloatRInstructionData {
 
 #[derive(Clone)]
 struct BInstructionData {
-    imm: Imm12,
+    imm: Imm13,
     rs2: Rs2,
     rs1: Rs1,
     extended_imm: Option<i32>,
@@ -162,7 +162,7 @@ struct BInstructionData {
 
 #[derive(Clone)]
 struct FBInstructionData {
-    imm: Imm12,
+    imm: Imm13,
     rs2: Rs2,
     rs1: Rs1,
     extended_imm: Option<i32>,
@@ -175,7 +175,7 @@ struct FBInstructionData {
 
 #[derive(Clone)]
 struct JInstructionData {
-    imm: Imm20,
+    imm: Imm19,
     rd: Rd,
     extended_imm: Option<i32>,
     rd_value: Option<Int>,
@@ -186,7 +186,7 @@ struct JInstructionData {
 
 #[derive(Clone)]
 struct UInstructionData {
-    imm: Imm20,
+    imm: Imm19,
     rd: Rd,
     upimm: Option<i32>,
     rd_value: Option<Int>,
@@ -214,7 +214,7 @@ struct R4InstructionData {
 // }
 
 // impl Lb {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -296,7 +296,7 @@ struct R4InstructionData {
 // }
 
 // impl Lh {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -378,7 +378,7 @@ pub struct Lw {
 }
 
 impl Lw {
-    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+    fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
         let data = IntIInstructionData {
             imm,
             rs1,
@@ -394,7 +394,7 @@ impl Lw {
 
 impl Debug for Lw {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         write!(
             f,
             "lw x{}, {}(x{})",
@@ -406,7 +406,7 @@ impl Debug for Lw {
 impl InstructionTrait for Lw {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
@@ -460,7 +460,7 @@ impl InstructionTrait for Lw {
 // }
 
 // impl Lbu {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -541,7 +541,7 @@ impl InstructionTrait for Lw {
 // }
 
 // impl Lhu {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -621,7 +621,7 @@ pub struct Addi {
 }
 
 impl Addi {
-    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+    fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
         let data = IntIInstructionData {
             imm,
             rs1,
@@ -637,7 +637,7 @@ impl Addi {
 
 impl Debug for Addi {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         write!(
             f,
             "addi x{}, x{}, {}",
@@ -649,7 +649,7 @@ impl Debug for Addi {
 impl InstructionTrait for Addi {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
@@ -698,7 +698,7 @@ pub struct Slli {
 }
 
 impl Slli {
-    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+    fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
         let data = IntIInstructionData {
             imm,
             rs1,
@@ -714,7 +714,7 @@ impl Slli {
 
 impl Debug for Slli {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let uimm = self.data.imm & 0x1f;
+        let uimm = self.data.imm & 63;
         write!(f, "slli x{}, x{}, {}", self.data.rd, self.data.rs1, uimm)
     }
 }
@@ -722,7 +722,7 @@ impl Debug for Slli {
 impl InstructionTrait for Slli {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.uimm = Some((self.data.imm & 0x1f) as u32);
+        self.uimm = Some((self.data.imm & 63) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value as Int);
@@ -769,7 +769,7 @@ impl InstructionTrait for Slli {
 // }
 
 // impl Slti {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -849,7 +849,7 @@ impl InstructionTrait for Slli {
 // }
 
 // impl Sltiu {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -929,7 +929,7 @@ impl InstructionTrait for Slli {
 // }
 
 // impl Xori {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -1006,7 +1006,7 @@ pub struct Srli {
 }
 
 impl Srli {
-    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+    fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
         let data = IntIInstructionData {
             imm,
             rs1,
@@ -1022,7 +1022,7 @@ impl Srli {
 
 impl Debug for Srli {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let uimm = self.data.imm & 0x1f;
+        let uimm = self.data.imm & 63;
         write!(f, "srli x{}, x{}, {}", self.data.rd, self.data.rs1, uimm)
     }
 }
@@ -1030,7 +1030,7 @@ impl Debug for Srli {
 impl InstructionTrait for Srli {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.uimm = Some((self.data.imm & 0x1f) as u32);
+        self.uimm = Some((self.data.imm & 63) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value as Int);
@@ -1078,7 +1078,7 @@ pub struct Srai {
 }
 
 impl Srai {
-    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+    fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
         let data = IntIInstructionData {
             imm,
             rs1,
@@ -1149,7 +1149,7 @@ impl InstructionTrait for Srai {
 // }
 
 // impl Ori {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -1225,7 +1225,7 @@ impl InstructionTrait for Srai {
 // }
 
 // impl Andi {
-//     fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+//     fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
 //         let data = IntIInstructionData {
 //             imm,
 //             rs1,
@@ -1301,7 +1301,7 @@ impl InstructionTrait for Srai {
 // }
 
 // impl Auipc {
-//     fn new(imm: Imm20, rd: Rd) -> Self {
+//     fn new(imm: Imm19, rd: Rd) -> Self {
 //         let data = UInstructionData {
 //             imm,
 //             rd,
@@ -1363,7 +1363,7 @@ impl InstructionTrait for Srai {
 // }
 
 // impl Sb {
-//     fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+//     fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
 //         let data = IntSInstructionData {
 //             imm,
 //             rs2,
@@ -1440,7 +1440,7 @@ impl InstructionTrait for Srai {
 // }
 
 // impl Sh {
-//     fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+//     fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
 //         let data = IntSInstructionData {
 //             imm,
 //             rs2,
@@ -1517,7 +1517,7 @@ pub struct Sw {
 }
 
 impl Sw {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = IntSInstructionData {
             imm,
             rs2,
@@ -1533,7 +1533,7 @@ impl Sw {
 
 impl Debug for Sw {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         write!(
             f,
             "sw x{}, {}(x{})",
@@ -1545,7 +1545,7 @@ impl Debug for Sw {
 impl InstructionTrait for Sw {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2434,7 +2434,7 @@ pub struct Lui {
 }
 
 impl Lui {
-    fn new(imm: Imm20, rd: Rd) -> Self {
+    fn new(imm: Imm19, rd: Rd) -> Self {
         let data = UInstructionData {
             imm,
             rd,
@@ -2456,7 +2456,7 @@ impl Debug for Lui {
 impl InstructionTrait for Lui {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.upimm = Some(self.data.imm << 12);
+        self.data.upimm = Some(self.data.imm << 13);
         self.data.origin_pc = Some(core.get_pc() - 4);
     }
 
@@ -2493,7 +2493,7 @@ pub struct Beq {
 }
 
 impl Beq {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = BInstructionData {
             imm,
             rs2,
@@ -2511,7 +2511,7 @@ impl Beq {
 
 impl Debug for Beq {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -2525,14 +2525,14 @@ impl Debug for Beq {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Beq {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
@@ -2555,7 +2555,7 @@ impl InstructionTrait for Beq {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value == rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -2589,7 +2589,7 @@ pub struct Bne {
 }
 
 impl Bne {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = BInstructionData {
             imm,
             rs2,
@@ -2607,7 +2607,7 @@ impl Bne {
 
 impl Debug for Bne {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -2621,14 +2621,14 @@ impl Debug for Bne {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Bne {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
@@ -2651,7 +2651,7 @@ impl InstructionTrait for Bne {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value != rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -2685,7 +2685,7 @@ pub struct Blt {
 }
 
 impl Blt {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = BInstructionData {
             imm,
             rs2,
@@ -2703,7 +2703,7 @@ impl Blt {
 
 impl Debug for Blt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -2717,14 +2717,14 @@ impl Debug for Blt {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Blt {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
@@ -2747,7 +2747,7 @@ impl InstructionTrait for Blt {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value < rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -2781,7 +2781,7 @@ pub struct Bge {
 }
 
 impl Bge {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = BInstructionData {
             imm,
             rs2,
@@ -2799,7 +2799,7 @@ impl Bge {
 
 impl Debug for Bge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -2813,14 +2813,14 @@ impl Debug for Bge {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Bge {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
@@ -2843,7 +2843,7 @@ impl InstructionTrait for Bge {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value >= rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -2877,7 +2877,7 @@ impl InstructionTrait for Bge {
 // }
 
 // impl Bltu {
-//     fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+//     fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
 //         let data = BInstructionData {
 //             imm,
 //             rs2,
@@ -2973,7 +2973,7 @@ impl InstructionTrait for Bge {
 // }
 
 // impl Bgeu {
-//     fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+//     fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
 //         let data = BInstructionData {
 //             imm,
 //             rs2,
@@ -3069,7 +3069,7 @@ pub struct Fbeq {
 }
 
 impl Fbeq {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = FBInstructionData {
             imm,
             rs2,
@@ -3087,7 +3087,7 @@ impl Fbeq {
 
 impl Debug for Fbeq {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -3101,14 +3101,14 @@ impl Debug for Fbeq {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Fbeq {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
@@ -3131,7 +3131,7 @@ impl InstructionTrait for Fbeq {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value == rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -3165,7 +3165,7 @@ pub struct Fbne {
 }
 
 impl Fbne {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = FBInstructionData {
             imm,
             rs2,
@@ -3183,7 +3183,7 @@ impl Fbne {
 
 impl Debug for Fbne {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -3197,14 +3197,14 @@ impl Debug for Fbne {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Fbne {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
@@ -3227,7 +3227,7 @@ impl InstructionTrait for Fbne {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value != rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -3261,7 +3261,7 @@ pub struct Fblt {
 }
 
 impl Fblt {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = FBInstructionData {
             imm,
             rs2,
@@ -3279,7 +3279,7 @@ impl Fblt {
 
 impl Debug for Fblt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -3293,14 +3293,14 @@ impl Debug for Fblt {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Fblt {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
@@ -3323,7 +3323,7 @@ impl InstructionTrait for Fblt {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value < rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -3357,7 +3357,7 @@ pub struct Fble {
 }
 
 impl Fble {
-    fn new(imm: Imm12, rs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, rs2: Rs2, rs1: Rs1) -> Self {
         let data = FBInstructionData {
             imm,
             rs2,
@@ -3375,7 +3375,7 @@ impl Fble {
 
 impl Debug for Fble {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         let origin_pc = {
             if let Some(pc) = self.data.origin_pc {
                 pc.to_string()
@@ -3389,14 +3389,14 @@ impl Debug for Fble {
             self.data.rs1,
             self.data.rs2,
             origin_pc,
-            extended_imm << 1
+            extended_imm << 2
         )
     }
 }
 
 impl InstructionTrait for Fble {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.origin_pc = Some(core.get_pc() - 4);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
@@ -3419,7 +3419,7 @@ impl InstructionTrait for Fble {
         let rs2_value = self.data.rs2_value.unwrap();
         if rs1_value <= rs2_value {
             self.data.jump_address =
-                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+                Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         }
     }
 
@@ -3455,7 +3455,7 @@ pub struct Jalr {
 }
 
 impl Jalr {
-    fn new(imm: Imm12, rs1: Rs1, rd: Rd) -> Self {
+    fn new(imm: Imm13, rs1: Rs1, rd: Rd) -> Self {
         let data = IntIInstructionData {
             imm,
             rs1,
@@ -3475,7 +3475,7 @@ impl Jalr {
 
 impl Debug for Jalr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         write!(
             f,
             "jalr x{}, x{}, {}",
@@ -3488,7 +3488,7 @@ impl InstructionTrait for Jalr {
     fn register_fetch(&mut self, core: &Core) {
         self.origin_pc = Some(core.get_pc() - 4);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
@@ -3500,7 +3500,7 @@ impl InstructionTrait for Jalr {
     fn exec(&mut self, core: &mut Core) {
         let extended_imm = self.data.extended_imm.unwrap();
         let rs1_value = self.data.rs1_value.unwrap();
-        self.jump_address = Some((rs1_value + (extended_imm << 1)) as Address);
+        self.jump_address = Some((rs1_value + (extended_imm << 2)) as Address);
         self.data.rd_value = Some(self.origin_pc.unwrap() as i32 + 4);
         core.set_forwarding_int_source(
             self.data.rd,
@@ -3545,7 +3545,7 @@ pub struct Jal {
 }
 
 impl Jal {
-    fn new(imm: Imm20, rd: Rd) -> Self {
+    fn new(imm: Imm19, rd: Rd) -> Self {
         let data = JInstructionData {
             imm,
             rd,
@@ -3561,14 +3561,14 @@ impl Jal {
 
 impl Debug for Jal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i32(self.data.imm, 20);
+        let extended_imm = sign_extention_i32(self.data.imm, 19);
         write!(f, "jal x{}, {}", self.data.rd, extended_imm)
     }
 }
 
 impl InstructionTrait for Jal {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.extended_imm = Some(sign_extention_i32(self.data.imm, 20));
+        self.data.extended_imm = Some(sign_extention_i32(self.data.imm, 19));
         self.data.origin_pc = Some(core.get_pc() - 4);
         self.data.inst_count = Some(core.get_instruction_count());
     }
@@ -3576,7 +3576,7 @@ impl InstructionTrait for Jal {
     fn exec(&mut self, core: &mut Core) {
         let extended_imm = self.data.extended_imm.unwrap();
         self.data.jump_address =
-            Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 1)) as Address);
+            Some((self.data.origin_pc.unwrap() as i32 + (extended_imm << 2)) as Address);
         self.data.rd_value = Some(self.data.origin_pc.unwrap() as i32 + 4);
         core.set_forwarding_int_source(
             self.data.rd,
@@ -5363,7 +5363,7 @@ pub struct Flw {
 }
 
 impl Flw {
-    fn new(imm: Imm12, rs1: Rs1, fd: Fd) -> Self {
+    fn new(imm: Imm13, rs1: Rs1, fd: Fd) -> Self {
         let data = FloatIInstructionData {
             imm,
             rs1,
@@ -5379,7 +5379,7 @@ impl Flw {
 
 impl Debug for Flw {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         write!(
             f,
             "flw f{}, {}(x{})",
@@ -5391,7 +5391,7 @@ impl Debug for Flw {
 impl InstructionTrait for Flw {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
             self.data.rs1_value = Some(*rs1_value);
@@ -5445,7 +5445,7 @@ pub struct Fsw {
 }
 
 impl Fsw {
-    fn new(imm: Imm12, fs2: Rs2, rs1: Rs1) -> Self {
+    fn new(imm: Imm13, fs2: Rs2, rs1: Rs1) -> Self {
         let data = FloatSInstructionData {
             imm,
             fs2,
@@ -5461,7 +5461,7 @@ impl Fsw {
 
 impl Debug for Fsw {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let extended_imm = sign_extention_i16(self.data.imm, 12);
+        let extended_imm = sign_extention_i16(self.data.imm, 13);
         write!(
             f,
             "fsw f{}, {}(x{})",
@@ -5473,7 +5473,7 @@ impl Debug for Fsw {
 impl InstructionTrait for Fsw {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
+        self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -7089,14 +7089,14 @@ impl InstructionTrait for InstructionEnum {
 }
 
 fn create_i_instruction_struct(
-    imm: Imm12,
+    imm: Imm13,
     rs1: Rs1,
     funct3: Funct3,
     rd: Rd,
     op: Op,
 ) -> InstructionEnum {
     match op {
-        3 => match funct3 {
+        0 => match funct3 {
             // 0b000 => InstructionEnum::Lb(Lb::new(imm, rs1, rd)),
             // 0b001 => InstructionEnum::Lh(Lh::new(imm, rs1, rd)),
             0b010 => InstructionEnum::Lw(Lw::new(imm, rs1, rd)),
@@ -7106,14 +7106,14 @@ fn create_i_instruction_struct(
                 panic!("unexpected funct3: {}", funct3);
             }
         },
-        19 => match funct3 {
+        1 => match funct3 {
             0b000 => InstructionEnum::Addi(Addi::new(imm, rs1, rd)),
             0b001 => InstructionEnum::Slli(Slli::new(imm, rs1, rd)),
             // 0b010 => InstructionEnum::Slti(Slti::new(imm, rs1, rd)),
             // 0b011 => InstructionEnum::Sltiu(Sltiu::new(imm, rs1, rd)),
             // 0b100 => InstructionEnum::Xori(Xori::new(imm, rs1, rd)),
             0b101 => {
-                let funct7 = (imm >> 5) & 0b1111111;
+                let funct7 = (imm >> 6) & 0b1111111;
                 match funct7 {
                     0b0000000 => InstructionEnum::Srli(Srli::new(imm, rs1, rd)),
                     0b0100000 => InstructionEnum::Srai(Srai::new(imm, rs1, rd)),
@@ -7128,25 +7128,25 @@ fn create_i_instruction_struct(
                 panic!("unexpected funct3: {}", funct3);
             }
         },
-        103 => match funct3 {
+        6 => match funct3 {
             0b000 => InstructionEnum::Jalr(Jalr::new(imm, rs1, rd)),
             _ => {
                 panic!("unexpected funct3: {}", funct3);
             }
         },
-        7 => match funct3 {
+        8 => match funct3 {
             0b010 => InstructionEnum::Flw(Flw::new(imm, rs1, rd)),
             _ => {
                 panic!("unexpected funct3: {}", funct3)
             }
         },
-        115 => match funct3 {
+        14 => match funct3 {
             0b000 => InstructionEnum::End(End::new()),
             _ => {
                 panic!("unexpected funct3: {}", funct3)
             }
         },
-        116 => match funct3 {
+        11 => match funct3 {
             0b000 => InstructionEnum::In(In::new(rd)),
             0b001 => InstructionEnum::Fin(Fin::new(rd)),
             _ => {
@@ -7168,7 +7168,7 @@ fn create_r_instruction_struct(
     op: Op,
 ) -> InstructionEnum {
     match op {
-        51 => match funct3 {
+        3 => match funct3 {
             0b000 => match funct7 {
                 0b0000000 => InstructionEnum::Add(Add::new(rs2, rs1, rd)),
                 0b0100000 => InstructionEnum::Sub(Sub::new(rs2, rs1, rd)),
@@ -7231,7 +7231,7 @@ fn create_r_instruction_struct(
                 panic!("unexpected funct3: {}", funct3);
             }
         },
-        83 => match funct7 {
+        9 => match funct7 {
             0b0000000 => InstructionEnum::Fadd(Fadd::new(rs2, rs1, rd)),
             0b0000100 => InstructionEnum::Fsub(Fsub::new(rs2, rs1, rd)),
             0b0001000 => InstructionEnum::Fmul(Fmul::new(rs2, rs1, rd)),
@@ -7277,14 +7277,14 @@ fn create_r_instruction_struct(
 }
 
 fn create_s_instruction_struct(
-    imm: Imm12,
+    imm: Imm13,
     rs2: Rs2,
     rs1: Rs1,
     funct3: Funct3,
     op: Op,
 ) -> InstructionEnum {
     match op {
-        35 => match funct3 {
+        2 => match funct3 {
             // 0b000 => InstructionEnum::Sb(Sb::new(imm, rs2, rs1)),
             // 0b001 => InstructionEnum::Sh(Sh::new(imm, rs2, rs1)),
             0b010 => InstructionEnum::Sw(Sw::new(imm, rs2, rs1)),
@@ -7292,13 +7292,13 @@ fn create_s_instruction_struct(
                 panic!("unexpected funct3: {}", funct3);
             }
         },
-        39 => match funct3 {
+        10 => match funct3 {
             0b010 => InstructionEnum::Fsw(Fsw::new(imm, rs2, rs1)),
             _ => {
                 panic!("unexpected funct3: {}", funct3)
             }
         },
-        117 => match funct3 {
+        12 => match funct3 {
             0b000 => InstructionEnum::Outchar(Outchar::new(rs2)),
             _ => {
                 panic!("unexpected funct3: {}", funct3)
@@ -7311,14 +7311,14 @@ fn create_s_instruction_struct(
 }
 
 fn create_b_instruction_struct(
-    imm: Imm12,
+    imm: Imm13,
     rs2: Rs2,
     rs1: Rs1,
     funct3: Funct3,
     op: Op,
 ) -> InstructionEnum {
     match op {
-        99 => match funct3 {
+        5 => match funct3 {
             0b000 => InstructionEnum::Beq(Beq::new(imm, rs2, rs1)),
             0b001 => InstructionEnum::Bne(Bne::new(imm, rs2, rs1)),
             0b100 => InstructionEnum::Blt(Blt::new(imm, rs2, rs1)),
@@ -7329,7 +7329,7 @@ fn create_b_instruction_struct(
                 panic!("unexpected funct3: {}", funct3);
             }
         },
-        100 => match funct3 {
+        13 => match funct3 {
             0b000 => InstructionEnum::Fbeq(Fbeq::new(imm, rs2, rs1)),
             0b001 => InstructionEnum::Fbne(Fbne::new(imm, rs2, rs1)),
             0b100 => InstructionEnum::Fblt(Fblt::new(imm, rs2, rs1)),
@@ -7346,25 +7346,26 @@ fn create_b_instruction_struct(
     }
 }
 
-fn create_j_instruction_struct(imm: Imm20, rd: Rd, op: Op) -> InstructionEnum {
+fn create_j_instruction_struct(imm: Imm19, rd: Rd, op: Op) -> InstructionEnum {
     match op {
-        111 => InstructionEnum::Jal(Jal::new(imm, rd)),
+        7 => InstructionEnum::Jal(Jal::new(imm, rd)),
         _ => {
             panic!("unexpected op: {}", op);
         }
     }
 }
 
-fn create_u_instruction_struct(imm: Imm20, rd: Rd, op: Op) -> InstructionEnum {
+fn create_u_instruction_struct(imm: Imm19, rd: Rd, op: Op) -> InstructionEnum {
     match op {
         // 23 => InstructionEnum::Auipc(Auipc::new(imm, rd)),
-        55 => InstructionEnum::Lui(Lui::new(imm, rd)),
+        4 => InstructionEnum::Lui(Lui::new(imm, rd)),
         _ => {
             panic!("unexpected op: {}", op);
         }
     }
 }
 
+#[allow(dead_code)]
 fn create_r4_instruction_struct(
     _fs3: Fs3,
     _funct2: Funct2,
@@ -7412,9 +7413,9 @@ pub fn create_instruction_struct(inst: Instruction) -> InstructionEnum {
         }
         Instruction::J(imm, rd, op) => create_j_instruction_struct(imm, rd, op),
         Instruction::U(imm, rd, op) => create_u_instruction_struct(imm, rd, op),
-        Instruction::R4(fs3, funct2, fs2, fs1, funct3, rd, op) => {
-            create_r4_instruction_struct(fs3, funct2, fs2, fs1, funct3, rd, op)
-        }
+        // Instruction::R4(fs3, funct2, fs2, fs1, funct3, rd, op) => {
+        //     create_r4_instruction_struct(fs3, funct2, fs2, fs1, funct3, rd, op)
+        // }
         _ => {
             panic!("unexpected instruction: {:?}", inst);
         }

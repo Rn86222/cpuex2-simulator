@@ -12,8 +12,8 @@ pub type InstructionValue = u32;
 // pub type InstructionCacheIndex = usize;
 pub type Tag = u32;
 pub type CacheIndex = usize;
-pub type Imm12 = i16;
-pub type Imm20 = i32;
+pub type Imm13 = i16;
+pub type Imm19 = i32;
 #[derive(PartialEq, Eq)]
 pub enum RegisterId {
     Int(u8),
