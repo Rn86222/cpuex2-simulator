@@ -1746,7 +1746,7 @@ impl InstructionTrait for Lui {
     fn register_fetch(&mut self, core: &Core) {
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.upimm = Some(self.data.imm << 13);
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -1823,7 +1823,7 @@ impl InstructionTrait for Beq {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1915,7 +1915,7 @@ impl InstructionTrait for Bne {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2007,7 +2007,7 @@ impl InstructionTrait for Blt {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2099,7 +2099,7 @@ impl InstructionTrait for Bge {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2183,7 +2183,7 @@ impl Debug for Jalr {
 
 impl InstructionTrait for Jalr {
     fn register_fetch(&mut self, core: &Core) {
-        self.origin_pc = Some(core.get_pc() - 4);
+        self.origin_pc = Some(core.get_pc() - 8);
         self.data.inst_count = Some(core.get_instruction_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
@@ -2262,7 +2262,7 @@ impl Debug for Jal {
 impl InstructionTrait for Jal {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i32(self.data.imm, 19));
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         self.data.inst_count = Some(core.get_instruction_count());
     }
 
@@ -3757,7 +3757,7 @@ impl InstructionTrait for Fbeq {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -3849,7 +3849,7 @@ impl InstructionTrait for Fbne {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -3941,7 +3941,7 @@ impl InstructionTrait for Fblt {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -4033,7 +4033,7 @@ impl InstructionTrait for Fble {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         self.data.inst_count = Some(core.get_instruction_count());
-        self.data.origin_pc = Some(core.get_pc() - 4);
+        self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);

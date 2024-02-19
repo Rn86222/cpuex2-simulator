@@ -39,8 +39,9 @@ pub struct Core {
     pc_history: Vec<Address>,
     pc_stats: HashMap<Address, (Instruction, usize)>,
     inst_stats: HashMap<String, usize>,
-    fetched_instruction: Option<InstructionValue>,
-    decoded_instruction: Option<InstructionEnum>,
+    instruction_in_fetch_stage: Option<InstructionValue>,
+    instruction_in_fetch_stage_2: Option<InstructionValue>,
+    instruction_in_decode_stage: Option<InstructionEnum>,
     instruction_in_exec_stage: Option<InstructionEnum>,
     instruction_in_memory_stage: Option<InstructionEnum>,
     instruction_in_write_back_stage: Option<InstructionEnum>,
@@ -71,7 +72,8 @@ impl Core {
         let instruction_count_history = Vec::new();
         let pc_stats = HashMap::new();
         let inst_stats = HashMap::new();
-        let fetched_instruction = None;
+        let instruction_in_fetch_stage = None;
+        let instruction_in_fetch_stage_2 = None;
         let decoded_instruction = None;
         let instruction_in_exec_stage = None;
         let instruction_in_memory_stage = None;
@@ -100,8 +102,9 @@ impl Core {
             instruction_count_history,
             pc_stats,
             inst_stats,
-            fetched_instruction,
-            decoded_instruction,
+            instruction_in_fetch_stage,
+            instruction_in_fetch_stage_2,
+            instruction_in_decode_stage: decoded_instruction,
             instruction_in_exec_stage,
             instruction_in_memory_stage,
             instruction_in_write_back_stage,
@@ -116,11 +119,11 @@ impl Core {
     }
 
     pub fn get_decoded_instruction(&self) -> &Option<InstructionEnum> {
-        &self.decoded_instruction
+        &self.instruction_in_decode_stage
     }
 
     pub fn set_decoded_instruction(&mut self, inst: Option<InstructionEnum>) {
-        self.decoded_instruction = inst;
+        self.instruction_in_decode_stage = inst;
     }
 
     pub fn get_instruction_in_exec_stage(&self) -> &Option<InstructionEnum> {
@@ -145,7 +148,11 @@ impl Core {
 
     fn fetch_instruction(&mut self) {
         let current_pc = self.get_pc();
-        self.fetched_instruction = Some(self.load_instruction(current_pc));
+        let inst = self.load_instruction(current_pc);
+        if inst == 0 {
+            return;
+        }
+        self.instruction_in_fetch_stage = Some(inst);
     }
 
     pub fn get_inv_map(&self) -> &InvMap {
@@ -173,9 +180,10 @@ impl Core {
             let jump_address = get_jump_address(inst);
             if let Some(jump_address) = jump_address {
                 self.set_pc(jump_address);
-                // flush instruction in IF and ID stage
-                self.fetched_instruction = None;
-                self.decoded_instruction = None;
+                // flush instruction in IF, IF2, and ID stage
+                self.instruction_in_fetch_stage = None;
+                self.instruction_in_fetch_stage_2 = None;
+                self.instruction_in_decode_stage = None;
             } else if !stalling {
                 self.increment_pc();
             }
@@ -301,20 +309,22 @@ impl Core {
     pub fn move_instructions_to_next_stage(&mut self) {
         self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
         self.instruction_in_memory_stage = self.instruction_in_exec_stage.clone();
-        self.instruction_in_exec_stage = self.decoded_instruction.clone();
-        if let Some(fetched_instruction) = self.fetched_instruction {
+        self.instruction_in_exec_stage = self.instruction_in_decode_stage.clone();
+        if let Some(fetched_instruction) = self.instruction_in_fetch_stage_2 {
             let decoded = decode_instruction(fetched_instruction);
             if let Instruction::Other = decoded {
-                self.decoded_instruction = None;
-                self.fetched_instruction = None;
+                self.instruction_in_decode_stage = None;
+                self.instruction_in_fetch_stage_2 = None;
+                self.instruction_in_fetch_stage = None;
                 return;
             }
             let decoded_inst_struct = create_instruction_struct(decoded);
-            self.decoded_instruction = Some(decoded_inst_struct);
+            self.instruction_in_decode_stage = Some(decoded_inst_struct);
         } else {
-            self.decoded_instruction = None;
+            self.instruction_in_decode_stage = None;
         }
-        self.fetched_instruction = None;
+        self.instruction_in_fetch_stage_2 = self.instruction_in_fetch_stage;
+        self.instruction_in_fetch_stage = None;
     }
 
     pub fn move_instructions_to_next_stage_stalling(&mut self) {
@@ -387,10 +397,10 @@ impl Core {
     }
 
     pub fn check_load_hazard(&self) -> bool {
-        if self.decoded_instruction.is_none() || self.instruction_in_exec_stage.is_none() {
+        if self.instruction_in_decode_stage.is_none() || self.instruction_in_exec_stage.is_none() {
             return false;
         }
-        let decoded_instruction = self.decoded_instruction.as_ref().unwrap();
+        let decoded_instruction = self.instruction_in_decode_stage.as_ref().unwrap();
         let instruction_in_exec_stage = self.instruction_in_exec_stage.as_ref().unwrap();
         if !is_load_instruction(instruction_in_exec_stage) {
             return false;
@@ -433,16 +443,19 @@ impl Core {
 
     #[allow(dead_code)]
     fn show_pipeline(&self) {
-        // println!(
-        //     "IF                  ID                  EX                  MEM                 WB"
-        // );
-        let if_string = if let Some(inst) = self.fetched_instruction {
+        let if_string = if let Some(inst) = self.instruction_in_fetch_stage {
             format!("{:>08x}", inst)
         } else {
             "None".to_string()
         };
         print_filled_with_space(&if_string, 20);
-        let id_string = if let Some(inst) = self.decoded_instruction.clone() {
+        let if2_string = if let Some(inst) = self.instruction_in_fetch_stage_2 {
+            format!("{:>08x}", inst)
+        } else {
+            "None".to_string()
+        };
+        print_filled_with_space(&if2_string, 20);
+        let id_string = if let Some(inst) = self.instruction_in_decode_stage.clone() {
             format!("{:?}", inst)
         } else {
             "None".to_string()
@@ -511,7 +524,7 @@ impl Core {
 
     #[allow(dead_code)]
     fn update_pc_stats(&mut self) {
-        if let Some(inst) = self.fetched_instruction {
+        if let Some(inst) = self.instruction_in_fetch_stage {
             let decoded = decode_instruction(inst);
             if let Instruction::Other = decoded {
                 return;
@@ -676,6 +689,8 @@ impl Core {
     }
 
     fn show_current_state(&self) {
+        eprint!("\x1B[2K\x1B[1000D");
+        std::io::stdout().flush().unwrap();
         eprint!(
             "\r{} {:>08} pc: {:>06} sp: {:>010}",
             self.instruction_count,
@@ -685,9 +700,7 @@ impl Core {
         );
         if let Some(inst) = self.get_instruction_in_exec_stage() {
             let inst_string = format!("{:?}", inst);
-            eprint!("  {:?}         ", inst_string);
-        } else {
-            eprint!("               ");
+            eprint!("  {}", inst_string);
         }
     }
 
@@ -743,6 +756,12 @@ impl Core {
         //     .build()
         //     .unwrap();
 
+        if verbose >= 1 {
+            println!(
+            "               IF                  IF2                 ID                  EX                  MEM                 WB"
+        );
+        }
+
         loop {
             if verbose >= 1 {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
@@ -755,6 +774,7 @@ impl Core {
             }
             if self.get_pc() >= INSTRUCTION_MEMORY_SIZE as Address {
                 self.pc_history.pop();
+                eprintln!();
                 println!("End of program.");
                 break;
             }
@@ -863,7 +883,7 @@ pub fn disassemble(buf: &Vec<u8>, path: &str) {
                 core.set_decoded_instruction(Some(inst));
                 core.increment_pc();
                 register_fetch(&mut core);
-                let inst = core.decoded_instruction.clone().unwrap();
+                let inst = core.instruction_in_decode_stage.clone().unwrap();
                 let inst_string = format!("{}: {:?}", pc_count, inst);
                 file.write_all(inst_string.as_bytes()).unwrap();
                 file.write_all("\n".as_bytes()).unwrap();
