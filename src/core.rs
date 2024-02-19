@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use fxhash::FxHashMap;
 use std::fs::File;
 use std::io::Write;
 use std::thread;
@@ -36,8 +36,8 @@ pub struct Core {
     float_registers_history: Vec<[FloatRegister; FLOAT_REGISTER_SIZE]>,
     cycle_count_history: Vec<InstructionCount>,
     pc_history: Vec<Address>,
-    pc_stats: HashMap<Address, (Instruction, usize)>,
-    inst_stats: HashMap<String, usize>,
+    pc_stats: FxHashMap<Address, (Instruction, usize)>,
+    inst_stats: FxHashMap<String, usize>,
     instruction_in_fetch_stage: Option<InstructionValue>,
     instruction_in_fetch_stage_2: Option<InstructionValue>,
     instruction_in_decode_stage: Option<InstructionEnum>,
@@ -70,8 +70,8 @@ impl Core {
         let float_registers_history = Vec::new();
         let pc_history = Vec::new();
         let instruction_count_history = Vec::new();
-        let pc_stats = HashMap::new();
-        let inst_stats = HashMap::new();
+        let pc_stats = FxHashMap::default();
+        let inst_stats = FxHashMap::default();
         let instruction_in_fetch_stage = None;
         let instruction_in_fetch_stage_2 = None;
         let decoded_instruction = None;
@@ -698,7 +698,7 @@ impl Core {
         eprint!("\x1B[2K\x1B[1000D");
         std::io::stdout().flush().unwrap();
         eprint!(
-            "\r{} {:>08} pc: {:>06} sp: {:>010}",
+            "\rcycle: {} output: {:>08} pc: {:>06} sp: {:>010}",
             self.cycle_count,
             self.output.len(),
             self.get_pc() - 4,
