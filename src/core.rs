@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fs::File;
-// use std::io::BufRead;
 use std::io::Write;
 use std::thread;
 use std::time::Duration;
@@ -18,9 +17,8 @@ use crate::sld_loader::*;
 use crate::types::*;
 use crate::utils::*;
 
-const INT_REGISTER_SIZE: usize = 32;
-const FLOAT_REGISTER_SIZE: usize = 32;
-// const IO_ADDRESS: Address = 2147483648;
+const INT_REGISTER_SIZE: usize = 64;
+const FLOAT_REGISTER_SIZE: usize = 64;
 
 pub struct Core {
     memory: Memory,
@@ -30,12 +28,13 @@ pub struct Core {
     instruction_memory: InstructionMemory,
     instruction_memory_access_count: usize,
     instruction_count: InstructionCount,
+    cycle_count: u128,
     int_registers: [IntRegister; INT_REGISTER_SIZE],
     float_registers: [FloatRegister; FLOAT_REGISTER_SIZE],
     pc: Address,
     int_registers_history: Vec<[IntRegister; INT_REGISTER_SIZE]>,
     float_registers_history: Vec<[FloatRegister; FLOAT_REGISTER_SIZE]>,
-    instruction_count_history: Vec<InstructionCount>,
+    cycle_count_history: Vec<InstructionCount>,
     pc_history: Vec<Address>,
     pc_stats: HashMap<Address, (Instruction, usize)>,
     inst_stats: HashMap<String, usize>,
@@ -45,8 +44,8 @@ pub struct Core {
     instruction_in_exec_stage: Option<InstructionEnum>,
     instruction_in_memory_stage: Option<InstructionEnum>,
     instruction_in_write_back_stage: Option<InstructionEnum>,
-    forwarding_int_sources: [Option<(InstructionCount, Int)>; 32],
-    forwarding_float_sources: [Option<(InstructionCount, FloatingPoint)>; 32],
+    forwarding_int_sources: [Option<(InstructionCount, Int)>; INT_REGISTER_SIZE],
+    forwarding_float_sources: [Option<(InstructionCount, FloatingPoint)>; FLOAT_REGISTER_SIZE],
     inv_map: InvMap,
     sqrt_map: SqrtMap,
     sld_vec: Vec<String>,
@@ -63,6 +62,7 @@ impl Core {
         let instruction_memory = InstructionMemory::new();
         let instruction_memory_access_count = 0;
         let instruction_count = 0;
+        let cycle_count = 0;
         let int_registers = [IntRegister::new(); INT_REGISTER_SIZE];
         let float_registers = [FloatRegister::new(); FLOAT_REGISTER_SIZE];
         let pc = 0;
@@ -78,8 +78,8 @@ impl Core {
         let instruction_in_exec_stage = None;
         let instruction_in_memory_stage = None;
         let instruction_in_write_back_stage = None;
-        let forwarding_int_sources = [None; 32];
-        let forwarding_float_sources = [None; 32];
+        let forwarding_int_sources = [None; INT_REGISTER_SIZE];
+        let forwarding_float_sources = [None; FLOAT_REGISTER_SIZE];
         let inv_map = create_inv_map();
         let sqrt_map = create_sqrt_map();
         let sld_vec = vec![];
@@ -93,13 +93,14 @@ impl Core {
             instruction_memory,
             instruction_memory_access_count,
             instruction_count,
+            cycle_count,
             int_registers,
             float_registers,
             pc,
             int_registers_history,
             float_registers_history,
             pc_history,
-            instruction_count_history,
+            cycle_count_history: instruction_count_history,
             pc_stats,
             inst_stats,
             instruction_in_fetch_stage,
@@ -198,6 +199,11 @@ impl Core {
 
     fn increment_instruction_count(&mut self) {
         self.instruction_count += 1;
+    }
+
+    #[inline]
+    fn increment_cycle_count(&mut self) {
+        self.cycle_count += 1;
     }
 
     pub fn load_instruction(&mut self, addr: Address) -> InstructionValue {
@@ -417,8 +423,8 @@ impl Core {
         false
     }
 
-    pub fn get_instruction_count(&self) -> InstructionCount {
-        self.instruction_count
+    pub fn get_cycle_count(&self) -> InstructionCount {
+        self.cycle_count
     }
 
     #[allow(dead_code)]
@@ -517,9 +523,8 @@ impl Core {
     }
 
     #[allow(dead_code)]
-    fn add_instruction_count_to_history(&mut self) {
-        self.instruction_count_history
-            .push(self.get_instruction_count());
+    fn add_cycle_count_to_history(&mut self) {
+        self.cycle_count_history.push(self.get_cycle_count());
     }
 
     #[allow(dead_code)]
@@ -578,8 +583,8 @@ impl Core {
     #[allow(dead_code)]
     fn show_instruction_count_history(&self) {
         print!("    ");
-        for i in 0..self.instruction_count_history.len() {
-            print!("{:>8}  ", self.instruction_count_history[i]);
+        for i in 0..self.cycle_count_history.len() {
+            print!("{:>8}  ", self.cycle_count_history[i]);
         }
         println!();
     }
@@ -667,6 +672,7 @@ impl Core {
         );
     }
 
+    #[allow(dead_code)]
     fn output_pc_file(&self, path: &str) {
         let mut file = File::create(path).unwrap();
         let mut pc_count = 0;
@@ -693,7 +699,7 @@ impl Core {
         std::io::stdout().flush().unwrap();
         eprint!(
             "\r{} {:>08} pc: {:>06} sp: {:>010}",
-            self.instruction_count,
+            self.cycle_count,
             self.output.len(),
             self.get_pc() - 4,
             self.get_int_register(2),
@@ -722,23 +728,13 @@ impl Core {
         self.pc = INSTRUCTION_MEMORY_SIZE as Address;
     }
 
-    pub fn run(
-        &mut self,
-        verbose: u32,
-        interval: u64,
-        ppm_file_path: &str,
-        sld_file_path: &str,
-        pc_file_path: &str,
-    ) {
+    pub fn run(&mut self, verbose: u32, interval: u64, ppm_file_path: &str, sld_file_path: &str) {
         let start_time = Instant::now();
         let mut will_stall = false;
         let mut stalling;
-        let mut cycle_num: u128 = 0;
 
         let mut ppm_file = File::create(ppm_file_path).unwrap();
         let mut before_output_len = 0;
-
-        self.output_pc_file(pc_file_path);
 
         self.load_sld_file(sld_file_path);
 
@@ -750,12 +746,6 @@ impl Core {
             self.add_pc_to_history();
         }
 
-        // let guard = pprof::ProfilerGuardBuilder::default()
-        //     .frequency(1000)
-        //     .blocklist(&["libc", "libgcc", "pthread", "vdso"])
-        //     .build()
-        //     .unwrap();
-
         if verbose >= 1 {
             println!(
             "               IF                  IF2                 ID                  EX                  MEM                 WB"
@@ -764,11 +754,10 @@ impl Core {
 
         loop {
             if verbose >= 1 {
-                // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
                 let pc_string = format!("pc: {}", self.get_pc());
                 print_filled_with_space(&pc_string, 15);
             }
-            cycle_num += 1;
+            self.increment_cycle_count();
             if interval != 0 {
                 thread::sleep(Duration::from_millis(interval));
             }
@@ -793,12 +782,15 @@ impl Core {
                 will_stall = true;
             }
 
+            if self.instruction_in_write_back_stage.is_some() {
+                self.increment_instruction_count();
+            }
+
             write_back(self);
             memory_access(self);
 
             if !stalling {
                 exec_instruction(self);
-                self.increment_instruction_count();
                 if !will_stall {
                     register_fetch(self);
                 }
@@ -813,7 +805,7 @@ impl Core {
 
             self.remove_forwarding_source_if_possible();
 
-            if cycle_num % 1000000 == 0 {
+            if self.cycle_count % 1000000 == 0 {
                 self.show_current_state();
             }
             if before_output_len != self.output.len() {
@@ -830,17 +822,12 @@ impl Core {
                 self.show_registers();
                 self.add_registers_to_history();
                 self.add_pc_to_history();
-                self.add_instruction_count_to_history();
+                self.add_cycle_count_to_history();
             }
         }
 
-        // if let Ok(report) = guard.report().build() {
-        //     let file = File::create("flamegraph_16_2.svg").unwrap();
-        //     report.flamegraph(file).unwrap();
-        // };
-
         println!(
-            "inst_count: {}\nelapsed time: {:?}\n{:.2} MIPS",
+            "executed instruction count: {}\nelapsed time: {:?}\n{:.2} MIPS",
             self.instruction_count,
             start_time.elapsed(),
             self.instruction_count as f64 / start_time.elapsed().as_micros() as f64
@@ -871,6 +858,7 @@ pub fn disassemble(buf: &Vec<u8>, path: &str) {
     }
     let mut file = File::create(path).unwrap();
     let mut pc_count = 0;
+    core.increment_pc();
     loop {
         let inst = core.instruction_memory.load(pc_count as Address);
         let decoded = decode_instruction(inst);

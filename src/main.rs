@@ -25,28 +25,28 @@ use utils::*;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Name of the input binary file
+    /// Name of the input binary file.
     #[arg(short, long, default_value = "main.bin")]
     bin: Option<String>,
 
-    /// Name of sld file for raytracing
+    /// Name of sld file for raytracing.
     #[arg(short, long, default_value = "./sld/contest.sld")]
     sld: Option<String>,
 
-    /// Verbose mode
-    /// If this flag is not set, the simulator won't print anything in each cycle
-    /// If this flag is set to 1, the simulator will print the information about only pipeline in each cycle
-    /// If this flag is set to 2, the simulator will print the information about pipeline and registers in each cycle, and save history of registers and pc
+    /// Verbose mode.
+    /// If this flag is not set, the simulator won't print anything in each cycle.
+    /// If this flag is set to 1, the simulator will print the information about only pipeline in each cycle.
+    /// If this flag is set to 2, the simulator will print the information about pipeline and registers in each cycle, and save history of registers and pc.
     #[arg(short, long)]
     verbose: Option<u32>,
 
-    /// Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, fcvtws, or all)
+    /// Operation name for test of FPU (fadd, fsub, fmul, fdiv, fsqrt, flt, fcvtsw, fcvtws, or all).
     #[arg(short, long)]
     test_fpu: Option<String>,
 
-    /// Disassemble mode
-    /// If this flag is set, the simulator will print the disassembled instructions
-    /// The output file name is the same as the input binary file name, but the extension is changed to ".dasm"
+    /// Disassemble mode.
+    /// If this flag is set, the simulator will print the disassembled instructions.
+    /// The output file name is the same as the input binary file name, but the extension is changed to ".dasm".
     #[arg(short, long)]
     disassemble: bool,
 }
@@ -89,14 +89,7 @@ fn main() {
                 let interval = 0;
                 let ppm_file_path = &input.replace(".bin", ".ppm");
                 let sld_file_path = &args.sld.unwrap();
-                let pc_file_path = &input.replace(".bin", ".pc");
-                core.run(
-                    verbose,
-                    interval,
-                    ppm_file_path,
-                    sld_file_path,
-                    pc_file_path,
-                );
+                core.run(verbose, interval, ppm_file_path, sld_file_path);
             }
         }
     }

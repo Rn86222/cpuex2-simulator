@@ -238,7 +238,7 @@ impl Debug for Lw {
 
 impl InstructionTrait for Lw {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -319,7 +319,7 @@ impl Debug for Addi {
 
 impl InstructionTrait for Addi {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -392,7 +392,7 @@ impl Debug for Slli {
 
 impl InstructionTrait for Slli {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.uimm = Some((self.data.imm & 63) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -467,7 +467,7 @@ impl Debug for Slti {
 
 impl InstructionTrait for Slti {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -547,7 +547,7 @@ impl Debug for Xori {
 
 impl InstructionTrait for Xori {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -620,7 +620,7 @@ impl Debug for Srli {
 
 impl InstructionTrait for Srli {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.uimm = Some((self.data.imm & 63) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -692,7 +692,7 @@ impl Debug for Srai {
 
 impl InstructionTrait for Srai {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.uimm = Some((self.data.imm & 0x1f) as u32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -767,7 +767,7 @@ impl Debug for Ori {
 
 impl InstructionTrait for Ori {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -843,7 +843,7 @@ impl Debug for Andi {
 
 impl InstructionTrait for Andi {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 12) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -920,7 +920,7 @@ impl Debug for Sw {
 
 impl InstructionTrait for Sw {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -995,7 +995,7 @@ impl Debug for Add {
 
 impl InstructionTrait for Add {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1078,7 +1078,7 @@ impl Debug for Sub {
 
 impl InstructionTrait for Sub {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1161,7 +1161,7 @@ impl Debug for Sll {
 
 impl InstructionTrait for Sll {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value as Int);
@@ -1245,7 +1245,7 @@ impl Debug for Slt {
 
 impl InstructionTrait for Slt {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1332,7 +1332,7 @@ impl Debug for Xor {
 
 impl InstructionTrait for Xor {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1415,7 +1415,7 @@ impl Debug for Srl {
 
 impl InstructionTrait for Srl {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1499,7 +1499,7 @@ impl Debug for Sra {
 
 impl InstructionTrait for Sra {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1583,7 +1583,7 @@ impl Debug for Or {
 
 impl InstructionTrait for Or {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1666,7 +1666,7 @@ impl Debug for And {
 
 impl InstructionTrait for And {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -1744,7 +1744,7 @@ impl Debug for Lui {
 
 impl InstructionTrait for Lui {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.upimm = Some(self.data.imm << 13);
         self.data.origin_pc = Some(core.get_pc() - 8);
     }
@@ -1822,7 +1822,7 @@ impl Debug for Beq {
 impl InstructionTrait for Beq {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -1914,7 +1914,7 @@ impl Debug for Bne {
 impl InstructionTrait for Bne {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -2006,7 +2006,7 @@ impl Debug for Blt {
 impl InstructionTrait for Blt {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -2098,7 +2098,7 @@ impl Debug for Bge {
 impl InstructionTrait for Bge {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -2184,7 +2184,7 @@ impl Debug for Jalr {
 impl InstructionTrait for Jalr {
     fn register_fetch(&mut self, core: &Core) {
         self.origin_pc = Some(core.get_pc() - 8);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -2263,7 +2263,7 @@ impl InstructionTrait for Jal {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i32(self.data.imm, 19));
         self.data.origin_pc = Some(core.get_pc() - 8);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -2334,7 +2334,7 @@ impl Debug for Flw {
 
 impl InstructionTrait for Flw {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source {
@@ -2414,7 +2414,7 @@ impl Debug for Fadd {
 
 impl InstructionTrait for Fadd {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2497,7 +2497,7 @@ impl Debug for Fsub {
 
 impl InstructionTrait for Fsub {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2580,7 +2580,7 @@ impl Debug for Fmul {
 
 impl InstructionTrait for Fmul {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2663,7 +2663,7 @@ impl Debug for Fdiv {
 
 impl InstructionTrait for Fdiv {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2742,7 +2742,7 @@ impl Debug for Fsqrt {
 
 impl InstructionTrait for Fsqrt {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2815,7 +2815,7 @@ impl Debug for Fsgnj {
 
 impl InstructionTrait for Fsgnj {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2898,7 +2898,7 @@ impl Debug for Fsgnjn {
 
 impl InstructionTrait for Fsgnjn {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -2981,7 +2981,7 @@ impl Debug for Fsgnjx {
 
 impl InstructionTrait for Fsgnjx {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -3064,7 +3064,7 @@ impl Debug for Feq {
 
 impl InstructionTrait for Feq {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
@@ -3147,7 +3147,7 @@ impl Debug for Flt {
 
 impl InstructionTrait for Flt {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
@@ -3230,7 +3230,7 @@ impl Debug for Fle {
 
 impl InstructionTrait for Fle {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
@@ -3316,7 +3316,7 @@ impl Debug for FcvtWS {
 
 impl InstructionTrait for FcvtWS {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.fs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.fs1_value = Some(*rs1_value);
@@ -3385,7 +3385,7 @@ impl Debug for FcvtSW {
 
 impl InstructionTrait for FcvtSW {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
             self.data.rs1_value = Some(*rs1_value);
@@ -3451,7 +3451,7 @@ impl Debug for In {
 
 impl InstructionTrait for In {
     fn register_fetch(&mut self, core: &Core) {
-        self.inst_count = Some(core.get_instruction_count());
+        self.inst_count = Some(core.get_cycle_count());
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3502,7 +3502,7 @@ impl Debug for Fin {
 
 impl InstructionTrait for Fin {
     fn register_fetch(&mut self, core: &Core) {
-        self.inst_count = Some(core.get_instruction_count());
+        self.inst_count = Some(core.get_cycle_count());
     }
 
     fn exec(&mut self, core: &mut Core) {
@@ -3563,7 +3563,7 @@ impl Debug for Fsw {
 
 impl InstructionTrait for Fsw {
     fn register_fetch(&mut self, core: &Core) {
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
         let forwarding_source_1 = core.get_forwarding_int_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -3631,7 +3631,7 @@ impl Debug for Outchar {
 
 impl InstructionTrait for Outchar {
     fn register_fetch(&mut self, core: &Core) {
-        self.inst_count = Some(core.get_instruction_count());
+        self.inst_count = Some(core.get_cycle_count());
         let forwarding_source = core.get_forwarding_int_source(self.rs2);
         if let Some((_, rs2_value)) = forwarding_source {
             self.rs2_value = Some(*rs2_value);
@@ -3683,7 +3683,7 @@ impl Debug for Outint {
 
 impl InstructionTrait for Outint {
     fn register_fetch(&mut self, core: &Core) {
-        self.inst_count = Some(core.get_instruction_count());
+        self.inst_count = Some(core.get_cycle_count());
         let forwarding_source = core.get_forwarding_int_source(self.rs2);
         if let Some((_, rs2_value)) = forwarding_source {
             self.rs2_value = Some(*rs2_value);
@@ -3756,7 +3756,7 @@ impl Debug for Fbeq {
 impl InstructionTrait for Fbeq {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -3848,7 +3848,7 @@ impl Debug for Fbne {
 impl InstructionTrait for Fbne {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -3940,7 +3940,7 @@ impl Debug for Fblt {
 impl InstructionTrait for Fblt {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -4032,7 +4032,7 @@ impl Debug for Fble {
 impl InstructionTrait for Fble {
     fn register_fetch(&mut self, core: &Core) {
         self.data.extended_imm = Some(sign_extention_i16(self.data.imm, 13) as i32);
-        self.data.inst_count = Some(core.get_instruction_count());
+        self.data.inst_count = Some(core.get_cycle_count());
         self.data.origin_pc = Some(core.get_pc() - 8);
         let forwarding_source_1 = core.get_forwarding_float_source(self.data.rs1);
         if let Some((_, rs1_value)) = forwarding_source_1 {
@@ -4097,7 +4097,7 @@ impl Debug for End {
 
 impl InstructionTrait for End {
     fn register_fetch(&mut self, core: &Core) {
-        self.inst_count = Some(core.get_instruction_count());
+        self.inst_count = Some(core.get_cycle_count());
     }
 
     fn write_back(&self, core: &mut Core) {
