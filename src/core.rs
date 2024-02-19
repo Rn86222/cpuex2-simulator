@@ -217,6 +217,9 @@ impl Core {
     }
 
     pub fn set_float_register(&mut self, index: usize, value: FloatingPoint) {
+        if index == ZERO {
+            return; // zero register
+        }
         self.float_registers[index].set(value);
     }
 
@@ -273,6 +276,11 @@ impl Core {
         self.output.push(value as u8);
     }
 
+    pub fn print_int(&mut self, value: Word) {
+        self.output
+            .append(&mut value.to_string().as_bytes().to_vec());
+    }
+
     pub fn store_word(&mut self, addr: Address, value: Word) {
         self.increment_memory_access_count();
         let cache_access = self.cache.set_word(addr, value);
@@ -300,10 +308,9 @@ impl Core {
                 self.decoded_instruction = None;
                 self.fetched_instruction = None;
                 return;
-            } else {
-                let decoded_inst_struct = create_instruction_struct(decoded);
-                self.decoded_instruction = Some(decoded_inst_struct);
             }
+            let decoded_inst_struct = create_instruction_struct(decoded);
+            self.decoded_instruction = Some(decoded_inst_struct);
         } else {
             self.decoded_instruction = None;
         }
@@ -364,6 +371,9 @@ impl Core {
                         }
                     }
                     RegisterId::Float(rd) => {
+                        if rd == 0 {
+                            return;
+                        }
                         let float_source = self.forwarding_float_sources[rd as usize];
                         if let Some((inst_cnt, _)) = float_source {
                             if inst_cnt == current_inst_cnt {
