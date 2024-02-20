@@ -39,8 +39,9 @@ pub struct Core {
     pc_history: Vec<Address>,
     pc_stats: HashMap<Address, (Instruction, usize)>,
     inst_stats: HashMap<String, usize>,
-    fetched_instruction: Option<InstructionValue>,
-    decoded_instruction: Option<InstructionEnum>,
+    instruction_in_fetch_stage: Option<InstructionValue>,
+    instruction_in_fetch_stage_2: Option<InstructionValue>,
+    instruction_in_decode_stage: Option<InstructionEnum>,
     instruction_in_exec_stage: Option<InstructionEnum>,
     instruction_in_memory_stage: Option<InstructionEnum>,
     instruction_in_write_back_stage: Option<InstructionEnum>,
@@ -71,7 +72,8 @@ impl Core {
         let instruction_count_history = Vec::new();
         let pc_stats = HashMap::new();
         let inst_stats = HashMap::new();
-        let fetched_instruction = None;
+        let instruction_in_fetch_stage = None;
+        let instruction_in_fetch_stage_2 = None;
         let decoded_instruction = None;
         let instruction_in_exec_stage = None;
         let instruction_in_memory_stage = None;
@@ -100,8 +102,9 @@ impl Core {
             instruction_count_history,
             pc_stats,
             inst_stats,
-            fetched_instruction,
-            decoded_instruction,
+            instruction_in_fetch_stage,
+            instruction_in_fetch_stage_2,
+            instruction_in_decode_stage: decoded_instruction,
             instruction_in_exec_stage,
             instruction_in_memory_stage,
             instruction_in_write_back_stage,
@@ -116,11 +119,11 @@ impl Core {
     }
 
     pub fn get_decoded_instruction(&self) -> &Option<InstructionEnum> {
-        &self.decoded_instruction
+        &self.instruction_in_decode_stage
     }
 
     pub fn set_decoded_instruction(&mut self, inst: Option<InstructionEnum>) {
-        self.decoded_instruction = inst;
+        self.instruction_in_decode_stage = inst;
     }
 
     pub fn get_instruction_in_exec_stage(&self) -> &Option<InstructionEnum> {
@@ -145,7 +148,11 @@ impl Core {
 
     fn fetch_instruction(&mut self) {
         let current_pc = self.get_pc();
-        self.fetched_instruction = Some(self.load_instruction(current_pc));
+        let inst = self.load_instruction(current_pc);
+        if inst == 0 {
+            return;
+        }
+        self.instruction_in_fetch_stage = Some(inst);
     }
 
     pub fn get_inv_map(&self) -> &InvMap {
@@ -173,9 +180,10 @@ impl Core {
             let jump_address = get_jump_address(inst);
             if let Some(jump_address) = jump_address {
                 self.set_pc(jump_address);
-                // flush instruction in IF and ID stage
-                self.fetched_instruction = None;
-                self.decoded_instruction = None;
+                // flush instruction in IF, IF2, and ID stage
+                self.instruction_in_fetch_stage = None;
+                self.instruction_in_fetch_stage_2 = None;
+                self.instruction_in_decode_stage = None;
             } else if !stalling {
                 self.increment_pc();
             }
@@ -217,6 +225,9 @@ impl Core {
     }
 
     pub fn set_float_register(&mut self, index: usize, value: FloatingPoint) {
+        if index == ZERO {
+            return; // zero register
+        }
         self.float_registers[index].set(value);
     }
 
@@ -237,104 +248,6 @@ impl Core {
         }
     }
 
-    // #[allow(dead_code)]
-    // pub fn load_byte(&mut self, addr: Address) -> Byte {
-    //     self.increment_memory_access_count();
-    //     let cache_access = self.cache.get_ubyte(addr);
-    //     match cache_access {
-    //         CacheAccess::HitUByte(value) => {
-    //             self.increment_cache_hit_count();
-    //             u8_to_i8(value) as Byte
-    //         }
-    //         CacheAccess::Miss => {
-    //             let value = self.memory.load_byte(addr);
-    //             self.process_cache_miss(addr);
-    //             value
-    //         }
-    //         _ => {
-    //             panic!("invalid cache access");
-    //         }
-    //     }
-    // }
-
-    // #[allow(dead_code)]
-    // pub fn load_ubyte(&mut self, addr: Address) -> UByte {
-    //     self.increment_memory_access_count();
-    //     let cache_access = self.cache.get_ubyte(addr);
-    //     match cache_access {
-    //         CacheAccess::HitUByte(value) => {
-    //             self.increment_cache_hit_count();
-    //             value
-    //         }
-    //         CacheAccess::Miss => {
-    //             let value = self.memory.load_ubyte(addr);
-    //             self.process_cache_miss(addr);
-    //             value
-    //         }
-    //         _ => {
-    //             panic!("invalid cache access");
-    //         }
-    //     }
-    // }
-
-    // #[allow(dead_code)]
-    // pub fn store_byte(&mut self, addr: Address, value: Byte) {
-    //     self.increment_memory_access_count();
-    //     let cache_access = self.cache.set_ubyte(addr, i8_to_u8(value));
-    //     match cache_access {
-    //         CacheAccess::HitSet => {
-    //             self.increment_cache_hit_count();
-    //         }
-    //         CacheAccess::Miss => {
-    //             self.memory.store_byte(addr, value);
-    //             self.process_cache_miss(addr);
-    //         }
-    //         _ => {
-    //             panic!("invalid cache access");
-    //         }
-    //     }
-    // }
-
-    // #[allow(dead_code)]
-    // pub fn load_half(&mut self, addr: Address) -> Half {
-    //     self.increment_memory_access_count();
-    //     let cache_access = self.cache.get_uhalf(addr);
-    //     match cache_access {
-    //         CacheAccess::HitUHalf(value) => {
-    //             self.increment_cache_hit_count();
-    //             u16_to_i16(value)
-    //         }
-    //         CacheAccess::Miss => {
-    //             let value = self.memory.load_half(addr);
-    //             self.process_cache_miss(addr);
-    //             value
-    //         }
-    //         _ => {
-    //             panic!("invalid cache access");
-    //         }
-    //     }
-    // }
-
-    // #[allow(dead_code)]
-    // pub fn load_uhalf(&mut self, addr: Address) -> UHalf {
-    //     self.increment_memory_access_count();
-    //     let cache_access = self.cache.get_uhalf(addr);
-    //     match cache_access {
-    //         CacheAccess::HitUHalf(value) => {
-    //             self.increment_cache_hit_count();
-    //             value
-    //         }
-    //         CacheAccess::Miss => {
-    //             let value = self.memory.load_uhalf(addr);
-    //             self.process_cache_miss(addr);
-    //             value
-    //         }
-    //         _ => {
-    //             panic!("invalid cache access");
-    //         }
-    //     }
-    // }
-
     pub fn read_int(&mut self) -> Word {
         let value = self.sld_vec[self.sld_counter].parse::<i32>().unwrap();
         self.sld_counter += 1;
@@ -349,11 +262,6 @@ impl Core {
     }
 
     pub fn load_word(&mut self, addr: Address) -> Word {
-        // if addr == IO_ADDRESS {
-        //     let value = self.sld_vec[self.sld_counter].parse::<i32>().unwrap();
-        //     self.sld_counter += 1;
-        //     return value;
-        // }
         self.increment_memory_access_count();
         let cache_access = self.cache.get_word(addr);
         match cache_access {
@@ -372,44 +280,16 @@ impl Core {
         }
     }
 
-    // pub fn load_word_fp(&mut self, addr: Address) -> Word {
-    //     if addr == IO_ADDRESS {
-    //         let value = self.sld_vec[self.sld_counter].parse::<f32>().unwrap();
-    //         let fp = FloatingPoint::new_f32(value);
-    //         self.sld_counter += 1;
-    //         u32_to_i32(fp.get_32_bits())
-    //     } else {
-    //         self.load_word(addr)
-    //     }
-    // }
-
-    // #[allow(dead_code)]
-    // pub fn store_half(&mut self, addr: Address, value: Half) {
-    //     self.increment_memory_access_count();
-    //     let cache_access = self.cache.set_uhalf(addr, i16_to_u16(value));
-    //     match cache_access {
-    //         CacheAccess::HitSet => {
-    //             self.increment_cache_hit_count();
-    //         }
-    //         CacheAccess::Miss => {
-    //             self.memory.store_half(addr, value);
-    //             self.process_cache_miss(addr);
-    //         }
-    //         _ => {
-    //             panic!("invalid cache access");
-    //         }
-    //     }
-    // }
-
     pub fn print_char(&mut self, value: Word) {
         self.output.push(value as u8);
     }
 
+    pub fn print_int(&mut self, value: Word) {
+        self.output
+            .append(&mut value.to_string().as_bytes().to_vec());
+    }
+
     pub fn store_word(&mut self, addr: Address, value: Word) {
-        // if addr == IO_ADDRESS {
-        //     self.output.push(value as u8);
-        //     return;
-        // }
         self.increment_memory_access_count();
         let cache_access = self.cache.set_word(addr, value);
         match cache_access {
@@ -429,21 +309,22 @@ impl Core {
     pub fn move_instructions_to_next_stage(&mut self) {
         self.instruction_in_write_back_stage = self.instruction_in_memory_stage.clone();
         self.instruction_in_memory_stage = self.instruction_in_exec_stage.clone();
-        self.instruction_in_exec_stage = self.decoded_instruction.clone();
-        if let Some(fetched_instruction) = self.fetched_instruction {
+        self.instruction_in_exec_stage = self.instruction_in_decode_stage.clone();
+        if let Some(fetched_instruction) = self.instruction_in_fetch_stage_2 {
             let decoded = decode_instruction(fetched_instruction);
             if let Instruction::Other = decoded {
-                self.decoded_instruction = None;
-                self.fetched_instruction = None;
+                self.instruction_in_decode_stage = None;
+                self.instruction_in_fetch_stage_2 = None;
+                self.instruction_in_fetch_stage = None;
                 return;
-            } else {
-                let decoded_inst_struct = create_instruction_struct(decoded);
-                self.decoded_instruction = Some(decoded_inst_struct);
             }
+            let decoded_inst_struct = create_instruction_struct(decoded);
+            self.instruction_in_decode_stage = Some(decoded_inst_struct);
         } else {
-            self.decoded_instruction = None;
+            self.instruction_in_decode_stage = None;
         }
-        self.fetched_instruction = None;
+        self.instruction_in_fetch_stage_2 = self.instruction_in_fetch_stage;
+        self.instruction_in_fetch_stage = None;
     }
 
     pub fn move_instructions_to_next_stage_stalling(&mut self) {
@@ -500,6 +381,9 @@ impl Core {
                         }
                     }
                     RegisterId::Float(rd) => {
+                        if rd == 0 {
+                            return;
+                        }
                         let float_source = self.forwarding_float_sources[rd as usize];
                         if let Some((inst_cnt, _)) = float_source {
                             if inst_cnt == current_inst_cnt {
@@ -513,10 +397,10 @@ impl Core {
     }
 
     pub fn check_load_hazard(&self) -> bool {
-        if self.decoded_instruction.is_none() || self.instruction_in_exec_stage.is_none() {
+        if self.instruction_in_decode_stage.is_none() || self.instruction_in_exec_stage.is_none() {
             return false;
         }
-        let decoded_instruction = self.decoded_instruction.as_ref().unwrap();
+        let decoded_instruction = self.instruction_in_decode_stage.as_ref().unwrap();
         let instruction_in_exec_stage = self.instruction_in_exec_stage.as_ref().unwrap();
         if !is_load_instruction(instruction_in_exec_stage) {
             return false;
@@ -559,16 +443,19 @@ impl Core {
 
     #[allow(dead_code)]
     fn show_pipeline(&self) {
-        // println!(
-        //     "IF                  ID                  EX                  MEM                 WB"
-        // );
-        let if_string = if let Some(inst) = self.fetched_instruction {
+        let if_string = if let Some(inst) = self.instruction_in_fetch_stage {
             format!("{:>08x}", inst)
         } else {
             "None".to_string()
         };
         print_filled_with_space(&if_string, 20);
-        let id_string = if let Some(inst) = self.decoded_instruction.clone() {
+        let if2_string = if let Some(inst) = self.instruction_in_fetch_stage_2 {
+            format!("{:>08x}", inst)
+        } else {
+            "None".to_string()
+        };
+        print_filled_with_space(&if2_string, 20);
+        let id_string = if let Some(inst) = self.instruction_in_decode_stage.clone() {
             format!("{:?}", inst)
         } else {
             "None".to_string()
@@ -637,7 +524,7 @@ impl Core {
 
     #[allow(dead_code)]
     fn update_pc_stats(&mut self) {
-        if let Some(inst) = self.fetched_instruction {
+        if let Some(inst) = self.instruction_in_fetch_stage {
             let decoded = decode_instruction(inst);
             if let Instruction::Other = decoded {
                 return;
@@ -802,6 +689,8 @@ impl Core {
     }
 
     fn show_current_state(&self) {
+        eprint!("\x1B[2K\x1B[1000D");
+        std::io::stdout().flush().unwrap();
         eprint!(
             "\r{} {:>08} pc: {:>06} sp: {:>010}",
             self.instruction_count,
@@ -811,9 +700,7 @@ impl Core {
         );
         if let Some(inst) = self.get_instruction_in_exec_stage() {
             let inst_string = format!("{:?}", inst);
-            eprint!("  {:?}         ", inst_string);
-        } else {
-            eprint!("               ");
+            eprint!("  {}", inst_string);
         }
     }
 
@@ -839,7 +726,6 @@ impl Core {
         &mut self,
         verbose: u32,
         interval: u64,
-        // data_file_path: &str,
         ppm_file_path: &str,
         sld_file_path: &str,
         pc_file_path: &str,
@@ -854,7 +740,6 @@ impl Core {
 
         self.output_pc_file(pc_file_path);
 
-        // self.load_data_file(data_file_path);
         self.load_sld_file(sld_file_path);
 
         self.update_pc_stats();
@@ -871,6 +756,12 @@ impl Core {
         //     .build()
         //     .unwrap();
 
+        if verbose >= 1 {
+            println!(
+            "               IF                  IF2                 ID                  EX                  MEM                 WB"
+        );
+        }
+
         loop {
             if verbose >= 1 {
                 // colorized_println(&format!("pc: {}", self.get_pc()), BLUE);
@@ -883,6 +774,7 @@ impl Core {
             }
             if self.get_pc() >= INSTRUCTION_MEMORY_SIZE as Address {
                 self.pc_history.pop();
+                eprintln!();
                 println!("End of program.");
                 break;
             }
@@ -991,7 +883,7 @@ pub fn disassemble(buf: &Vec<u8>, path: &str) {
                 core.set_decoded_instruction(Some(inst));
                 core.increment_pc();
                 register_fetch(&mut core);
-                let inst = core.decoded_instruction.clone().unwrap();
+                let inst = core.instruction_in_decode_stage.clone().unwrap();
                 let inst_string = format!("{}: {:?}", pc_count, inst);
                 file.write_all(inst_string.as_bytes()).unwrap();
                 file.write_all("\n".as_bytes()).unwrap();

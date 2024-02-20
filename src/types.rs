@@ -29,6 +29,5 @@ pub type Op = u8;
 pub type Fs3 = u8;
 pub type Fs2 = u8;
 pub type Fs1 = u8;
-pub type Funct2 = u8;
 pub type Fd = u8;
 pub type InstructionCount = u128;
