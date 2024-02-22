@@ -559,7 +559,7 @@ impl Core {
     }
 
     fn update_inst_stats(&mut self) {
-        if let Some(inst) = self.get_instruction_in_exec_stage() {
+        if let Some(inst) = &self.instruction_in_write_back_stage {
             self.inst_stats
                 .entry(get_name(inst))
                 .and_modify(|e| *e += 1)
@@ -748,8 +748,8 @@ impl Core {
 
         if verbose >= 1 {
             println!(
-            "               IF                  IF2                 ID                  EX                  MEM                 WB"
-        );
+                "               IF                  IF2                 ID                  EX                  MEM                 WB"
+            );
         }
 
         loop {
