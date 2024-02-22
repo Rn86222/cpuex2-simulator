@@ -2254,8 +2254,23 @@ impl Jal {
 
 impl Debug for Jal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // let extended_imm = sign_extention_i32(self.data.imm, 19);
+        // write!(f, "jal x{}, {}", self.data.rd, extended_imm)
         let extended_imm = sign_extention_i32(self.data.imm, 19);
-        write!(f, "jal x{}, {}", self.data.rd, extended_imm)
+        let origin_pc = {
+            if let Some(pc) = self.data.origin_pc {
+                pc.to_string()
+            } else {
+                "?".to_string()
+            }
+        };
+        write!(
+            f,
+            "jal x{}, {} + {}",
+            self.data.rd,
+            origin_pc,
+            extended_imm << 2
+        )
     }
 }
 
