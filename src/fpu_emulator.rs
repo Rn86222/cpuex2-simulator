@@ -191,7 +191,7 @@ impl Add for FloatingPoint {
         } else if e1 == 255 && e2 == 255 {
             (1 << 31) + (255 << 23) + (1 << 22)
         } else {
-            (sy << 31) + (ey << 23) + (my as u32)
+            (sy << 31) | (ey << 23) | (my as u32)
         };
 
         let _ovf = if e1 == 255 && e2 == 255 {
@@ -245,7 +245,7 @@ impl Mul for FloatingPoint {
         } else {
             to_n_bits_u64(m1m2 >> 1, 23)
         };
-        let y = (sy << 31) + (ey << 23) + (my as u32);
+        let y = (sy << 31) | (ey << 23) | (my as u32);
         FloatingPoint { value: y }
     }
 }
@@ -294,9 +294,13 @@ pub fn div_fp(this: FloatingPoint, other: FloatingPoint, inv_map: &InvMap) -> Fl
     let yi = normailized_this * normalized_other_inv;
     let (_, ei, my) = yi.get_1_8_23_bits();
     let eyi = (e1 as i32 - 127) - (e2 as i32 - 127) + (ei as i32 - 127) + 127;
-    let ey = if eyi < 0 { 0 } else { eyi as u32 };
+    let ey = if eyi < 0 {
+        0
+    } else {
+        to_n_bits_u32(eyi as u32, 8)
+    };
     let sy = s1 ^ s2;
-    let y = (sy << 31) + (ey << 23) + my;
+    let y = (sy << 31) | (ey << 23) | my;
     FloatingPoint { value: y }
 }
 
@@ -358,11 +362,11 @@ pub fn sqrt_fp(this: FloatingPoint, sqrt_map: &SqrtMap) -> FloatingPoint {
     let yi = b + a * normalized_x;
     let (_, eyi, my) = yi.get_1_8_23_bits();
     let ey = if sh == 0 {
-        eyi - offset_e / 2
+        to_n_bits_u32(eyi - offset_e / 2, 8)
     } else {
-        eyi + offset_e / 2
+        to_n_bits_u32(eyi + offset_e / 2, 8)
     };
-    let y = (ey << 23) + my;
+    let y = (ey << 23) | my;
     FloatingPoint { value: y }
 }
 
@@ -414,12 +418,12 @@ pub fn int_to_fp(x: Int) -> FloatingPoint {
     let myi2 = if mye & (1 << 8) != 0 { myi + 1 } else { myi };
     let my = to_n_bits_u32(myi2, 23);
     let ey = if myi.count_ones() == 23 && mye & (1 << 8) != 0 {
-        127 + 31 - se + 1
+        to_n_bits_u32(127 + 31 - se + 1, 8)
     } else {
-        127 + 31 - se
+        to_n_bits_u32(127 + 31 - se, 8)
     };
     let sy = if x < 0 { 1 } else { 0 };
-    let y = (sy << 31) + (ey << 23) + my;
+    let y = (sy << 31) | (ey << 23) | my;
     FloatingPoint { value: y }
 }
 
@@ -544,7 +548,7 @@ pub fn fp_sign_injection(this: FloatingPoint, other: FloatingPoint) -> FloatingP
     let sy = s2;
     let ey = e1;
     let my = m1;
-    let y = (sy << 31) + (ey << 23) + my;
+    let y = (sy << 31) | (ey << 23) | my;
     FloatingPoint { value: y }
 }
 
@@ -554,7 +558,7 @@ pub fn fp_negative_sign_injection(this: FloatingPoint, other: FloatingPoint) -> 
     let sy = s2 ^ 1;
     let ey = e1;
     let my = m1;
-    let y = (sy << 31) + (ey << 23) + my;
+    let y = (sy << 31) | (ey << 23) | my;
     FloatingPoint { value: y }
 }
 
@@ -564,7 +568,7 @@ pub fn fp_xor_sign_injection(this: FloatingPoint, other: FloatingPoint) -> Float
     let sy = s1 ^ s2;
     let ey = e1;
     let my = m1;
-    let y = (sy << 31) + (ey << 23) + my;
+    let y = (sy << 31) | (ey << 23) | my;
     FloatingPoint { value: y }
 }
 
@@ -575,15 +579,13 @@ mod tests {
     use super::*;
     use rand::prelude::*;
 
-    fn gen_one_random_operand(rng: &mut ThreadRng) -> f32 {
-        let left = -100.;
-        let right = 100.;
+    fn gen_one_random_operand(rng: &mut ThreadRng, left: f32, right: f32) -> f32 {
         rng.gen_range(left..=right)
     }
 
-    fn gen_two_random_operands(rng: &mut ThreadRng) -> (f32, f32) {
-        let op1 = gen_one_random_operand(rng);
-        let op2 = gen_one_random_operand(rng);
+    fn gen_two_random_operands(rng: &mut ThreadRng, left: f32, right: f32) -> (f32, f32) {
+        let op1 = gen_one_random_operand(rng, left, right);
+        let op2 = gen_one_random_operand(rng, left, right);
         (op1, op2)
     }
 
@@ -593,15 +595,17 @@ mod tests {
         (fp1, fp2)
     }
 
-    const ITER_NUM: usize = 10000000;
+    const ITER_NUM: usize = 1000000000;
 
     #[test]
     fn test_add() {
         let relative_eps = 2_f64.powf(-23.);
         let absolute_eps = 2_f64.powf(-126.);
         let mut rng = rand::thread_rng();
+        let left = -1e37;
+        let right = 1e37;
         for _ in 0..ITER_NUM {
-            let (op1, op2) = gen_two_random_operands(&mut rng);
+            let (op1, op2) = gen_two_random_operands(&mut rng, left, right);
             let correct_result = op1 as f64 + op2 as f64;
             let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
             let result = fp1 + fp2;
@@ -625,8 +629,10 @@ mod tests {
         let relative_eps = 2_f64.powf(-23.);
         let absolute_eps = 2_f64.powf(-126.);
         let mut rng = rand::thread_rng();
+        let left = -1e37;
+        let right = 1e37;
         for _ in 0..ITER_NUM {
-            let (op1, op2) = gen_two_random_operands(&mut rng);
+            let (op1, op2) = gen_two_random_operands(&mut rng, left, right);
             let correct_result = op1 as f64 - op2 as f64;
             let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
             let result = fp1 - fp2;
@@ -650,8 +656,10 @@ mod tests {
         let mut rng = rand::thread_rng();
         let relative_eps = 2_f64.powf(-22.);
         let absolute_eps = 2_f64.powf(-126.);
+        let left = -1e18;
+        let right = 1e18;
         for _ in 0..ITER_NUM {
-            let (op1, op2) = gen_two_random_operands(&mut rng);
+            let (op1, op2) = gen_two_random_operands(&mut rng, left, right);
             let correct_result = op1 as f64 * op2 as f64;
             let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
             let result = fp1 * fp2;
@@ -665,32 +673,6 @@ mod tests {
                 result.get_f32_value()
             );
         }
-
-        // for _ in 0..ITER_NUM {
-        //     let op1 = gen_one_random_operand(&mut rng);
-        //     let op2 = 0.;
-        //     let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
-        //     let result = fp1 * fp2;
-        //     assert!(
-        //         (result.get_value().abs() as f64) < absolute_eps,
-        //         "op1: {}, op2: {}",
-        //         op1,
-        //         op2
-        //     );
-        // }
-
-        // for _ in 0..ITER_NUM {
-        //     let op1 = 0.;
-        //     let op2 = gen_one_random_operand(&mut rng);
-        //     let (fp1, fp2) = gen_two_floating_points_from_f32(op1, op2);
-        //     let result = fp1 * fp2;
-        //     assert!(
-        //         (result.get_value().abs() as f64) < absolute_eps,
-        //         "op1: {}, op2: {}",
-        //         op1,
-        //         op2
-        //     );
-        // }
     }
 
     #[test]
@@ -699,8 +681,10 @@ mod tests {
         let mut rng = rand::thread_rng();
         let relative_eps = 2_f64.powf(-20.);
         let absolute_eps = 2_f64.powf(-126.);
+        let left = -1e37;
+        let right = 1e37;
         for _ in 0..ITER_NUM {
-            let (op1, op2) = gen_two_random_operands(&mut rng);
+            let (op1, op2) = gen_two_random_operands(&mut rng, left, right);
             if op2 == 0. {
                 continue;
             }
